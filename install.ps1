@@ -6,6 +6,8 @@
     2. Backs up your existing chrome folder (except chrome\utils) to chrome.backup-<date>.
     3. Downloads this repository and copies its chrome\ folder into your profile.
        Your own css\user-overrides.css is kept, never overwritten.
+       Also writes chrome\1px-transparent.png (embedded in this script), the default background image
+       that SidebarToggles.uc.js uses when no Background image is chosen.
     4. Downloads the fonts the theme uses into chrome\fonts (core + other alphabets + Poppins),
        plus the large CJK font for your language. Poppins is also registered for the current
        Windows user only (no admin needed) because the new tab page loads it by name.
@@ -57,6 +59,11 @@ $DwmUrl    = 'https://github.com/Maplespe/DWMBlurGlass/releases/download/2.3.2b3
 $DwmSha256 = '32834fed77575353cf3699e3a5c182b8d4fcd7f00926c730e94d1a1dd591bd51'   # the download must match this
 $DwmDir    = Join-Path $env:ProgramFiles 'DWMBlurGlass'                          # where the files are kept
 # -----------------------------------------------------------------------------
+
+# 1x1 fully transparent PNG (68 bytes, RGBA, alpha 0). Written to chrome\1px-transparent.png on every run.
+# SidebarToggles.uc.js uses it as the default --uc-bg-image when no background image is chosen.
+$TransparentPngName = '1px-transparent.png'
+$TransparentPngB64  = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNgAAIAAAUAAen63NgAAAAASUVORK5CYII='
 
 # Fonts. File names must match chrome/css/00-fonts.css and the release assets exactly.
 $FontsCore    = @('Nunito-Black.ttf', 'NotoSans-Black.ttf')
@@ -285,6 +292,11 @@ try {
   if ($uoKeep) { [IO.File]::WriteAllBytes($uoPath, $uoKeep); Write-Host 'Kept your css\user-overrides.css.' }
   Write-Host 'Theme files copied.'
 
+  # chrome\1px-transparent.png: default background image for SidebarToggles.uc.js. Written after the copy above, so the
+  # embedded bytes always win even if the repo also ships a file with this name.
+  [IO.File]::WriteAllBytes((Join-Path $chromeDir $TransparentPngName), [Convert]::FromBase64String($TransparentPngB64))
+  Write-Host "Installed chrome\$TransparentPngName."
+
   # Files you delete or rename in the repo stay in users' profiles unless they are deleted here. A leftover .uc.js
   # keeps running. List such files (paths inside chrome/, one per line, # for comments) in removed-files.txt at the repo root.
   $removedList = Join-Path $srcRoot 'removed-files.txt'
@@ -294,6 +306,7 @@ try {
       if (-not $rel -or $rel.StartsWith('#')) { continue }
       if ([IO.Path]::IsPathRooted($rel) -or $rel -match '(^|[\\/])\.\.([\\/]|$)') { continue }       # stay inside chrome\
       if ($rel -match '^(utils|resources)([\\/]|$)' -or $rel -match 'user-overrides\.css$') { continue } # never touch these
+      if ($rel -ieq $TransparentPngName) { continue }                                                # installed by this script
       if (Test-Path (Join-Path $srcChrome ($rel -replace '/', '\'))) { continue }                    # still part of the theme (also case-only renames)
       $target = Join-Path $chromeDir ($rel -replace '/', '\')
       if (Test-Path $target) { Remove-Item $target -Recurse -Force; Write-Host "Removed old file: $rel" }
