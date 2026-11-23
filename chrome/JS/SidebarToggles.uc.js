@@ -5,6 +5,7 @@
 //                 Tab opacity, Popup opacity) to the Customize sidebar panel (Event-Driven).
 //                 The look tunables are stored in prefs (uc.gradient.amount, uc.glow.strength, uc.accent.override) and applied as CSS variables
 //                 on the window (see "Appearance tunables" below), live and in every open window.
+//                 With no Background image chosen, --uc-bg-image points at chrome/1px-transparent.png (installed by install.ps1).
 // @include        main
 // @run-at         document-start
 // ==/UserScript==
@@ -588,6 +589,23 @@
     try { v = Services.prefs.getStringPref(PREFS.bgimage.id, ""); } catch (e) {}
     return /^(file|chrome|resource):/i.test(v) ? v : "";
   };
+  // Fallback for --uc-bg-image when no image is chosen: chrome\1px-transparent.png in the profile (put there by install.ps1).
+  // Resolved from the profile's chrome directory, so no chrome:// alias of the loader is needed. Only a successful lookup is cached,
+  // so the file can appear later (installer run while Firefox is open) without a restart.
+  const DEFAULT_BG_FILE = "1px-transparent.png";
+  let defaultBgUrl = "";
+  const defaultBackgroundImage = () => {
+    if (defaultBgUrl) return defaultBgUrl;
+    try {
+      let dir;
+      try { dir = Services.dirsvc.get("UChrm", Ci.nsIFile); }
+      catch (e) { dir = Services.dirsvc.get("ProfD", Ci.nsIFile); dir.append("chrome"); }
+      const f = dir.clone();
+      f.append(DEFAULT_BG_FILE);
+      if (f.exists()) defaultBgUrl = Services.io.newFileURI(f).spec;
+    } catch (e) { log("default background image lookup failed", e); }
+    return defaultBgUrl;
+  };
   const panelTranslucent = () => {
     if (!backgroundImage() || !hasUserValue(PREFS.surface.id)) return false;
     return Services.prefs.getIntPref(PREFS.surface.id, 100) < 100;
@@ -656,7 +674,10 @@
     // Background image opacity
     const imgOpacity = hasUserValue(PREFS.imageopacity.id) ? pct(PREFS.imageopacity) : 50;
     vars["--uc-bg-image-opacity"] = (imgOpacity / 100).toString();
-    if (image) vars["--uc-bg-image"] = 'url("' + image.replace(/["\\]/g, encodeURIComponent) + '")';
+    // The variable is always defined: the chosen image, else the transparent default. The uc-bg-image flag below
+    // still reflects only a user-chosen image, so the translucency logic is unchanged.
+    const shownImage = image || defaultBackgroundImage();
+    if (shownImage) vars["--uc-bg-image"] = 'url("' + shownImage.replace(/["\\]/g, encodeURIComponent) + '")';
     const tabs = hasUserValue(PREFS.tab.id) ? pct(PREFS.tab) : 100;
     if (hasUserValue(PREFS.tab.id)) vars["--uc-alpha-tab"] = tabs + "%";
 
