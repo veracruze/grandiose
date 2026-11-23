@@ -232,10 +232,17 @@ You will probably want to edit in `userContent.css`: `--bj-left`, `--bj-clock`, 
 
 ## License
 
-See [`LICENSE`](LICENSE). This theme is source-available, **not** open source: you may use it and improve it, but not sell it or build a separate product from it. Third-party components keep their own licenses, see [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md).
+Copyright (C) 2026 YOUR NAME
+
+This project is free software under the GNU General Public License v3.0, see [`LICENSE`](LICENSE). You may use it, change it, fork it and share it, but copies and modified versions must stay under the same license, keep this notice, and include the source. There is no warranty of any kind: you use it at your own risk, including the installer, which changes files in your Firefox profile and in Firefox's install folder. Third-party components keep their own licenses, see [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md).
+
+## Support
+
+If you like the theme, you can send a tip on Solana: `AHmQLeeQebQo1et4nkCo4XLMN2ZzMNsSXbjNe8jHhhi4`
 
 ## Credits
 
-- [fx-autoconfig](https://github.com/MrOtherGuy/fx-autoconfig) by MrOtherGuy loads the scripts. Not included here.
+- [fx-autoconfig](https://github.com/MrOtherGuy/fx-autoconfig) by MrOtherGuy (MPL 2.0) loads the scripts. Unmodified copies are included in `program/` and `chrome/utils/`.
 - [Feather icons](https://github.com/feathericons/feather) v4.29.2, MIT, © Cole Bemis. Embedded in the CSS as inline SVG masks. See [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md).
-- [Nunito](https://fonts.google.com/specimen/Nunito), [Noto Sans](https://fonts.google.com/noto) and [Poppins](https://fonts.google.com/specimen/Poppins) are SIL Open Font License fonts. Not included here.
+- [Nunito](https://fonts.google.com/specimen/Nunito), [Noto Sans](https://fonts.google.com/noto) and [Poppins](https://fonts.google.com/specimen/Poppins) are SIL Open Font License fonts. They are not stored in this repository; the installer downloads them from this repository's `fonts-v1` release.
+- [DWMBlurGlass](https://github.com/Maplespe/DWMBlurGlass) by Maplespe is optional and not included; the installer can download it from its official release.
