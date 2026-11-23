@@ -1,0 +1,80 @@
+
+/* 17-glass-transparency.css: Handles the custom background image overlay and forces transparency on web content areas. */
+
+/* 1. Turn off the image on the window and body entirely */
+#main-window#main-window[uc-bg-image],
+#main-window#main-window[uc-bg-image] body {
+  background-image: none !important;
+  background-color: transparent !important;
+}
+
+/* 2. Paint the image on a fixed, semi-transparent layer */
+#main-window#main-window[uc-bg-image]::before {
+  content: "";
+  position: fixed;
+  /* grown by the --uc-bg-x / --uc-bg-y offset (01) so shifting the image never shows a bare edge */
+  inset: calc(-1 * abs(var(--uc-bg-y, 0px))) calc(-1 * abs(var(--uc-bg-x, 0px)));
+  z-index: -1;
+  pointer-events: none;
+  
+  background-image: linear-gradient(
+    color-mix(in srgb, black var(--uc-bg-scrim, 40%), transparent),
+    color-mix(in srgb, black var(--uc-bg-scrim, 40%), transparent)
+  ), var(--uc-bg-image) !important;
+  
+  background-size: cover !important;
+  background-position: calc(50% + var(--uc-bg-x, 0px)) calc(50% + var(--uc-bg-y, 0px)) !important;
+  background-repeat: no-repeat !important;
+  
+  opacity: var(--uc-bg-image-opacity, 0.5) !important; 
+}
+
+/* 3. Make the web content area transparent */
+:root {
+  --tabpanel-background-color: transparent !important;
+}
+
+#main-window,
+#browser,
+#tabbrowser-tabpanels {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* ==========================================================================
+   PICTURE-IN-PICTURE: HIDE CONTROLS UNTIL HOVER/TRANSPARENT BACKGROUND
+   ========================================================================== */
+@-moz-document url(chrome://global/content/pictureinpicture/player.xhtml) {
+  html,
+  body {
+    background-color: transparent !important;
+  }
+}
+
+html[windowtype="Toolkit:PictureInPicture"] #controls-bottom,
+html[windowtype="Toolkit:PictureInPicture"] #close,
+html[windowtype="Toolkit:PictureInPicture"] #unpip {
+  opacity: 0 !important;
+  transition: opacity 0.2s ease-in-out !important;
+}
+
+html[windowtype="Toolkit:PictureInPicture"]:hover #controls-bottom,
+html[windowtype="Toolkit:PictureInPicture"]:hover #close,
+html[windowtype="Toolkit:PictureInPicture"]:hover #unpip {
+  opacity: 1 !important;
+}
+
+html[windowtype="Toolkit:PictureInPicture"] #controls-bottom:focus-within,
+html[windowtype="Toolkit:PictureInPicture"] #close:focus,
+html[windowtype="Toolkit:PictureInPicture"] #unpip:focus {
+  opacity: 1 !important;
+}
+
+/* Reduced motion (16 comes earlier and this file's transition is !important, so the switch-off is here): the controls just appear */
+@media (prefers-reduced-motion: reduce) {
+  html[windowtype="Toolkit:PictureInPicture"] #controls-bottom,
+  html[windowtype="Toolkit:PictureInPicture"] #close,
+  html[windowtype="Toolkit:PictureInPicture"] #unpip {
+    transition: none !important;
+  }
+}

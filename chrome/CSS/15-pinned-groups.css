@@ -1,0 +1,482 @@
+/* 15-pinned-groups.css: pinned tabs and tab groups. Imported after 14 by ../userChrome.css (it overrides 04, 06 and 14); 16-accessibility.css comes after it.
+   Tunables: --uc-pinned-w, --uc-pin-* and the --uc-group-* variables in 01-tokens.css (section 2); --uc-pin-color is in section 4 (light / dark).
+   Needs JS/tabPreviewGroup.uc.js for the group name in the tab preview.
+   To undo: delete this file and its @import line. */
+
+/* ==========================================================================
+   PINNED TABS
+   A pinned tab looks like every other tab of its layout and carries a small pin on its favicon (top start corner): white on the dark
+   theme, black on the light one (--uc-pin-color in 01-tokens.css, section 4).
+   Horizontal strip: a square (--uc-pinned-w, the tab height by default), favicon centred, no title. Measured before: the favicon's box
+   (32px picture + padding = 38px) started at the content box's padding edge, so it sat at the start of the tab; the idle-tab padding in 04
+   is made for a 50px tab. So: no start/end padding on the content, the icon stack is as wide as its content and centred, and the picture
+   has no padding of its own.
+   Vertical rail: pinned tabs are ordinary rows. Firefox lays them out as a grid of narrow cells when the rail is open, and the rail rules in
+   06 / 14 (favicon column, title fade, tile sizes) were written for full-width rows. The pinned container is a single column with no space
+   of its own around it (the pin marks them, so there is no gap or divider between the pinned tabs and the rest), which makes every rail
+   rule apply to pinned tabs the same way, in expand-on-hover, collapsed and "Hide tabs and sidebar".
+   Back/forward buttons (moved into the selected tab by moveNavToActiveTab.uc.js) do not fit in a pinned tab and are hidden there;
+   use Alt+Left / Alt+Right, the mouse buttons or the context menu while a pinned tab is selected.
+   ========================================================================== */
+
+/* horizontal strip: a square, centred favicon, no title */
+#TabsToolbar .tabbrowser-tab[pinned]:not([closing]) {
+  min-width: var(--uc-pinned-w) !important;
+  max-width: var(--uc-pinned-w) !important;
+}
+
+#TabsToolbar .tabbrowser-tab[pinned] .tab-content {
+  padding-inline: 0 !important;
+  justify-content: center !important;
+}
+
+#TabsToolbar .tabbrowser-tab[pinned] .tab-content .tab-icon-stack {
+  flex: none !important;
+  margin-inline: 0 !important;
+}
+
+#TabsToolbar .tabbrowser-tab[pinned] .tab-content .tab-icon-image {
+  padding: 0 !important;
+}
+
+#TabsToolbar .tabbrowser-tab[pinned] .tab-label-container {
+  display: none !important;
+}
+
+/* vertical rail: one column, so pinned tabs are rows like the others, and no gap or divider around them */
+#tabbrowser-tabs[orient="vertical"] #pinned-tabs-container {
+  display: flex !important;
+  flex-direction: column !important;
+  flex-wrap: nowrap !important;
+  gap: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  min-height: 0 !important;
+}
+
+#tabbrowser-tabs[orient="vertical"] #pinned-tabs-container::before,
+#tabbrowser-tabs[orient="vertical"] #pinned-tabs-container::after,
+#vertical-pinned-tabs-splitter,
+.vertical-pinned-tabs-container-separator {
+  display: none !important;
+}
+
+#tabbrowser-tabs[orient="vertical"] .tabbrowser-tab[pinned] .tab-label-container {
+  display: flex !important;
+}
+
+/* no room for back/forward in a pinned tab */
+.tabbrowser-tab[pinned] .tab-content :is(#back-button, #forward-button) {
+  display: none !important;
+}
+
+/* the pin: drawn on the favicon's stack (the speaker badge sits at the other top corner), coloured with --uc-pin-color */
+.tabbrowser-tab[pinned] .tab-icon-stack {
+  position: relative;
+}
+
+.tabbrowser-tab[pinned] .tab-icon-stack::after {
+  content: "";
+  position: absolute;
+  top: -4px;
+  inset-inline-start: -4px;
+  z-index: 3;
+  width: var(--uc-pin-size);
+  height: var(--uc-pin-size);
+  background-color: var(--uc-pin-color);
+  mask-image: var(--uc-pin-icon);
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   TAB GROUPS: the tabs of an open group are tethered into one piece, like a split view pair (08), for any number of tabs
+   Firefox sets --tab-group-color on every <tab-group> from the colour chosen for it.
+   - The group is one rounded piece: the tabs touch, the inner corners are square, the outer corners rounded, one divider between two
+     tabs, and an inner glow in the group's colour all around it (stronger while the group holds the selected tab). The glow's reach is
+     the split view glow's (--uc-split-glow-* / --uc-split-idle-glow-*, so the "Glow strength" switch scales it too); its colour strength is
+     --uc-group-glow-strength / --uc-group-glow-idle-strength.
+   - The tabs carry the group's colour: the glows of the selected, hovered and idle tabs of an open group are in its colour, and the
+     selected tab's surface has --uc-group-selected-tint of it mixed in.
+   - The group's name is shown as a small text-less tag in the group's colour, open or collapsed. The tag is the drag handle for moving
+     the group, and clicking it opens the group's editor panel (rename, recolour, collapse). The name itself is in the tab preview
+     (tabPreviewGroup.uc.js). The tag's box stays visible to Firefox because the editor panel opens anchored to it.
+   Sizes, collapsing and the panel's content stay Firefox's.
+   ========================================================================== */
+tab-group {
+  --uc-group-color: var(--tab-group-color, var(--uc-accent));
+
+  /* width of the selected tab inside an open group (horizontal strip). Keep it equal to the selected tab's max-width in 04 (290px) to match a lone selected tab */
+  --uc-group-selected-w: 290px;
+
+  /* the handle tag */
+  --uc-group-tag-long: 16px;     /* length of the tag along the tab row */
+  --uc-group-tag-short: 6px;     /* thickness of the tag */
+  --uc-group-tag-gap: 3px;       /* space on each side of the tag */
+  --uc-group-tag-strength: 80%;          /* open group: colour strength of the tag */
+  --uc-group-tag-hover-strength: 100%;   /* hovered */
+  --uc-group-tag-collapsed-strength: 55%;        /* collapsed group: dimmer, so it reads as closed */
+  --uc-group-tag-collapsed-hover-strength: 85%;
+}
+
+/* Firefox's own line sits inside the tab stack, underneath this theme's opaque tab surface; the glow replaces it */
+tab-group .tab-group-line {
+  display: none !important;
+}
+
+/* ---- the group's colour on its tabs ----
+   07 draws the selected, hovered and idle glows from these variables, so setting them on the group is all it takes. */
+tab-group:not([collapsed]) {
+  --uc-selected-glow-color: var(--uc-group-color);
+  --uc-hover-glow-color: color-mix(in srgb, var(--uc-group-color) 65%, transparent);
+  --uc-inactive-glow-color: color-mix(in srgb, var(--uc-group-color) 25%, transparent);
+}
+
+/* the selected tab's surface: the normal selected colour with some of the group's colour in it, and the same gradient as 04 / 01
+   (not while hovered, so the hover colour still shows) */
+#TabsToolbar tab-group:not([collapsed]) > .tabbrowser-tab[selected]:not(:hover) .tab-content,
+#tabbrowser-tabs[orient="vertical"] tab-group:not([collapsed]) > .tabbrowser-tab[selected]:not(:hover) .tab-content {
+  --uc-group-selected: color-mix(in srgb, var(--uc-tab-selected), var(--uc-group-color) var(--uc-group-selected-tint));
+  background-color: var(--uc-group-selected) !important;
+}
+
+#TabsToolbar tab-group:not([collapsed]) > .tabbrowser-tab[selected]:not(:hover) .tab-content {
+  background-image: linear-gradient(in oklab var(--uc-gradient-angle-tab-h), color-mix(in srgb, color-mix(in srgb, var(--uc-group-selected), white var(--uc-gradient-amount)) var(--uc-alpha-tab), transparent), color-mix(in srgb, color-mix(in srgb, var(--uc-group-selected), black var(--uc-gradient-amount)) var(--uc-alpha-tab), transparent)) !important;
+}
+
+#tabbrowser-tabs[orient="vertical"] tab-group:not([collapsed]) > .tabbrowser-tab[selected]:not(:hover) .tab-content {
+  background-image: linear-gradient(in oklab var(--uc-gradient-angle-tab-v), color-mix(in srgb, color-mix(in srgb, var(--uc-group-selected), white var(--uc-gradient-amount)) var(--uc-alpha-tab), transparent), color-mix(in srgb, color-mix(in srgb, var(--uc-group-selected), black var(--uc-gradient-amount)) var(--uc-alpha-tab), transparent)) !important;
+}
+
+/* Translucent tabs (Tab opacity below 100%): the selected tab of a group paints its gradient, which carries the transparency, so the flat
+   group colour is dropped here as well (see 04) */
+:root[uc-tab-translucent] #TabsToolbar tab-group:not([collapsed]) > .tabbrowser-tab[selected]:not(:hover) .tab-content,
+:root[uc-tab-translucent] #tabbrowser-tabs[orient="vertical"] tab-group:not([collapsed]) > .tabbrowser-tab[selected]:not(:hover) .tab-content {
+  background-color: transparent !important;
+}
+
+/* ---- the group as one piece ---- */
+tab-group:not([collapsed]) {
+  display: flex !important;
+  box-sizing: border-box !important;
+  align-items: stretch !important;
+  gap: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: var(--uc-split-radius) !important;
+  background: transparent !important;
+  overflow: visible !important;
+  position: relative !important;
+}
+
+/* the glow is an overlay on top of the tabs (their own backgrounds would cover a shadow set on the group itself) */
+tab-group:not([collapsed])::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 10 !important;
+  border-radius: inherit !important;
+  pointer-events: none !important;
+  box-shadow: inset 0 0 var(--uc-split-idle-glow-blur) var(--uc-split-idle-glow-spread) color-mix(in srgb, var(--uc-group-color) var(--uc-group-glow-idle-strength), transparent) !important;
+}
+
+tab-group[hasactivetab]:not([collapsed])::after,
+tab-group:not([collapsed]):has(> .tabbrowser-tab[selected])::after {
+  box-shadow: inset 0 0 var(--uc-split-glow-blur) var(--uc-split-glow-spread) color-mix(in srgb, var(--uc-group-color) var(--uc-group-glow-strength), transparent) !important;
+}
+
+/* no gradient seam or icon band between joined tabs (same fix as split view pairs in 08) */
+tab-group:not([collapsed]) .tab-icon-stack {
+  background: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* --- Horizontal strip: side by side, margins like a single tab --- */
+#TabsToolbar tab-group:not([collapsed]) {
+  flex: 0 0 auto !important;
+  flex-direction: row !important;
+  width: auto !important;
+  min-width: max-content !important;   /* never squeeze the tabs */
+  max-width: none !important;
+  margin-block: 0 !important;
+  margin-inline: -0.6px !important;    /* same overlap as a single tab */
+}
+
+/* the group is exactly as wide as its tabs, selected or not. It used to grow into free tab space (flex 100, up to 1100px) while the selected tab
+   inside it is capped by 04 (max-width), so the extra width was an empty strip inside the group's glow. Now the width comes only from the tabs. */
+#TabsToolbar tab-group:not([collapsed]),
+#TabsToolbar tab-group:not([collapsed])[hasactivetab],
+#TabsToolbar tab-group:not([collapsed]):has(> .tabbrowser-tab[selected]) {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  max-width: none !important;
+}
+
+#TabsToolbar tab-group:not([collapsed]) > .tabbrowser-tab {
+  flex: none !important;
+  margin-block: 0.4px !important;      /* same as a single tab, so the group is the same height */
+  margin-inline: 0 !important;
+}
+
+/* the selected tab has a fixed width (--uc-group-selected-w, set on tab-group below); the others keep the idle tab width from 04.
+   [fadein] and :not([pinned]) are there to out-rank the selected tab's 220px / 290px rule in 04 if you set a different width. */
+#TabsToolbar tab-group:not([collapsed]) > .tabbrowser-tab[fadein][selected]:not([pinned]) {
+  flex: 0 0 auto !important;
+  width: var(--uc-group-selected-w) !important;
+  min-width: var(--uc-group-selected-w) !important;
+  max-width: var(--uc-group-selected-w) !important;
+}
+
+/* inner corners square, outer corners rounded: every tab but the last has square end corners, every tab but the first square start corners */
+#TabsToolbar tab-group:not([collapsed]) > .tabbrowser-tab:not(:last-of-type),
+#TabsToolbar tab-group:not([collapsed]) > .tabbrowser-tab:not(:last-of-type) :is(.tab-stack, .tab-content) {
+  border-start-end-radius: 0 !important;
+  border-end-end-radius: 0 !important;
+}
+
+#TabsToolbar tab-group:not([collapsed]) > .tabbrowser-tab:not(:first-of-type),
+#TabsToolbar tab-group:not([collapsed]) > .tabbrowser-tab:not(:first-of-type) :is(.tab-stack, .tab-content) {
+  border-start-start-radius: 0 !important;
+  border-end-start-radius: 0 !important;
+}
+
+/* one divider between two tabs: every tab draws a 1px border on both .tab-stack and .tab-content (04), so the end side of every tab but the
+   last is dropped, and the start side of the stack of every tab but the first; the next tab's content border is the divider */
+#TabsToolbar tab-group:not([collapsed]) > .tabbrowser-tab:not(:last-of-type) :is(.tab-stack, .tab-content) {
+  border-inline-end-width: 0 !important;
+}
+
+#TabsToolbar tab-group:not([collapsed]) > .tabbrowser-tab:not(:first-of-type) .tab-stack {
+  border-inline-start-width: 0 !important;
+}
+
+/* the selected tab's 20px icon margin (04) is made padding on its content instead, as in a split pair (08) */
+#TabsToolbar tab-group:not([collapsed]) > .tabbrowser-tab[selected] .tab-content {
+  padding-inline-start: 20px !important;
+}
+
+#TabsToolbar tab-group:not([collapsed]) > .tabbrowser-tab[selected] .tab-icon-stack {
+  margin-inline-start: 0 !important;
+}
+
+/* --- Vertical rail: stacked, same width and margins as a single rail tab --- */
+#tabbrowser-tabs[orient="vertical"] tab-group:not([collapsed]) {
+  flex: none !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: -1px !important;             /* same as the rail's single tabs, so icons line up */
+}
+
+#tabbrowser-tabs[orient="vertical"] tab-group:not([collapsed]) > .tabbrowser-tab {
+  margin: 0 !important;
+}
+
+#tabbrowser-tabs[orient="vertical"] tab-group:not([collapsed]) > .tabbrowser-tab:not(:last-of-type),
+#tabbrowser-tabs[orient="vertical"] tab-group:not([collapsed]) > .tabbrowser-tab:not(:last-of-type) :is(.tab-stack, .tab-content) {
+  border-end-start-radius: 0 !important;
+  border-end-end-radius: 0 !important;
+}
+
+#tabbrowser-tabs[orient="vertical"] tab-group:not([collapsed]) > .tabbrowser-tab:not(:first-of-type),
+#tabbrowser-tabs[orient="vertical"] tab-group:not([collapsed]) > .tabbrowser-tab:not(:first-of-type) :is(.tab-stack, .tab-content) {
+  border-start-start-radius: 0 !important;
+  border-start-end-radius: 0 !important;
+}
+
+/* every tab but the first is overlapped by 1px and loses its stack's top border, so the two borders collapse into one divider (as in 08) */
+#tabbrowser-tabs[orient="vertical"] tab-group:not([collapsed]) > .tabbrowser-tab:not(:first-of-type) {
+  margin-block-start: -1px !important;
+}
+
+#tabbrowser-tabs[orient="vertical"] tab-group:not([collapsed]) > .tabbrowser-tab:not(:first-of-type) .tab-stack {
+  border-block-start-width: 0 !important;
+}
+
+/* ==========================================================================
+   The group's name as a small text-less tag: the drag handle, open or collapsed
+   The container is the box Firefox anchors the editor panel to; the label is the visible tag.
+   Selectors are descendant selectors (no ">") and match the label wherever Firefox nests it.
+   ========================================================================== */
+
+/* Firefox's own chip decoration on the container and label (pseudo-elements, borders, native appearance) is removed */
+tab-group .tab-group-label-container::before,
+tab-group .tab-group-label-container::after,
+tab-group .tab-group-label::before,
+tab-group .tab-group-label::after {
+  content: none !important;
+  display: none !important;
+}
+
+/* the wrapper between the container and the label (Firefox draws the hover highlight and its padding here): no box of its own */
+tab-group .tab-group-label-hover-highlight {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  width: auto !important;
+  height: auto !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* --- Horizontal strip: a thin tag, centred in the tab row, at the start of the group --- */
+#TabsToolbar tab-group .tab-group-label-container {
+  display: flex !important;
+  flex: none !important;
+  align-self: center !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  width: calc(var(--uc-group-tag-short) + 2 * var(--uc-group-tag-gap)) !important;
+  min-width: 0 !important;
+  max-width: calc(var(--uc-group-tag-short) + 2 * var(--uc-group-tag-gap)) !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: none !important;
+  opacity: 1 !important;
+  overflow: visible !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+#TabsToolbar tab-group .tab-group-label {
+  align-self: center !important;
+  width: var(--uc-group-tag-short) !important;
+  min-width: var(--uc-group-tag-short) !important;
+  max-width: var(--uc-group-tag-short) !important;
+  height: var(--uc-group-tag-long) !important;
+  min-height: var(--uc-group-tag-long) !important;
+  max-height: var(--uc-group-tag-long) !important;
+}
+
+/* --- Vertical rail: a thin tag across the rail, above the group's tabs --- */
+#tabbrowser-tabs[orient="vertical"] tab-group .tab-group-label-container {
+  display: flex !important;
+  flex: none !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: calc(var(--uc-group-tag-short) + 2 * var(--uc-group-tag-gap)) !important;
+  min-height: 0 !important;
+  max-height: calc(var(--uc-group-tag-short) + 2 * var(--uc-group-tag-gap)) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: none !important;
+  opacity: 1 !important;
+  overflow: visible !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+#tabbrowser-tabs[orient="vertical"] tab-group .tab-group-label {
+  align-self: center !important;
+  width: var(--uc-group-tag-long) !important;
+  min-width: var(--uc-group-tag-long) !important;
+  max-width: var(--uc-group-tag-long) !important;
+  height: var(--uc-group-tag-short) !important;
+  min-height: var(--uc-group-tag-short) !important;
+  max-height: var(--uc-group-tag-short) !important;
+}
+
+/* --- The tag itself (both orientations): no text, filled with the group's colour --- */
+tab-group .tab-group-label {
+  display: block !important;
+  flex: none !important;
+  box-sizing: border-box !important;
+  appearance: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+  color: transparent !important;
+  text-indent: -9999px !important;
+  overflow: hidden !important;
+  opacity: 1 !important;
+  cursor: grab !important;
+  border-radius: 99px !important;
+  background-image: none !important;
+  background-color: color-mix(in srgb, var(--uc-group-color) var(--uc-group-tag-strength), transparent) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--uc-group-color) 55%, transparent) !important;
+}
+
+tab-group .tab-group-label:hover {
+  background-color: color-mix(in srgb, var(--uc-group-color) var(--uc-group-tag-hover-strength), transparent) !important;
+}
+
+tab-group .tab-group-label:active {
+  cursor: grabbing !important;
+}
+
+/* a collapsed group is dimmer, so it reads as closed */
+tab-group[collapsed] .tab-group-label {
+  background-color: color-mix(in srgb, var(--uc-group-color) var(--uc-group-tag-collapsed-strength), transparent) !important;
+}
+
+tab-group[collapsed] .tab-group-label:hover {
+  background-color: color-mix(in srgb, var(--uc-group-color) var(--uc-group-tag-collapsed-hover-strength), transparent) !important;
+}
+
+/* --- While a group is being dragged: no tag on the lifted copy ---
+   Firefox lifts the label container out of the strip (position: absolute, [dragtarget] on the container itself) and it follows the
+   pointer. The selectors repeat the prefixes of the sizing rules above so they win. */
+#TabsToolbar tab-group .tab-group-label-container[dragtarget],
+#tabbrowser-tabs[orient="vertical"] tab-group .tab-group-label-container[dragtarget] {
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+/* horizontal strip: a group is centred in the tab row like a single tab or a split pair (04) */
+#TabsToolbar #tabbrowser-arrowscrollbox > tab-group {
+  align-self: center !important;
+}
+
+/* The group's name in the tab preview (added by JS/tabPreviewGroup.uc.js): a colour dot and the name, above the title */
+.uc-tab-preview-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+  font-size: 0.85em;
+  color: var(--uc-url-dim-color);
+}
+
+.uc-tab-preview-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--uc-group-color, var(--uc-accent));
+}
+
+/* ---- "Suggest more tabs for group" showed two backdrops ----
+   The panel's own box (its shadow-DOM part, drawn by Firefox) and the .panel-viewcontainer that 05 paints with the theme's gradient are
+   different sizes while the panel changes view, so a larger box stood behind the smaller one. The smaller one is kept: the panel's own box
+   is made see-through. Only for this panel. */
+panel.tab-group-editor-panel::part(content),
+panel.tab-group-editor-panel .panel-arrowcontent {
+  background: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}

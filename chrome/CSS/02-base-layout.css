@@ -1,0 +1,257 @@
+/* 02-base-layout.css: Sections 5-6: global styles, hidden elements, toolbar layout. Imported by ../userChrome.css; order of the imports matters. */
+
+/* ==========================================================================
+   5. GLOBAL STYLES & HIDDEN ELEMENTS
+   ========================================================================== */
+/* Fonts live in 00-fonts.css */
+
+.tab-label {
+  font-size-adjust: 0.6;
+}
+
+toolbarspring {
+  display: none !important;
+}
+
+/* App Menu Button */
+#PanelUI-button {
+  order: -2 !important;
+  margin: 2px !important;
+}
+
+/* Window Control Buttons */
+.titlebar-buttonbox-container {
+  display: none !important;
+}
+
+/* Hidden Interface Elements */
+#identity-box.extensionPage #identity-icon-label,
+#tracking-protection-icon-container,
+#urlbar .search-one-offs,
+.tab-close-button {
+  display: none !important;
+}
+
+/* The toolbox: no border, rounded, with the toolbar gradient (invisible while vertical tabs collapse it to 0 height).
+   Its height / fullscreen behaviour is in section 6 below. */
+#navigator-toolbox {
+  border: none !important;
+  background-image: var(--uc-grad-toolbar) !important;
+  border-radius: 7px !important;
+}
+
+/* Shift the horizontal button position */
+#tabs-newtab-button {
+  position: relative !important;
+  left: var(--uc-newtab-x) !important; 
+  bottom: var(--uc-newtab-y) !important;
+}
+
+/* Translucent toolbar (Surface opacity below 100%): the colour behind the gradient is dropped so the two do not stack (the gradient carries
+   the transparency, --uc-alpha-chrome in 01) */
+:root[uc-translucent] #navigator-toolbox {
+  background-color: transparent !important;
+}
+
+#navigator-toolbox-background:-moz-window-inactive {
+  filter: contrast(90%);
+}
+
+#fullscreen-warning {
+  border: none !important;
+  background-color: var(--in-content-page-bg, #1e1e1e) !important;
+}
+
+.browserStack {
+  background-color: var(--tabpanel-background-color);
+}
+
+/* With a background image the page area is see-through behind transparent pages */
+:root[uc-bg-image] .browserStack {
+  background-color: transparent !important;
+}
+
+/* Disable all backgrounds in tab-group-editor-panel */
+panel.tab-group-editor-panel,
+panel.tab-group-editor-panel :is(.panel-header, #tab-group-main, .panel-subview-body, .tab-group-editor-swatches, .tab-group-editor-name, #tab-group-properties-and-actions, #tab-group-suggestions-container, toolbarseparator) {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+panel.tab-group-editor-panel toolbarseparator {
+  border-color: transparent !important;
+}
+
+/* Window and body colour. --uc-bg is set per theme in 01, so no media query is needed here. The background IMAGE is not painted here:
+   css/17-glass-transparency.css draws it on a fixed layer behind the window and clears any image on the window and body. */
+#main-window,
+body {
+  background-color: var(--uc-bg) !important;
+}
+
+/*Fullscreen videos turn the border black */
+#main-window[inDOMFullscreen="true"],
+#main-window[inDOMFullscreen="true"] body {
+  background-color: black !important;
+  background-image: none !important;
+}
+
+/* Page area frame: rounded corners, no border or shadow */
+#browser,
+.browserContainer {
+  background-color: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  border-radius: 10px !important;
+  overflow: hidden !important;
+}
+
+/* 1px gap around the page area. #browser only on the right and bottom (its left and top margins are not set here);
+   .browserContainer on all four sides. */
+#browser {
+  margin-right: 0px !important;
+  margin-bottom: 0px !important;
+}
+
+.browserContainer {
+  margin: 0px !important;
+}
+
+/* Allow the page area to shrink when the toolbox grows (info bar, bookmarks toolbar).
+   Without min-height: 0 flexbox refuses to go below content height, so the toolbox
+   grows but the page area just overflows and gets clipped by #browser's overflow: hidden. */
+#browser,
+#tabbrowser-tabbox,
+#tabbrowser-tabpanels,
+.browserStack {
+  min-height: 0 !important;
+}
+
+/* ==========================================================================
+   6. TOOLBAR LAYOUT (navbar sizing, responsive widths, toolbox animation)
+   ========================================================================== */
+#nav-bar,
+#PersonalToolbar {
+  background-color: #0000 !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+#nav-bar {
+  will-change: auto !important;
+  margin-left: 3px;
+  border: 1px solid var(--navbar-border-color) !important;
+  box-shadow: inset 0 0 0 1px var(--navbar-box-shadow-color) !important;
+  border-radius: 6px !important;
+}
+
+#nav-bar-customization-target {
+  margin-left: -11px;
+}
+
+/* Layout for windows from 950px up. Wide and medium used to be two blocks split at a hard-coded 1325px (and 1328px), which is a number
+   in CSS pixels: at 125-150% display scaling the same screen lands on the other side of it. One rule now: the navbar is
+   --NavbarWidth % of the window, capped at that % of --uc-navbar-cap (01-tokens.css), so it grows smoothly and stops by itself.
+   The tab strip starts --uc-navbar-tabs-gap after it. 950px stays here because a media query cannot read a variable (below it the
+   two bars stack, see the small-window block). */
+@media screen and (min-width: 950px) {
+  :root {
+    --uc-navbar-w: min(calc(var(--NavbarWidth) * 1vw), calc(var(--NavbarWidth) / 100 * var(--uc-navbar-cap)));
+  }
+
+  :root #nav-bar {
+    margin-top: calc(var(--TabsHeight) * -1px - var(--TabsBorder) * 1px) !important;
+    height: calc(var(--TabsHeight) * 1px + var(--TabsBorder) * 1px);
+  }
+
+  #TabsToolbar {
+    margin-left: calc(var(--uc-navbar-w) + var(--uc-navbar-tabs-gap)) !important;
+  }
+
+  #nav-bar {
+    margin-right: calc(100vw - var(--uc-navbar-w)) !important;
+  }
+
+  #urlbar-container {
+    min-width: 0px !important;
+    flex: auto !important;
+  }
+
+  #TabsToolbar,
+  #nav-bar {
+    transition: margin-top 0.25s !important;
+  }
+}
+
+/* Layout for small windows */
+@media screen and (max-width: 949px) {
+  :root #nav-bar {
+    padding: 0 5px !important;
+    height: calc(var(--NavbarHeightSmall) * 1px) !important;
+  }
+
+  #TabsToolbar,
+  #nav-bar {
+    transition: margin-top 0.25s !important;
+  }
+}
+
+/* Animate the toolbox height when vertical tabs turn on/off, so the page area glides instead of
+   jumping. Wide and medium windows only (the small-window layout stacks two rows).
+   --uc-bm-h is the bookmarks toolbar's height (0px while hidden), published by bookmarksToolbarHeight.uc.js.
+   To undo: delete this block. */
+@media screen and (min-width: 950px) {
+  #navigator-toolbox {
+    height: calc((var(--TabsHeight) + var(--TabsBorder)) * 1px + var(--uc-bm-h, 0px)) !important;
+    transition: height var(--uc-toolbox-anim) !important;
+  }
+
+  :root#main-window[uc-vertical] #navigator-toolbox {
+    height: var(--uc-bm-h, 0px) !important;
+  }
+}
+
+/* Only grow the toolbox while at least one notification is actually visible.
+   Dismissed messages stay in the DOM (hidden), so `> *` alone keeps the toolbox open. */
+#navigator-toolbox:has(
+  #notifications-toolbar .notificationbox-stack
+  > :not([hidden]):not([animate]):not([style*="display: none"])
+) {
+  height: auto !important;
+  transition: none !important;
+}
+
+/* Force Firefox's notification toolbar into normal flow so it contributes to
+   #navigator-toolbox's layout height instead of being positioned/transformed
+   out of the way. Empty, it collapses to 0. */
+#notifications-toolbar {
+  position: static !important;
+  flex: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+}
+
+#notifications-toolbar > .notificationbox-stack {
+  position: static !important;
+  height: auto !important;
+  min-height: 0 !important;
+}
+
+#notifications-toolbar notification-message {
+  border-radius: 0 !important;
+}
+
+/* Debug marker: check the computed value of --uc-scheme-source in the Browser Toolbox */
+@media (-moz-toolbar-prefers-color-scheme: light), (prefers-color-scheme: light) {
+  :root {
+    --uc-scheme-source: "light";
+  }
+}
+
+@media (-moz-toolbar-prefers-color-scheme: dark), (prefers-color-scheme: dark) {
+  :root {
+    --uc-scheme-source: "dark";
+  }
+}

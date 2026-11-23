@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 28 28">
+  <!-- Original pair -->
+  <g transform="translate(14,14)">
+    <g>
+      <animateTransform
+        attributeName="transform"
+        type="rotate"
+        values="0; 180; 360"
+        keyTimes="0; 0.5; 1"
+        dur="3s"
+        repeatCount="indefinite"
+        calcMode="spline"
+        keySplines="0.42 0.1 0.58 0.9; 0.42 0.1 0.58 0.9" />
+
+      <g transform="scale(1,1) translate(-14,-14)">
+        <circle cx="7" cy="7" r="2.5" fill="#000000">
+          <animate
+            attributeName="cx"
+            values="7; 21; 7"
+            keyTimes="0; 0.5; 1"
+            dur="3s"
+            repeatCount="indefinite"
+            calcMode="spline"
+            keySplines="0.42 0.1 0.58 0.9; 0.42 0.1 0.58 0.9" />
+          <animate
+            attributeName="cy"
+            values="7; 21; 7"
+            keyTimes="0; 0.5; 1"
+            dur="3s"
+            repeatCount="indefinite"
+            calcMode="spline"
+            keySplines="0.42 0.1 0.58 0.9; 0.42 0.1 0.58 0.9" />
+        </circle>
+
+        <circle cx="21" cy="21" r="2.5" fill="#000000">
+          <animate
+            attributeName="cx"
+            values="21; 7; 21"
+            keyTimes="0; 0.5; 1"
+            dur="3s"
+            repeatCount="indefinite"
+            calcMode="spline"
+            keySplines="0.42 0.1 0.58 0.9; 0.42 0.1 0.58 0.9" />
+          <animate
+            attributeName="cy"
+            values="21; 7; 21"
+            keyTimes="0; 0.5; 1"
+            dur="3s"
+            repeatCount="indefinite"
+            calcMode="spline"
+            keySplines="0.42 0.1 0.58 0.9; 0.42 0.1 0.58 0.9" />
+        </circle>
+
+        <!-- Middle dot: static and small -->
+        <circle cx="14" cy="14" r="2.5" fill="#000000" />
+      </g>
+    </g>
+  </g>
+
+  <!-- Added pair: same motion and easing, offset by +90 degrees -->
+  <g transform="rotate(90 14 14)">
+    <animateTransform
+      attributeName="transform"
+      type="rotate"
+      values="90 14 14; 270 14 14; 450 14 14"
+      keyTimes="0; 0.5; 1"
+      dur="3s"
+      repeatCount="indefinite"
+      calcMode="spline"
+      keySplines="0.42 0.1 0.58 0.9; 0.42 0.1 0.58 0.9" />
+
+    <circle cx="7" cy="7" r="2.5" fill="#000000">
+      <animate
+        attributeName="cx"
+        values="7; 21; 7"
+        keyTimes="0; 0.5; 1"
+        dur="3s"
+        repeatCount="indefinite"
+        calcMode="spline"
+        keySplines="0.42 0.1 0.58 0.9; 0.42 0.1 0.58 0.9" />
+      <animate
+        attributeName="cy"
+        values="7; 21; 7"
+        keyTimes="0; 0.5; 1"
+        dur="3s"
+        repeatCount="indefinite"
+        calcMode="spline"
+        keySplines="0.42 0.1 0.58 0.9; 0.42 0.1 0.58 0.9" />
+    </circle>
+
+    <circle cx="21" cy="21" r="2.5" fill="#000000">
+      <animate
+        attributeName="cx"
+        values="21; 7; 21"
+        keyTimes="0; 0.5; 1"
+        dur="3s"
+        repeatCount="indefinite"
+        calcMode="spline"
+        keySplines="0.42 0.1 0.58 0.9; 0.42 0.1 0.58 0.9" />
+      <animate
+        attributeName="cy"
+        values="21; 7; 21"
+        keyTimes="0; 0.5; 1"
+        dur="3s"
+        repeatCount="indefinite"
+        calcMode="spline"
+        keySplines="0.42 0.1 0.58 0.9; 0.42 0.1 0.58 0.9" />
+    </circle>
+  </g>
+</svg>

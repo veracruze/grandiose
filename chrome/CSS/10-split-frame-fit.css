@@ -1,0 +1,32 @@
+/* 10-split-frame-fit.css: every tab surface the same size. Imported from userChrome.css.
+
+   Measured in the Browser Console: the tab boxes are all the same height, but the visible surface (.tab-content)
+   differed by a pixel or more between idle, selected, hovered, audio and split tabs.
+     - horizontal strip: idle single tabs were 68px tall against 59px for the selected tab and split tabs
+     - vertical rail: idle single tabs were 60px against 59px
+   Here the surface is the tab height minus the 1px border at the top and bottom for every tab, so it follows the
+   density (--TabsHeight). Widths are not touched (audio tabs keep their dynamic width, the selected tab still
+   grows). The second tab of a vertical split pair has no border at its top (it shares the divider), so its surface
+   is 1px taller, which is what joins the two.
+   Horizontal tabs and the tabs of a split pair are sized here. The SINGLE tiles of the vertical rail are sized per state
+   (idle, hover, active, selected) in 14-rail-tiles.css, so the rail rule below is limited to split pairs.
+   To undo: delete this file and its @import line. */
+
+#TabsToolbar .tabbrowser-tab .tab-content {
+  box-sizing: border-box !important;
+  height: calc(var(--TabsHeight) * 1px + 3px) !important;
+  min-height: 0 !important;
+  max-height: calc(var(--TabsHeight) * 1px + 3px) !important;
+}
+
+#tabbrowser-tabs[orient="vertical"] tab-split-view-wrapper > .tabbrowser-tab .tab-content {
+  box-sizing: border-box !important;
+  height: calc(var(--TabsHeight) * 1px + 3px) !important;
+  min-height: 0 !important;
+  max-height: calc(var(--TabsHeight) * 1px + 3px) !important;
+}
+
+#tabbrowser-tabs[orient="vertical"] tab-split-view-wrapper > .tabbrowser-tab:last-child .tab-content {
+  height: calc(var(--TabsHeight) * 1px + 4px) !important;
+  max-height: calc(var(--TabsHeight) * 1px + 4px) !important;
+}

@@ -1,0 +1,133 @@
+/* ChromeTools: ModuleLoader */
+
+/* userChrome.css (Firefox 160)
+ 
+   Scripts (chrome/JS/, loaded by the userscript loader in chrome/utils):
+     uiLanguage.uc.js              sets the interface language on the window so fonts follow it (css/00-fonts.css)
+     uiStateFlags.uc.js            mirrors "vertical tabs are on" onto the window as uc-vertical (and the debug pref uc.urlbar.keep-visible as uc-urlbar-keep); the CSS reads it as #main-window[uc-vertical]
+                                   instead of :has() (css/02, 03, 11; also read by statusJson and fullscreenRailHover). The rail's own states stay :has() on purpose
+     bookmarksToolbarHeight.uc.js  publishes the bookmarks toolbar's height as --uc-bm-h so the fixed toolbox height leaves room for it (css/02)
+     moveNavToActiveTab.uc.js      puts back/forward inside the selected tab
+     sidebarCollapseRail.uc.js     collapses the rail when "Hide tabs and sidebar" is on, and re-shows it at startup
+     sidebarRailHold.uc.js         expand-on-hover: sets uc-rail-hold so css/07 can fade the rail's button row and » chevron out BEFORE the rail expands
+                                   (timers only; the CSS that reaches into sidebar-main's shadow DOM is plain CSS in css/07, "SHADOW-DOM RULES")
+     urlHostHighlight.uc.js        colours the site's domain in the address bar differently from the rest (section 7)
+     statusJson.uc.js              vertical tabs only: the status text (link under the pointer, loading messages) as a chat-style feed of JSON lines at the bottom right (end of css/03)
+     tabPreviewGroup.uc.js         shows the name of a tab's group (with its colour) in the tab hover preview (css/15)
+     verticalTabLabelSpeed.uc.js   constant scroll speed for long vertical-tab titles (section 14)
+     sidebarContextMenuHold.uc.js  keeps the rail at its width while a context menu or sidebar panel is open, and publishes the rail/panel
+                                   widths that css/13 needs (patches SidebarController)
+     sidebarOverflowFit.uc.js      makes the » overflow menu tall enough in fullscreen, and keeps the » button's tooltip off
+     fullscreenOverlayMode.uc.js   switch for css/12: fullscreen bars overlay the page instead of pushing it
+     fullscreenRailHover.uc.js, fullscreenLeftEdgeReveal.uc.js
+                                   fullscreen rail behaviour (section 18)
+     sidebarPushSettle.uc.js       Overlay mode Off: stages the page push / retract when the hover-expanded rail opens and closes (css/12, last blocks)
+     sidebarRailGate.uc.js         one shared "is the rail busy?" signal that defers non-urgent measuring until the rail is quiet
+     vtRememberVisibility.uc.js    remembers the sidebar visibility setting across turning vertical tabs off and on
+     betterSplitViewSeparator.uc.js  split view divider drag;  SidebarToggles.uc.js  Customize panel switches (theme mode, colour scheme, selection colour,
+                                   density, overlay mode, hover delay, colour source, gradient, glow, accent colour, background image, image dimming,
+                                   image opacity, surface opacity, tab opacity, popup opacity)
+     railExpandTargets.uc.js       expand-on-hover: which spots on the collapsed rail (buttons, "+", tabs) may start the expansion; never arms a second pending one
+     sidebarAutoHide.uc.js         "Hide tabs and sidebar" + vertical tabs: reveals the rail at the screen edge; "Keep sidebar visible" and "Reveal sidebar" menu items
+     sidebarCloseLeft.uc.js        Customize panel: moves the close button to the side facing the page when the rail is on the right
+     forceSchemePerSite.uc.js      per-site forced light/dark colour scheme (tab context menu, Ctrl+Alt+L / Ctrl+Alt+D)
+     extensionIcons.uc.js          sharpest icon from the extension's own package for moz-extension:// tabs
+     pipControl.uc.js              Ctrl + hover over a tab opens it in Picture-in-Picture; Ctrl + hover over the PiP window returns the video to its tab
+     ExtensionToggles.uc.js        rail button and » menu entry that open a panel with an on/off switch for every installed extension (AddonManager)
+     FaviconUpgrader.uc.js         replaces a site's small tab icon with the best one it offers, as a sharp PNG; per-site choice in the tab context menu ("Change favicon…")
+
+   Also: userContent.css restyles about:newtab / about:home (transparent layout, clocks, weather, shortcuts; its accent follows the Colour source /
+   Accent setting), the PiP and Screenshots overlays, and the scrollbar colours of every web page. The sidebar panels (History, Bookmarks, ...) are
+   styled from this file (css/06; translucent through uc-panel-translucent).
+ 
+   WHERE TO EDIT
+     Colours ........ section 1 (accent palette) and section 4 (light / dark theme). Both themes use the same two-part media query
+                      (-moz-toolbar-prefers-color-scheme or prefers-color-scheme), light block first and dark block second, in 01 and in the
+                      window background rule in 02. Keep that order and wording if you add another colour rule that differs per theme.
+                      The "Accent colour", "Gradient amount" and "Glow strength" switches in the Customize sidebar panel override the
+                      accent / gradient / glow values at runtime; the focus ring colour (--uc-focus-color) follows the accent.
+     Sizes, timings . section 2 (every --uc-* tunable). Restart Firefox after editing.
+     Density ........ Customize Toolbar > Density (Compact / Normal / Touch), or the Density switch in the Customize sidebar panel. Section 2
+                      holds the Normal values; section 17 overrides them. (Compact is hidden in Firefox's UI unless
+                      browser.compactmode.show is true in about:config.)
+     Rail behaviour . section 18 (all densities), driven by --uc-rail-collapsed and --uc-rail-buttons-w.
+     Background ..... the Customize panel (Background image, Image dimming, Image opacity, Surface opacity, Tab opacity, Popup opacity) or the --uc-bg-image / --uc-bg-scrim / --uc-bg-image-opacity /
+                      --uc-alpha-* variables in section 2. The image is painted in css/17; translucency in 01 (gradients), 02 (toolbar), 04 and 15 (tabs), 05
+                      (popups) and 06 (rail and sidebar panels). Everything at 100% and no image = the solid look.
+     Accessibility .. css/16 (reduced motion, Windows contrast themes). Focus rings: address bar (03) and the rail's "+" button (06) use --uc-focus.
+                      Text contrast of the dim part of the address: --uc-url-dim-color (01). Security badge: --uc-security-* (01), drawn in 03.
+ 
+   CONTENTS
+      1  Master accent palette
+      2  Tunables (all :root variables)
+      3  Firefox theme-token overrides
+      4  Light / dark theme colours
+      5  Global styles & hidden elements
+      6  Toolbar layout (navbar, responsive widths, toolbox animation)
+      7  URL bar (status panel, backgrounds, dropdown, floating bar in vertical-tabs mode)
+      8  Horizontal tabs (tab shape, throbber, animations, audio badge, favicon centring)
+      9  Tab-strip buttons (back/forward inside the tab, All Tabs button)
+     10  Panels, menus & extensions panel
+     11  Context menu & app menu
+     12  Global buttons (hover/active/selected, notification buttons)
+     13  Sidebar (colours, positioning, splitters, rail behaviour)
+     14  Vertical tabs (rail tab layout, audio badge, titles, "+" button)
+     15  Split view tabs
+     16  Tab glows
+     17  Density (Compact / Touch)
+     18  Collapsed rail, all densities
+	 19	 Rail tool icons (Feather icons; css/19-rail-icons.css)
+	 
+(pinned tabs and tab groups have no number: css/15-pinned-groups.css;
+ reduced motion and forced colours: css/16-accessibility.css)                     
+																								*/
+
+/* ==========================================================================
+   MODULES  (this file only imports them. They load in this order; later files
+   override earlier ones. Module files live in chrome/css/. @import lines must
+   stay at the top of the file.)
+ 
+     css/00-fonts.css                  fonts that follow the interface language (needs JS/uiLanguage.uc.js)
+     css/01-tokens.css                 sections 1-4    palette, tunables, theme tokens, light/dark colours
+     css/02-base-layout.css            sections 5-6    global styles, toolbar layout
+     css/03-urlbar.css                 section 7       URL bar, domain highlight, focus ring, security badge, floating bar
+     css/04-horizontal-tabs.css        sections 8-9    horizontal tabs, audio badge, tab-strip buttons
+     css/05-panels-menus-buttons.css   sections 10-12  panels, context/app menus, buttons
+     css/06-sidebar-vertical-tabs.css  sections 13-14  sidebar, rail behaviour, vertical tabs
+     css/07-split-glows-density.css    sections 16-18  tab glows, density, collapsed rail
+     css/08-split-view.css             section 15      split view tab pairs
+     css/09-menubar.css                                menu bar (Alt) under the toolbar row
+     css/10-split-frame-fit.css                        one height for every tab surface in the strip and in split pairs
+     css/11-fullscreen-rail.css                        fullscreen toolbox / rail / page animations (page-pushing version)
+     css/12-fullscreen-overlay.css                     fullscreen bars slide over the page, page never resizes (switch: fullscreenOverlayMode.uc.js)
+     css/13-sidebar-panel-cover.css                    sidebar panels drawn over the rail at the screen edge (needs sidebarContextMenuHold.uc.js)
+     css/14-rail-tiles.css                             the vertical rail's tab tiles per state and density
+     css/15-pinned-groups.css                          pinned tabs (square in the strip, rows in the rail) and minimalist tab groups
+     css/16-accessibility.css                          reduced motion and forced colours (Windows contrast themes)
+     css/17-glass-transparency.css                     custom background image layer and web content transparency
+     css/18-firefox-160-fixes.css                      view transition opt-outs and sidebarAutoHide fixes for Firefox 160
+     css/19-rail-icons.css                             Feather icons for the sidebar rail's tool buttons (History, Bookmarks, Customize ...), via moz-button's --button-icon-content
+	 css/user-overrides.css                            Empty file for user defined changes to override theme css components. 
+   ========================================================================== */
+
+@import url("css/00-fonts.css");
+@import url("css/01-tokens.css");
+@import url("css/02-base-layout.css");
+@import url("css/03-urlbar.css");
+@import url("css/04-horizontal-tabs.css");
+@import url("css/05-panels-menus-buttons.css");
+@import url("css/06-sidebar-vertical-tabs.css");
+@import url("css/07-split-glows-density.css");
+@import url("css/08-split-view.css");
+@import url("css/09-menubar.css");
+@import url("css/10-split-frame-fit.css");
+@import url("css/11-fullscreen-rail.css");
+@import url("css/12-fullscreen-overlay.css");
+@import url("css/13-sidebar-panel-cover.css");
+@import url("css/14-rail-tiles.css");
+@import url("css/15-pinned-groups.css");
+@import url("css/16-accessibility.css");
+@import url("css/17-glass-transparency.css");
+@import url("css/18-firefox-160-fixes.css");
+@import url("css/19-rail-icons.css");
+@import url("css/user-overrides.css");

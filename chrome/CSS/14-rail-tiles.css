@@ -1,0 +1,257 @@
+/* ===== 14-rail-tiles.css ===== */
+
+/* 14-rail-tiles.css: the vertical rail's tab tiles. One box per state (idle, hover, active, selected), favicons centred, hover glow drawn
+   inside the tile, for Compact (40px rail) and Standard / Touch (50 / 60px rails; the widths are --uc-rail-collapsed in 07).
+   This file sizes the SINGLE tiles of the rail (10-split-frame-fit.css covers the horizontal strip and split pairs; 08 the pair shape).
+   Where it overlaps 04, 06, 07 and 10 it wins on specificity (the :root[...] prefix plus #tabbrowser-tabs[orient="vertical"]), so it needs no
+   stacked IDs and no layer of its own. Keep it in the same layer as those files (or in no layer).
+   The Compact favicon and "+" offsets (--uc-rail-pad-start, --uc-newtab-nudge) are in the Compact block of 07-split-glows-density.css.
+   Tunables: --uc-tile-w, --uc-tile-slot, --uc-tile-h-<state>, --uc-tile-extra-w, --uc-icon-nudge (all set below, per density).
+   Imported after 13, which holds only the sidebar panel rules; the tile rules, the width transition and the expanded width are all here.
+																					 
+   The tile GROWS and SHRINKS with the rail: width is transitioned over --uc-sidebar-anim (declared in the rule that matches in every state).
+   To undo: delete this file and its @import line. */
+
+/* ---- :has() REMOVED FROM :root (audit item 6) ----
+   This file used :root:has(#tabbrowser-tabs[expanded]) / :not(:has(#tabbrowser-tabs[expanded])) as a state gate.
+   A :has() on :root makes the browser re-evaluate the whole tree on every DOM/attribute change. It has been replaced
+   with a direct #tabbrowser-tabs[orient="vertical"][expanded] / :not([expanded]) on the selector itself, so the
+   browser only checks the one element. Specificity was preserved by doubling the ID (#tabbrowser-tabs#tabbrowser-tabs)
+   where the :has() had contributed 1 to the ID column. The compact expand-on-hover rule uses sidebar-main:not([expanded])
+   instead of :not(:has(#tabbrowser-tabs[expanded])) on :root — sidebar-main carries the same `expanded` attribute Firefox
+   sets on #tabbrowser-tabs, and 06/07 already use sidebar-main:not([expanded]) as the "rail is collapsed" test.
+
+   The one remaining :has() (a :not(:has(#tabbrowser-tabbox[sidebar-ongoing-animations])) term in the Compact expand-on-hover rule) is gone too: Firefox 160
+   never sets that attribute, so it was always true. The doubled #sidebar-container keeps the ID the term used to add.
+
+   Note on the two `[expanded]` attributes: Firefox sets both [expanded] on #tabbrowser-tabs (for the tab strip layout)
+   and [expanded] on sidebar-main (for the button rail). They are in sync on every state transition. */
+
+/* ---- TILE HEIGHT = SLOT - 2px (4-SIDED GLOW) ----
+   Rail tabs have margin -1px (06), so the next tab's box starts on the last pixel row of the slot above it (the tabs overlap by 1px at each
+   edge). A tile exactly as tall as its slot therefore has its bottom row (border, inset ring and glow) painted over by the neighbour, and only
+   the left, right and top of the glow showed. Each tile is now 2px shorter than its slot and centred in it (1px free above and below), so the
+   bottom edge is always inside its own space and the glow is drawn on all four sides. Do not set a tile height to slot - 1 (half-pixel
+   margins blur the edges); use slot - 2 (default) or smaller. To touch the tiles edge to edge again, set --uc-tile-h-* back to the slot value.
+   --uc-tile-slot is the slot height (tab height minus the 2px overlap), unchanged. */
+
+/* ---- COMPACT RAIL TILE SIZES (idle, hover, active = pressed, selected), expand-on-hover and "Hide tabs and sidebar" ----
+   Measured in the Browser Console on the 40px Compact rail (07 §17 sets --uc-rail-collapsed to 40px): every tab slot is 37px tall
+   (tab 39px, margin -1px), but the tiles were not the same box:
+     idle tile      content box 50px wide in a 40px rail (10px stuck out and was clipped, so its right edge and glow were cut off)
+     selected tile  content box 34px wide (tab width - 2px) in the same rail
+   Both are now the same box: border-box, 100% of the tab, no side margin, so all four states are as wide as the rail.
+   Height per state: the tile is --uc-tile-h-<state> tall and centred in the --uc-tile-slot (37px) it sits in, so a smaller tile leaves an
+   even gap above and below it and the list does not move. All four are 37px. Change one number to size that state alone
+   (e.g. --uc-tile-h-idle: 35px for the old idle look). Tiles inside a split view pair are left alone (08 sizes those).
+   These selectors are more specific than the earlier rail and tab rules (06, 10), so those cannot out-rank them.
+   Compact only. To undo: delete this block. */
+:root[uidensity="compact"] {
+  --uc-tile-slot: 37px;
+  --uc-tile-h-idle: 35px;
+  --uc-tile-h-hover: 35px;
+  --uc-tile-h-active: 35px;
+  --uc-tile-h-selected: 35px;
+}
+
+:root[uidensity="compact"] #tabbrowser-tabs[orient="vertical"] .tabbrowser-tab:not(tab-split-view-wrapper > .tabbrowser-tab) .tab-content {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  margin-inline: 0 !important;
+  inline-size: 100% !important;
+  flex: 0 0 auto !important;
+  min-height: 0 !important;
+  height: var(--uc-tile-h-idle) !important;
+  margin-block: calc((var(--uc-tile-slot) - var(--uc-tile-h-idle)) / 2) !important;
+  /* the tile grows and shrinks with the rail (collapsed width <-> 100%) over the rail's own time and easing. Declared here, in the rule
+     that matches in EVERY state, so it plays in both directions */
+  transition: width var(--uc-sidebar-anim), inline-size var(--uc-sidebar-anim) !important;
+}
+
+:root[uidensity="compact"] #tabbrowser-tabs[orient="vertical"] .tabbrowser-tab:hover:not(tab-split-view-wrapper > .tabbrowser-tab) .tab-content {
+  height: var(--uc-tile-h-hover) !important;
+  margin-block: calc((var(--uc-tile-slot) - var(--uc-tile-h-hover)) / 2) !important;
+}
+
+:root[uidensity="compact"] #tabbrowser-tabs[orient="vertical"] .tabbrowser-tab[selected]:not(:hover):not(tab-split-view-wrapper > .tabbrowser-tab) .tab-content {
+  height: var(--uc-tile-h-selected) !important;
+  margin-block: calc((var(--uc-tile-slot) - var(--uc-tile-h-selected)) / 2) !important;
+}
+
+:root[uidensity="compact"] #tabbrowser-tabs[orient="vertical"] .tabbrowser-tab:hover:active:not(tab-split-view-wrapper > .tabbrowser-tab) .tab-content {
+  height: var(--uc-tile-h-active) !important;
+  margin-block: calc((var(--uc-tile-slot) - var(--uc-tile-h-active)) / 2) !important;
+}
+
+/* ---- COMPACT, EXPAND-ON-HOVER, RAIL COLLAPSED: the tab strip is as wide as the rail, so the tiles fit inside it ----
+   Measured on the 40px Compact rail: in expand-on-hover the tabs are laid out 50px wide (Firefox's own collapsed width)
+   while the Compact rail is 40px, so each tile's right edge, corners and glow are cut off by the rail. At 291px (expanded) the tile fits.
+   "Hide tabs and sidebar" is a separate case (the strip follows the rail there). Same conditions as the rail-width rule in 07
+   (section 18, rule 1): toolbar not hidden, rail not expanded (sidebar-main:not([expanded]) — see the note at the top of this file),
+   no open/close animation running, so the slide itself is not changed and the expanded rail keeps its normal widths.
+   To undo: delete this block. */
+:root[uidensity="compact"][sidebar-expand-on-hover]:not([fullscreenNavToolboxHidden]) #sidebar-container#sidebar-container sidebar-main:not([expanded]) :is(#tabbrowser-tabs, #tabbrowser-arrowscrollbox, #pinned-tabs-container) {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+/* ---- COMPACT RAIL: the box the tile sits in must not be wider than the tab ----
+   Console result (40px rail): the width: 100% rule on the tile is applied (nothing out-ranks it), yet the idle tile stayed
+   50px wide and the selected 34px in a 40px tab. width: 100% is a share of the PARENT, and the parent (.tab-stack, a one-cell grid) was sized by what the tile needs at
+   minimum: favicon 24px + padding 11px + 14px + margin = about 50px for an idle tab. So the cell is now a single column that may shrink
+   to the tab (minmax(0, 1fr)) and the stack itself is not allowed to be wider than the tab. Compact only. To undo: delete this block. */
+:root[uidensity="compact"] #tabbrowser-tabs[orient="vertical"] .tabbrowser-tab:not(tab-split-view-wrapper > .tabbrowser-tab) > .tab-stack {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  margin-inline: 0 !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+/* ---- COMPACT RAIL, COLLAPSED: centre the tile in the rail ----
+   Layout for the 40px Compact rail (07 §17 sets --uc-rail-collapsed to 40px). On the old 36px rail the tile needed +2px to reach the
+   rail's edges; at 40px it does not:
+     rail 40px wide, its border the pixel right after x = 40; tab 40px (margin -1px, box -1..39); .tab-stack pinned to 100% of the tab,
+     so the tile's own 100% resolves to 40px = the rail width. The tile starts at x = 0 (1px inside the tab) and its painted face is
+     inset by its own border, so ~1px stays free on each side — the same box Standard/Touch use (--uc-tile-w = rail width).
+   --uc-tile-extra-w is therefore 0px: +1px would push the tile's right edge under the rail border (clipped), -1px would leave a 2px
+   gap on the right. Only while the rail is collapsed: expanded (291px) the tile keeps its own width, which looked right.
+   Tunable: --uc-tile-extra-w (px added to the collapsed tile). To undo: delete this block. */
+:root[uidensity="compact"] {
+  --uc-tile-extra-w: 0px;
+}
+
+:root[uidensity="compact"] #tabbrowser-tabs#tabbrowser-tabs[orient="vertical"]:not([expanded]) .tabbrowser-tab:not(tab-split-view-wrapper > .tabbrowser-tab) .tab-content {
+  width: calc(100% + var(--uc-tile-extra-w)) !important;
+  inline-size: calc(100% + var(--uc-tile-extra-w)) !important;
+  max-width: none !important;
+}
+
+/* ---- COMPACT RAIL: the hover glow goes INSIDE the tile ----
+   07 draws the hover glow as an OUTER shadow (0 0 blur spread colour, no "inset": 3px solid at the default tokens). With the tiles now as
+   wide as the rail, that 3px ring falls outside the rail and the tab list and is cut off on the left, right and top. Same recipe 07 already
+   uses for inactive tabs in the vertical rail (it says the outer glow "was clipped there by the tab list"): the glow is drawn inwards,
+   with the same --uc-hover-glow-* values, so nothing has to be made smaller. Hovered selected tabs are covered too (07 gives them the hover
+   glow). Compact only. To undo: delete this block. */
+:root[uidensity="compact"] #tabbrowser-tabs[orient="vertical"] .tabbrowser-tab:hover:not(tab-split-view-wrapper > .tabbrowser-tab) .tab-content {
+  box-shadow:
+    inset 0 0 0 1px var(--tab-box-shadow-color),
+    inset 0 0 var(--uc-selected-glow-blur) var(--uc-selected-glow-spread) var(--uc-selected-glow-color) !important;
+}
+
+/* ---- TOUCH AND STANDARD RAIL: same tile in every state (idle, hover, active, selected), favicons centred, hover glow inside ----
+   Measured in the Browser Console (rail collapsed, both rail modes) and on screenshots (the painted tile is the .tab-content box inset 1px
+   on each side, the rail's own border is the pixel right after the rail):
+     Touch     rail 60   tab slot 59px   idle tile box 0..59   selected 0..58   favicon x = 14..50 (rail centre 30)
+     Standard  rail 50   tab slot 48px   idle tile box 0..50   selected 0..48   favicon x = 11..43 (rail centre 25)
+   Width: every state gets the same box, 0..rail width, so 1px is free on each side. Only while the rail is collapsed (an expanded rail
+   keeps its own widths).
+   Height: each state is --uc-tile-h-<state> tall and centred in the --uc-tile-slot it sits in, so the list does not move. All four = slot.
+   Hover glow: 07 draws it as an OUTER shadow; with tiles as wide as the rail the ring fell outside the rail / tab list and was cut off.
+   It is drawn inwards here (same --uc-hover-glow-* values), exactly as in the Compact block above. Selected tiles under the mouse get it too.
+   Favicon: start-aligned, so it does not follow the tile width; --uc-icon-nudge moves it (all states, so it does not jump on expand).
+   Compact has its own rules above and is not touched; split view pairs are left alone (08).
+   Tunable: --uc-tile-w, --uc-tile-slot, --uc-tile-h-<state>, --uc-icon-nudge. To undo: delete this block. */
+:root:not([uidensity="compact"]) {
+  --uc-tile-w: 50px;
+  --uc-tile-slot: 48px;
+  --uc-tile-h-idle: 46px;
+  --uc-tile-h-hover: 46px;
+  --uc-tile-h-active: 46px;
+  --uc-tile-h-selected: 46px;
+  --uc-icon-nudge: 1px;
+}
+
+:root[uidensity="touch"] {
+  --uc-tile-w: 60px;
+  --uc-tile-slot: 59px;
+  --uc-tile-h-idle: 57px;
+  --uc-tile-h-hover: 57px;
+  --uc-tile-h-active: 57px;
+  --uc-tile-h-selected: 57px;
+  --uc-icon-nudge: 1px;
+}
+
+/* width (collapsed rail only) */
+:root:not([uidensity="compact"]) #tabbrowser-tabs#tabbrowser-tabs[orient="vertical"]:not([expanded]) .tabbrowser-tab:not(tab-split-view-wrapper > .tabbrowser-tab) .tab-content {
+  box-sizing: border-box !important;
+  width: var(--uc-tile-w) !important;
+  inline-size: var(--uc-tile-w) !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  margin-inline: 0 !important;
+  flex: 0 0 auto !important;
+}
+
+/* expanded: the tile fills the tab again. Width goes from the collapsed length to 100%, so the tile GROWS with the rail */
+:root:not([uidensity="compact"]) #tabbrowser-tabs#tabbrowser-tabs[orient="vertical"][expanded] .tabbrowser-tab:not(tab-split-view-wrapper > .tabbrowser-tab) .tab-content {
+  width: 100% !important;
+  inline-size: 100% !important;
+}
+
+/* height per state (this idle rule matches in every state, so it also carries the box rules and the width transition) */
+:root:not([uidensity="compact"]) #tabbrowser-tabs[orient="vertical"] .tabbrowser-tab:not(tab-split-view-wrapper > .tabbrowser-tab) .tab-content {
+  box-sizing: border-box !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  margin-inline: 0 !important;
+  flex: 0 0 auto !important;
+  min-height: 0 !important;
+  height: var(--uc-tile-h-idle) !important;
+  margin-block: calc((var(--uc-tile-slot) - var(--uc-tile-h-idle)) / 2) !important;
+  transition: width var(--uc-sidebar-anim), inline-size var(--uc-sidebar-anim) !important;
+}
+
+:root:not([uidensity="compact"]) #tabbrowser-tabs[orient="vertical"] .tabbrowser-tab:hover:not(tab-split-view-wrapper > .tabbrowser-tab) .tab-content {
+  height: var(--uc-tile-h-hover) !important;
+  margin-block: calc((var(--uc-tile-slot) - var(--uc-tile-h-hover)) / 2) !important;
+}
+
+:root:not([uidensity="compact"]) #tabbrowser-tabs[orient="vertical"] .tabbrowser-tab[selected]:not(:hover):not(tab-split-view-wrapper > .tabbrowser-tab) .tab-content {
+  height: var(--uc-tile-h-selected) !important;
+  margin-block: calc((var(--uc-tile-slot) - var(--uc-tile-h-selected)) / 2) !important;
+}
+
+:root:not([uidensity="compact"]) #tabbrowser-tabs[orient="vertical"] .tabbrowser-tab:hover:active:not(tab-split-view-wrapper > .tabbrowser-tab) .tab-content {
+  height: var(--uc-tile-h-active) !important;
+  margin-block: calc((var(--uc-tile-slot) - var(--uc-tile-h-active)) / 2) !important;
+}
+
+/* hover glow inside the tile (hover, active, hovered selected): the thin glow the selected tab used to have */
+:root:not([uidensity="compact"]) #tabbrowser-tabs[orient="vertical"] .tabbrowser-tab:hover:not(tab-split-view-wrapper > .tabbrowser-tab) .tab-content {
+  box-shadow:
+    inset 0 0 0 1px var(--tab-box-shadow-color),
+    inset 0 0 var(--uc-selected-glow-blur) var(--uc-selected-glow-spread) var(--uc-selected-glow-color) !important;
+}
+
+/* favicon nudge, vertical rail only, every density.
+   --uc-icon-nudge   (existing) base X offset, set per density above (Compact has none, so it falls back to 0px)
+   --uc-icon-nudge-x extra X offset, positive = right
+   --uc-icon-nudge-y extra Y offset, positive = down
+   translate does not affect layout, so it is identical collapsed / expanded / mid-slide and nothing jumps.
+   The throbber and the audio badge live inside .tab-icon-stack, so they move with the icon. */
+:root {
+  --uc-icon-nudge-x: -.6px;
+  --uc-icon-nudge-y: 0px;
+}
+
+:root #tabbrowser-tabs[orient="vertical"] .tabbrowser-tab:not(tab-split-view-wrapper > .tabbrowser-tab) .tab-icon-stack {
+  translate: calc(var(--uc-icon-nudge, 0px) + var(--uc-icon-nudge-x)) var(--uc-icon-nudge-y) !important;
+}
+
+/* ---- RAIL TAB BOX = SLOT + 2px, IN EVERY DENSITY (fixes the missing bottom glow in Touch) ----
+   The tile heights above assume that the distance between two rail tabs (the "slot", --uc-tile-slot) is the tab's height minus the 2px
+   overlap of the -1px margins (06). 04 gives every tab a fixed height of TabsHeight + 5px: that is 39px in Compact (slot 37) and 50px in
+   Standard (slot 48), which fits, but 54px in Touch, while the Touch slot is 59px. The tab box was 5px shorter than the tiles, so each Touch tile
+   ran under the next tab and its bottom edge was covered. The box is now sized from the slot itself, so the tab pitch always equals
+   --uc-tile-slot and the tiles can never overlap. Compact and Standard get the numbers they already had. Single tabs only: split pairs (08, 10)
+   and tab groups (15) size their own tabs.
+   To undo: delete this block. */
+#tabbrowser-tabs[orient="vertical"] .tabbrowser-tab:not(tab-split-view-wrapper > .tabbrowser-tab) {
+  height: calc(var(--uc-tile-slot) + 2px) !important;
+  min-height: calc(var(--uc-tile-slot) + 2px) !important;
+  max-height: calc(var(--uc-tile-slot) + 2px) !important;
+}

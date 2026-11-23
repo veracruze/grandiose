@@ -1,0 +1,554 @@
+/* 03-urlbar.css: Section 7: URL bar, domain highlight, floating bar. Imported by ../userChrome.css; order of the imports matters. */
+
+/* ==========================================================================
+   7. URL BAR (status panel, backgrounds, dropdown, floating bar)
+   ========================================================================== */
+/* The address text is centred in every state: resting, hovered, focused and while typing (also the floating bar and its placeholder) */
+#urlbar .urlbar-input {
+  text-align: center !important;
+}
+
+#urlbar-search-button,
+#identity-box {
+  max-width: 0px;
+  transition: max-width 100ms linear !important;
+  overflow: hidden;
+}
+
+#identity-box.extensionPage {
+  max-width: 35px;
+}
+
+#urlbar:not(:hover) #userContext-label {
+  display: none;
+}
+
+/* Statuspanel Inside URL Bar
+   [uc-status-active] on #urlbar means "Firefox's status panel (the link text shown on hover) is showing". It is set by
+   urlHostHighlight.uc.js from #statuspanel's `inactive` attribute. It replaces :root:has(#statuspanel:not([inactive])), which the
+   browser had to re-check for the whole window on every link hover. Without the script the address text is not hidden behind the status text. */
+.urlbar-input-box {
+  position: relative !important;
+}
+
+.urlbar-input-box::before {
+  z-index: 3;
+  content: "";
+  display: block;
+  position: absolute;
+  pointer-events: none;
+  inset: 0;
+  background-repeat: no-repeat;
+  background-image: -moz-element(#statuspanel);
+  background-position: left center;
+}
+
+#urlbar:hover .urlbar-input-box::before,
+#urlbar[focused] .urlbar-input-box::before {
+  visibility: hidden;
+  background-image: none !important;
+}
+
+#urlbar[uc-status-active]:not([focused]):not(:hover) .urlbar-input {
+  opacity: 0 !important;
+}
+
+.urlbar-input {
+  mask-image: linear-gradient(to right, black calc(100% - 40px), transparent 100%) !important;
+}
+
+#statuspanel {
+  background-color: transparent !important;
+  z-index: -1;
+  max-width: 100% !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+#statuspanel-label {
+  display: flex !important;
+  align-items: center !important;
+  height: 100% !important;
+  min-width: 35vw !important;
+  max-width: 100% !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  color: var(--statuspanel-text) !important;
+  font-style: italic !important;
+  font-size: 1em !important;
+  border-radius: var(--tab-border-radius) !important;
+  border: none !important;
+  padding-inline: 0px !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  mask-image: linear-gradient(to right, black calc(100% - 40px), transparent 100%) !important;
+}
+
+#statuspanel[type="status"] {
+  color: var(--statuspanel-text) !important;
+}
+
+/* DOMAIN HIGHLIGHT in the address bar. Firefox paints its own dimming of the non-domain part with a
+   text-selection effect that CSS can't recolour, so JS/urlHostHighlight.uc.js draws the address text again
+   on top of the input, split into the domain (.uc-url-host) and the rest (.uc-url-dim), and the input's own text
+   is made transparent while that overlay is showing. Colours: --uc-url-host-color / --uc-url-dim-color
+   (section 2). The overlay only appears while the bar is not focused; focus it and you edit the plain text.
+   To undo: delete this block (and the script). */
+#uc-url-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: safe center;
+  white-space: pre;
+  overflow: hidden;
+  pointer-events: none;
+  mask-image: linear-gradient(to right, black calc(100% - 40px), transparent 100%);
+}
+
+#uc-url-overlay .uc-url-host {
+  color: var(--uc-url-host-color);
+}
+
+#uc-url-overlay .uc-url-dim {
+  color: var(--uc-url-dim-color);
+}
+
+/* Selection drawn by the overlay while the floating bar is focused (script adds .uc-url-sel to selected pieces) */
+#uc-url-overlay span.uc-url-sel {
+  background-color: Highlight;
+  color: HighlightText;
+}
+
+#urlbar[uc-url-colored]:not([focused]) .urlbar-input {
+  color: transparent !important;
+}
+
+#urlbar[focused] #uc-url-overlay,
+#urlbar:not([uc-url-colored]) #uc-url-overlay {
+  display: none;
+}
+
+/* FLOATING BAR (vertical tabs): it appears when you press Ctrl+L, which focuses it, so the overlay has to
+   work while the bar is focused too. Only while the text is untouched (the script sets uc-url-pristine until
+   you type or paste something): the overlay is centred like the input, the input's own text
+   (including the selected part) and caret are recoloured so only the overlay's text shows. Once you start
+   editing, the plain text comes back. To undo: delete this block. */
+:root#main-window[uc-vertical] #urlbar[focused][uc-url-colored][uc-url-pristine] #uc-url-overlay {
+  display: flex;
+  justify-content: safe center;   /* centred like the input; "safe" falls back to the start while a long address scrolls */
+}
+
+:root#main-window[uc-vertical] #urlbar[focused][uc-url-colored][uc-url-pristine] .urlbar-input {
+  color: transparent !important;
+  caret-color: var(--uc-url-host-color) !important;
+}
+
+:root#main-window[uc-vertical] #urlbar[focused][uc-url-colored][uc-url-pristine] .urlbar-input::selection {
+  color: transparent !important;
+}
+
+/* while the status text is drawn inside the bar, hide the overlay like the input */
+#urlbar[uc-status-active]:not([focused]):not(:hover) #uc-url-overlay {
+  opacity: 0;
+}
+
+/* URL Bar Dropdown Text & Icon Accent Styling */
+.urlbarView-row .urlbarView-type-icon,
+.urlbarView-row .urlbarView-icon {
+  /* Firefox draws these icons from SVGs that read their colour from the element ("context-fill"). That only works while -moz-context-properties
+     lists fill: without it the fill below is ignored and the icon keeps its own colour (the bookmark star came out black on black / white on white).
+     fill-opacity is Firefox's own dimming of these icons: full strength here so the star is as visible as the text. */
+  -moz-context-properties: fill, fill-opacity, stroke !important;
+  fill-opacity: 1 !important;
+  fill: var(--uc-accent-text) !important;
+  color: var(--uc-accent-text) !important;
+}
+
+@media (-moz-toolbar-prefers-color-scheme: dark), (prefers-color-scheme: dark) {
+  .urlbarView-row .urlbarView-type-icon,
+  .urlbarView-row .urlbarView-icon {
+    fill: var(--uc-tint-90) !important;
+    color: var(--uc-tint-90) !important;
+  }
+}
+
+/* Bookmark badge in the dropdown: a filled Feather star (MIT, https://github.com/feathericons/feather) in the bottom-right corner of the favicon (42% of its size; raise it for a bigger star),
+   drawn as a mask in the icon colour set above. Its box is Firefox's own badge, so nothing is sized or positioned here (sizing it to the favicon made Normal and Touch worse). To undo: delete this block. */
+.urlbarView-row[type="bookmark"] .urlbarView-type-icon {
+  background-image: none !important;
+  background-color: currentColor !important;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolygon points='12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2'%3E%3C/polygon%3E%3C/svg%3E") 100% 100% / 42% no-repeat !important;
+  filter: drop-shadow(0 0 1px var(--uc-bg)) !important;
+}
+
+/* ---- URLBAR BACKGROUNDS (normal and floating bar) ----
+   Firefox draws the bar's background on a .urlbar-background layer that grows and
+   changes shape when the dropdown opens. Hide it, then paint our own fill on the bar
+   (a pill that never changes size) and give the dropdown its own card. */
+#urlbar > .urlbar-background {
+  opacity: 0 !important;
+}
+
+#urlbar {
+  background: color-mix(in srgb, var(--urlbar-focused-bg) 92%, transparent) !important;
+  border-radius: 24px !important;
+}
+
+.urlbarView-background {
+  display: none !important;
+}
+
+/* Dropdown: semi-transparent card. 85% as before; once Popup opacity is below 100% (attribute set by SidebarToggles.uc.js) it follows that setting. */
+.urlbarView {
+  --uc-urlview-alpha: 85%;
+  margin-top: 6px !important;
+  background: color-mix(in srgb, var(--urlbar-focused-bg) var(--uc-urlview-alpha), transparent) !important;
+  border-radius: 16px !important;
+}
+
+:root[uc-popup-translucent] .urlbarView {
+  --uc-urlview-alpha: var(--uc-alpha-popup);
+}
+
+/* ---- FOCUS RING ----
+   Firefox draws the focus ring on .urlbar-background, which is hidden above, so a focused bar had no ring at all (only the caret).
+   The ring follows the accent (--uc-focus). To undo: delete this rule. */
+#urlbar[focused] {
+  outline: 2px solid var(--uc-focus) !important;
+  outline-offset: -2px !important;
+}
+
+/* ---- SECURITY BADGE ----
+   The identity box (lock icon) is collapsed to 0 width in this theme, so nothing said that a page was on plain http:// or had mixed content.
+   No script: Firefox itself puts a class on #identity-box for every connection state (browser-siteIdentity.js), and this block reads it.
+     .notSecure                         plain http:// that is not potentially trustworthy (http://localhost and friends get .localResource, so
+                                        Firefox's own rule for "local" decides, not a hand-written one)
+     .mixedActiveContent, .mixedDisplayContent, .mixedDisplayContentLoadedActiveBlocked, .weakCipher
+                                        https with a broken connection (mixed content, weak cipher)
+     .certUserOverridden                https page that is only trusted because of a certificate exception
+   A small badge is drawn at the start of the bar (the address text is centred, so it does not cover it) and the input gets room for it.
+   Icons, size and colours: --uc-security-* in 01-tokens.css (section 2). The :has() is scoped to #urlbar, not to the whole window.
+   In vertical-tabs mode the floating bar is invisible until hovered or focused, so the badge shows then.
+   To undo: delete this block. */
+#urlbar:has(#identity-box.notSecure) {
+  --uc-security-icon: var(--uc-security-icon-insecure);
+}
+
+/* after the rule above, so a page that is somehow in both states shows the stronger warning */
+#urlbar:has(#identity-box:is(.mixedActiveContent, .mixedDisplayContent, .mixedDisplayContentLoadedActiveBlocked, .weakCipher, .certUserOverridden)) {
+  --uc-security-icon: var(--uc-security-icon-broken);
+}
+
+#urlbar:has(#identity-box:is(.notSecure, .mixedActiveContent, .mixedDisplayContent, .mixedDisplayContentLoadedActiveBlocked, .weakCipher, .certUserOverridden))::after {
+  content: "";
+  position: absolute;
+  inset-inline-start: 12px;
+  top: 50%;
+  translate: 0 -50%;
+  width: var(--uc-security-size);
+  height: var(--uc-security-size);
+  background: var(--uc-security-icon) center / contain no-repeat;
+  pointer-events: none;
+  z-index: 2;
+}
+
+#urlbar:has(#identity-box:is(.notSecure, .mixedActiveContent, .mixedDisplayContent, .mixedDisplayContentLoadedActiveBlocked, .weakCipher, .certUserOverridden)) .urlbar-input-container {
+  padding-inline-start: calc(12px + var(--uc-security-size) + 4px) !important;
+}
+
+/* ---- FLOATING URLBAR (vertical tabs) ----
+   The urlbar stays inside #nav-bar but is fixed to the bottom of the window, invisible
+   until it is hovered, focused or open. Position and size: --uc-urlbar-* in section 2. */
+:root#main-window[uc-vertical] #nav-bar #urlbar-container {
+  /* Dynamic position: slides left as the window narrows, but not past the rail */
+  --uc-urlbar-left-now: max(
+    var(--uc-urlbar-min-left),
+    min(var(--uc-urlbar-left), calc(100vw - var(--uc-urlbar-width) - var(--uc-urlbar-gap)))
+  );
+
+  position: fixed !important;
+  bottom: var(--uc-urlbar-bottom) !important;
+  top: auto !important;
+  right: auto !important;
+  left: var(--uc-urlbar-left-now) !important;
+  /* Dynamic width: never wider than --uc-urlbar-width, shrinks to fit the window */
+  width: min(var(--uc-urlbar-width), calc(100vw - var(--uc-urlbar-left-now) - var(--uc-urlbar-gap))) !important;
+  min-width: 0 !important;
+  max-width: var(--uc-urlbar-width) !important;
+  height: var(--uc-urlbar-h) !important;
+  min-height: var(--uc-urlbar-h) !important;
+  z-index: 999999 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  opacity: 0 !important;
+  visibility: visible !important;
+  pointer-events: none !important;
+  transition: opacity 0.1s ease-out !important;
+}
+
+/* Shown state */
+:root#main-window[uc-vertical] #nav-bar #urlbar-container:is(:focus-within, :hover, :has(#urlbar[open], #urlbar[focused], #urlbar [open], [state="open"])) {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* DEBUG: keep the floating bar visible whatever the focus does (it fades out whenever the window loses focus, which made it impossible to
+   inspect from the Browser Console). Switch: the pref uc.urlbar.keep-visible (true/false in about:config), mirrored onto the window as
+   uc-urlbar-keep by uiStateFlags.uc.js. Or from the Browser Console, for this session only:
+   Services.wm.getMostRecentWindow("navigator:browser").document.documentElement.toggleAttribute("uc-urlbar-keep")
+   To undo: delete this rule. */
+:root#main-window[uc-vertical][uc-urlbar-keep] #nav-bar #urlbar-container {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+:root#main-window[uc-vertical][uc-urlbar-keep] #nav-bar #urlbar-container :is(#urlbar-search-button, .urlbar-input-container > box) {
+  max-width: 300px !important;
+}
+
+/* Buttons expanded while the bar is visible */
+:root#main-window[uc-vertical] #nav-bar #urlbar-container:is(:focus-within, :hover, :has(#urlbar[open], #urlbar[focused], #urlbar [open], [state="open"])) :is(#urlbar-search-button, .urlbar-input-container > box) {
+  max-width: 300px !important;
+}
+
+/* The bar itself: fixed size (background and corners come from the section above) */
+:root#main-window[uc-vertical] #nav-bar #urlbar-container #urlbar {
+  position: relative !important;
+  width: 100% !important;
+  min-height: var(--uc-urlbar-h) !important;
+}
+
+/* The search mode switcher carries [offscreen] while the urlbar is unfocused. Firefox places it
+   out of flow, and inside the fixed floating bar that lands it at the top left of the window.
+   Keep it invisible until Firefox removes the attribute (on focus), when it snaps back into the bar.
+   To undo: delete this rule. */
+:root#main-window[uc-vertical] #urlbar .searchmode-switcher[offscreen] {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* No suggestions dropdown: clip it rather than hide it, so Firefox still lays it out */
+:root#main-window[uc-vertical] #nav-bar #urlbar-container .urlbarView {
+  clip-path: inset(100%) !important;
+  pointer-events: none !important;
+}
+
+/* The bar lives inside the toolbar, so lift the whole toolbar above the page and sidebar. 101, not 100: the rail sits
+   at z-index 100 in fullscreen (12-fullscreen-overlay.css), and 09-menubar.css drops the menu bar out of this toolbox —
+   at equal z-index the rail (later in the DOM) paints over the menu bar, so the Alt menu stayed invisible behind an
+   expanded rail in vertical-tabs fullscreen. 101 keeps the toolbox's whole subtree, menu bar included, just above the rail.
+   To undo: put 100 back. */
+:root#main-window[uc-vertical] #navigator-toolbox {
+  z-index: 101 !important;
+}
+
+/* ==========================================================================
+   STATUS TEXT AS A CHAT-STYLE JSON FEED (vertical tabs only)
+   With vertical tabs the address bar is a floating bar that is invisible until hovered, and the status text above is drawn inside it,
+   so the link under the pointer was never visible. JS/statusJson.uc.js adds one line per status message to #uc-status-json, a JSON
+   object { "type", "text" } each. The feed sits at the bottom right and grows upwards (newest line at the bottom); it is shown only
+   while #main-window[uc-vertical]. Every line holds for --uc-status-hold, fades out over --uc-status-fade-out and is then removed by the
+   script when the animation ends. One line each: only the text value is cut with an ellipsis, the rest of the JSON stays visible.
+   Tunables: --uc-status-* in 01-tokens.css (section 2). To undo: delete this block and the script.
+   ========================================================================== */
+#uc-status-json {
+  display: none;
+  position: fixed;
+  right: var(--uc-status-right);
+  bottom: var(--uc-status-bottom);
+  z-index: 2147483646;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: var(--uc-status-gap);
+  max-width: var(--uc-status-max-w);
+  pointer-events: none;
+}
+
+:root#main-window[uc-vertical] #uc-status-json {
+  display: flex;
+}
+
+/* rail on the right: stay clear of it, even when it is expanded */
+#uc-status-json[uc-end] {
+  right: var(--uc-status-right-rail);
+}
+
+#uc-status-json .m {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  max-width: 100%;
+  padding: var(--uc-status-pad-y) var(--uc-status-pad-x);
+  border: 0;
+  border-radius: var(--uc-status-radius);
+  background: color-mix(in srgb, var(--urlbar-focused-bg) var(--uc-status-bg-strength), transparent);
+  color: var(--uc-text);
+  font-size: var(--uc-status-size);
+  line-height: 1.4;
+  /* hold, then fade out; the script removes the line on animationend */
+  animation: uc-status-out var(--uc-status-fade-out) linear var(--uc-status-hold) forwards;
+}
+
+@keyframes uc-status-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* the universal font rule in 00-fonts.css would otherwise give the spans the interface font */
+#uc-status-json,
+#uc-status-json * {
+  font-family: var(--uc-status-font);
+}
+
+/* flex items would drop the spaces at the edges of a piece, so spaces are kept */
+#uc-status-json .m > span {
+  flex: none;
+  white-space: pre;
+}
+
+/* the text value is the only piece that shrinks and is cut */
+#uc-status-json .m > .v {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#uc-status-json .p,
+#uc-status-json .k,
+#uc-status-json .q {
+  color: var(--uc-url-dim-color);
+}
+
+#uc-status-json .t {
+  color: var(--uc-text-accent);
+}
+
+#uc-status-json .v {
+  color: var(--uc-text);
+}
+
+/* ---- URLBAR ICON SIZING ----
+   --urlbar-icon-size / --urlbar-icon-padding are Firefox's own tokens for the page-action
+   buttons (star, reader, zoom, send-to-device, extension page actions), the go and revert
+   buttons, and the identity / search-mode icons. Set on #urlbar so they inherit into
+   #urlbar-input-container. The identity box and search button stay collapsed to 0 width
+   (03 §7) unless hovered/focused. Sizes: 01 §2 + 07 §17. */
+#urlbar {
+  --urlbar-icon-size: var(--uc-urlbar-icon-size) !important;
+  --urlbar-icon-padding: var(--uc-urlbar-icon-padding) !important;
+}
+
+/* The .extensionPage identity box: icon only, sized by Firefox itself.
+   On an extension page Firefox adds #identity-icon-label ("Extension (name)") inside #identity-icon-box. The old fixed
+   max-width (icon + padding*2 + 8px) was a guess that cut that label off at an arbitrary pixel, and Firefox's own margins
+   around the icon don't follow the formula, so the box came out a few px short in Compact and Standard and the input box
+   ended up over the icon. Hide the label (the icon's tooltip still names the extension) and let the box take its natural
+   width: nothing is clipped, nothing to overlap. To undo: put the max-width calc() back and delete the label rule. */
+#identity-box.extensionPage {
+  max-width: none !important;
+}
+
+#identity-box.extensionPage #identity-icon-label {
+  display: none !important;
+}
+
+/* IDENTITY ICON COVERED BY THE ADDRESS TEXT BOX (compact and standard density)
+   Two causes, two fixes:
+   1. .urlbar-input-box is position: relative (statuspanel block above), and a positioned element is painted over a
+      non-positioned sibling. Any overlap, even 1-2px, therefore lands on top of the identity icon. Making the identity box
+      positioned too (and later in z-order) puts the icon back on top, whatever the density's margins add up to.
+   2. Give the input box a little room, but only while the identity box is actually showing (.extensionPage, or the
+      expanded floating bar), so the centred address text does not move when the box is collapsed to 0 width.
+      The :has() is scoped to the input container. Raise/lower --uc-identity-gap to taste.
+   To undo: delete this block. */
+#identity-box {
+  position: relative;
+  z-index: 2;
+}
+
+.urlbar-input-container {
+  --uc-identity-gap: 6px;
+}
+
+.urlbar-input-container:has(> #identity-box.extensionPage) > .urlbar-input-box,
+:root#main-window[uc-vertical] #urlbar-container:is(:focus-within, :hover) .urlbar-input-container:has(> #identity-box:not(.extensionPage)) > .urlbar-input-box {
+  margin-inline-start: var(--uc-identity-gap);
+}
+
+/* ---- URLBAR DROPDOWN ICONS: one size, one position ----
+   --uc-urlbar-dropdown-icon (01 / 07 §17) is the only size. The favicon, its Nova mask and the bookmark badge all derive from it.
+   The mask is painted by the favicon <img>, so it can never be larger than the icon: mask = icon box, position 0.
+   The bookmark badge is anchored to the favicon's box, so it cannot move on its own (Firefox's own badge offsets are computed
+   from tokens we override, which is what let them drift). */
+.urlbarView-row,
+.urlbarView-favicon {
+  --urlbarview-favicon-size: var(--uc-urlbar-dropdown-icon) !important;
+  --urlbarview-favicon-mask-size: var(--uc-urlbar-dropdown-icon) !important;
+  --urlbarview-favicon-mask-position: 0px !important;
+}
+
+.urlbarView-favicon {
+  width: var(--uc-urlbar-dropdown-icon) !important;
+  height: var(--uc-urlbar-dropdown-icon) !important;
+  min-width: var(--uc-urlbar-dropdown-icon) !important;
+  min-height: var(--uc-urlbar-dropdown-icon) !important;
+  mask-size: var(--urlbarview-favicon-mask-size) var(--urlbarview-favicon-mask-size) !important;
+  mask-position: var(--urlbarview-favicon-mask-position) 50% !important;
+  mask-repeat: no-repeat !important;
+}
+
+/* row height follows the icon so results are not clipped */
+.urlbarView-row-inner {
+  min-height: calc(var(--uc-urlbar-dropdown-icon) + 16px) !important;
+}
+
+@supports (position-anchor: --a) {
+  /* anchor-scope: each row resolves --uc-dd-fav to ITS OWN favicon, not the last one in the list */
+  .urlbarView-row-inner {
+    anchor-scope: --uc-dd-fav;
+  }
+
+  .urlbarView-favicon {
+    anchor-name: --uc-dd-fav;
+  }
+
+  /* Every row type's badge (bookmark star, history clock, open-tab glyph) sits on the favicon box.
+     Only the box is controlled here. Each type keeps its own glyph, so no mask-image is set. */
+  .urlbarView-row .urlbarView-type-icon {
+    position: absolute !important;
+    position-anchor: --uc-dd-fav;
+    inset: auto !important;
+    inset-inline-start: anchor(start) !important;
+    inset-block-start: anchor(start) !important;
+    width: var(--uc-urlbar-dropdown-icon) !important;
+    height: var(--uc-urlbar-dropdown-icon) !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    translate: none !important;
+    transform: none !important;
+    overflow: visible !important;
+  }
+
+  /* history and open-tab badges (drawn as background-image, confirmed): glyph in the favicon's
+     bottom-right corner, scaled with the box. Tune --uc-badge-glyph-size to match the cutout
+     (45% was too small; bookmark star's mask is 42% but its SVG has less built-in padding).
+     The bookmark star keeps its own mask rule from the badge block above. */
+
+  /* One note for later: --uc-badge-glyph-size is the only value tied to this. If a different density
+     ever makes the glyph look slightly off against its cutout, adjust that one variable 
+     (or background-position for a nudge) and leave the anchoring rules alone. */
+
+  .urlbarView-row:not([type="bookmark"]) .urlbarView-type-icon {
+    --uc-badge-glyph-size: 100%;
+    background-size: var(--uc-badge-glyph-size) var(--uc-badge-glyph-size) !important;
+    background-position: 100% 100% !important;
+    background-repeat: no-repeat !important;
+  }
+}

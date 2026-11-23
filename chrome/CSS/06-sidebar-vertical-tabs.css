@@ -1,0 +1,610 @@
+/* 06-sidebar-vertical-tabs.css: Sections 13-14: sidebar, rail behaviour, vertical tabs. Imported by ../userChrome.css; order of the imports matters. */
+
+/* ==========================================================================
+   13. SIDEBAR (colours, positioning, splitters, rail behaviour)
+   ========================================================================== */
+
+/* Remove scrollbar background/track in sidebar and panels */
+#sidebar-box,
+#sidebar-header,
+.sidebar-panel,
+#historyTree,
+#bookmarks-view {
+  scrollbar-color: rgba(255, 255, 255, 0.4) transparent !important;
+}
+
+/* Transparent track and corner in browser UI scrollbars */
+scrollbar,
+scrollcorner {
+  -moz-appearance: none !important;
+  background: transparent !important;
+}
+
+/* Semi-transparent thumb */
+thumb {
+  -moz-appearance: none !important;
+  background-color: rgba(128, 128, 128, 0.5) !important;
+  border-radius: 4px;
+}
+
+/* Give the scrollbars a width, since removing native appearance can collapse them */
+scrollbar[vertical] {
+  min-width: 10px;
+}
+
+scrollbar[horizontal] {
+  min-height: 10px;
+}
+
+#sidebar-box webview {
+  border-radius: var(--uc-rail-radius) !important;   /* (#sidebar and .sidebar-panel get theirs from the big rule below) */
+}
+
+/* Full Sidebar Background, Header, Container & Tree Integration */
+sidebar-main,
+#sidebar-container,
+#sidebar-box,
+#sidebar-header,
+#sidebar,
+.sidebar-panel,
+#historyTree,
+#bookmarks-view,
+#sidebar-search-container {
+  border-radius: var(--uc-rail-radius) !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  background-color: var(--sidebar-bg-custom) !important;
+  color: var(--sidebar-text-color) !important;
+
+  --sidebar-background-color: var(--sidebar-bg-custom) !important;
+  --lwt-sidebar-background-color: var(--sidebar-bg-custom) !important;
+  --lwt-sidebar-text-color: var(--sidebar-text-color) !important;
+  --organizer-pane-background: var(--sidebar-panel-bg) !important;
+  --organizer-content-background: var(--sidebar-panel-bg) !important;
+
+  --toolbarbutton-hover-background: var(--uc-hover) !important;
+  --toolbarbutton-active-background: var(--uc-active) !important;
+  --toolbarbutton-checked-background: var(--uc-selected) !important;
+
+  --button-hover-background: var(--uc-hover) !important;
+  --button-active-background: var(--uc-active) !important;
+  --button-checked-background: var(--uc-selected) !important;
+  --button-background-color-hover: var(--uc-hover) !important;
+  --button-background-color-active: var(--uc-active) !important;
+  --button-background-color-checked: var(--uc-selected) !important;
+
+  --lwt-sidebar-highlight-background: var(--uc-hover) !important;
+  --border-color-hover: var(--uc-accent) !important;
+  --input-border-color-hover: var(--uc-accent) !important;
+}
+
+/* Gradient on the rail (colours: --uc-grad-sidebar in section 2) */
+sidebar-main {
+  background-image: var(--uc-grad-sidebar) !important;
+}
+
+/* Translucent rail (Surface opacity below 100%, attribute set by SidebarToggles.uc.js): only sidebar-main paints, with the gradient, which
+   carries the transparency (--uc-alpha-chrome in 01). The flat colours of the rail and its containers, and Firefox's own colour inside
+   sidebar-main's shadow DOM (--sidebar-background-color), are dropped so the layers do not stack. The sidebar panels (History...) are
+   separate documents and keep their own solid colour. */
+:root[uc-translucent] sidebar-main {
+  background-color: transparent !important;
+  --sidebar-background-color: transparent !important;
+  --lwt-sidebar-background-color: transparent !important;
+}
+
+:root[uc-translucent] :is(#sidebar-container, #sidebar-box, .sidebar-browser-stack, #sidebar) {
+  background-color: transparent !important;
+}
+
+/* The rail's container carries a gradient of its own (a 96deg, 50% translucent one, measured in the Browser Console). Behind the rail the stack was: window
+   colour + image, the body's gradient, THIS one, then the rail's gradient, so the image showed through three 50% tints and the rail looked opaque. The rail's
+   copy of the image used to sit on top of the first two and hide them. Dropped here so the rail has the same two layers over the image as the toolbox
+   (the body's gradient and its own). To undo: delete this rule. */
+:root[uc-translucent] #sidebar-container {
+  background-image: none !important;
+}
+
+/* The rail itself never paints an image: its tint only. This is more specific than any rail image rule that might still be around (an older copy of
+   this file, a hand edit), so the rail can never show an image of its own. The image comes from the fixed layer behind the window (17).
+   To undo: delete this rule. */
+:root[uc-bg-image][uc-translucent] :is(#sidebar-container, #browser) sidebar-main {
+  background-image: var(--uc-grad-sidebar) !important;
+}
+
+/* With a background image the rail paints NO image of its own: its gradient (--uc-grad-sidebar, translucent when Surface opacity is below 100%) is just a
+   tint over the window backdrop, which shows the image layer of 17. The image is placed once, there (--uc-bg-x / --uc-bg-y in 01-tokens.css), so the rail can move, slide or
+   change size (navbar pushing it, fullscreen, expanding) without the image shifting or rescaling.
+   Trade-off: while an expanded rail covers the page (hover expand, fullscreen overlay) the tint shows the page behind it, not the image. */
+
+/* The sidebar panels (History, Bookmarks, Downloads, Customize...) get the same treatment: the panel box in the window paints the panel colour
+   at Surface opacity over the dimmed image (fixed to the window, so it lines up with everything else), and the panel's own document paints
+   nothing (the block after this rule, switched by uc-panel-translucent, which SidebarToggles.uc.js sets on the panel's root while an image is
+   chosen and Surface opacity is below 100). #sidebar, the browser inside the box (it carries transparent="true"), and the stack around it are
+   made transparent above. Panels from extensions are remote pages that these rules cannot reach: they keep their own background. */
+:root[uc-bg-image][uc-translucent] #sidebar-box {
+  background-image: var(--uc-panel-layer), var(--uc-bg-scrim-layer), var(--uc-bg-image) !important;
+  background-attachment: scroll, fixed, fixed !important;
+  background-size: auto, cover, cover !important;
+  background-position: 0 0, center, center !important;
+  background-repeat: repeat, no-repeat, no-repeat !important;
+}
+
+/* The sidebar panel DOCUMENTS (History, Bookmarks, Customize, Passwords...). userChrome.css reaches them (userContent.css does not), and two
+   rules of this theme paint them solid: the "Full Sidebar Background" rule above (.sidebar-panel, #sidebar-header, #sidebar-search-container,
+   #bookmarks-view, #historyTree) and the backdrop colour rule in 02 (#main-window, body). While uc-panel-translucent is set on the panel's root, they are
+   made see-through so the panel box above shows through. The colour variables are set on the same elements because the "Full Sidebar
+   Background" rule sets them on .sidebar-panel itself, where they would otherwise override the root. Cards, inputs and buttons inside the
+   panels keep their own colours. */
+:root[uc-panel-translucent],
+:root[uc-panel-translucent] body,
+:root[uc-panel-translucent] :is(.sidebar-panel, #sidebar-header, #sidebar-search-container, #bookmarks-view, #historyTree) {
+  background: transparent !important;
+  --sidebar-background-color: transparent !important;
+  --lwt-sidebar-background-color: transparent !important;
+  --organizer-pane-background: transparent !important;
+  --organizer-content-background: transparent !important;
+  --uc-panel-doc-bg: transparent !important;
+}
+
+/* The newer panels (History, Tabs from other devices, Passwords...) keep their .sidebar-panel box inside a shadow root. A selector with
+   :root in front of it cannot reach into a shadow root, but the plain .sidebar-panel selector of the "Full Sidebar Background" rule above can
+   (rules of this stylesheet apply inside shadow roots), and it wins over anything a panel adds itself. So that rule is repeated here with its
+   colour taken from --uc-panel-doc-bg, which is set to transparent above while the panel is translucent (variables do cross into shadow
+   roots) and unset otherwise, when this gives the same colour as before. Must stay below the "Full Sidebar Background" rule. */
+.sidebar-panel {
+  background-color: var(--uc-panel-doc-bg, var(--sidebar-bg-custom)) !important;
+}
+
+/* Sidebar Button Isolation & Hover/Selected States */
+:is(sidebar-main, #sidebar-container, #sidebar-box, #sidebar) :is(button, toolbarbutton, .sidebar-places-treeitem) {
+  background-color: transparent !important;
+  color: inherit !important;
+}
+
+:is(sidebar-main, #sidebar-container, #sidebar-box, #sidebar) :is(button, toolbarbutton, .sidebar-places-treeitem):hover {
+  background-color: var(--uc-hover) !important;
+}
+
+:is(sidebar-main, #sidebar-container, #sidebar-box, #sidebar) :is(button, toolbarbutton, .sidebar-places-treeitem):is([selected], [aria-selected="true"], [aria-pressed="true"], [checked="true"], [open="true"]) {
+  background-color: var(--uc-selected) !important;
+}
+
+/* ---- SIDEBAR SPLITTERS: not resizable, filled with the sidebar colour ---- */
+/* The splitters between the rail, the panel and the page are the only drag handles for
+   resizing, so letting mouse events pass through them locks the sidebar size. They are
+   also transparent by default, which showed the window background as a gap, so fill
+   them with the sidebar colour. */
+#sidebar-splitter,
+#sidebar-launcher-splitter {
+  pointer-events: none !important;
+  cursor: default !important;
+  -moz-user-focus: ignore !important;
+  background-color: transparent !important;
+  opacity: 1 !important;
+}
+
+/* ---- FIREFOX NATIVE VERTICAL TABS ONLY ---- */
+/* Sidebar width and expand-on-hover are handled by Firefox itself.
+   The old 48px/240px width rules were removed because they fought the
+   native behaviour (confirmed: hover-expand works without them). */
+
+/* Rounded rail corners during the slide: the rail's border-radius stays on while Firefox animates it,
+   but the corners get lost in rendering, so clip-path rounds it too. Both read --uc-rail-radius (01-tokens.css),
+   so they can no longer drift apart; the clip-path in 07 (section 18, rule 2) uses it as well.
+   To undo: delete this rule. */
+sidebar-main,
+#sidebar-main {
+  border-radius: var(--uc-rail-radius) !important;
+  clip-path: inset(0 round var(--uc-rail-radius)) !important;
+}
+
+/* "Hide tabs and sidebar" toggled while the Customize panel is open (expand-on-hover OFF only; with it on,
+   forcing the rail visible left it stuck off screen): Firefox hides #sidebar-container but leaves the panel
+   open, so the panel slid over the spot where the rail belongs. Keep the container visible while a panel is
+   open, and at the usual 50px: in that stuck state Firefox sizes the rail to 32px and gives the panel an extra
+   left padding, so the panel overlapped the rail. Measured good state: rail and container 50px wide, panel
+   padding unset. The rail can still be too wide until the panel closes; JS/sidebarCollapseRail.uc.js
+   handles that. To undo: delete this block. */
+:root:not([sidebar-expand-on-hover]) #sidebar-container[hidden][sidebar-panel-open] {
+  display: flex !important;
+}
+
+/* ---- Customize panel open: keep the rail visible even if the mode would hide it ----
+   Scenario this fixes: vertical tabs off, CS opened from the horizontal toolbar's buttons-wrapper,
+   user toggles vertical tabs ON from within CS, and the saved visibility mode is hide-sidebar
+   (vtRememberVisibility.uc.js restores it). Firefox hides the rail ([hidden] on
+   #sidebar-container) immediately — the existing rule above does not catch this because in
+   horizontal-tabs mode [sidebar-panel-open] lands on #tabbrowser-tabbox, not on the container.
+   In fullscreen with the toolbox hidden, the only way to reveal the rail is the "Show Sidebar"
+   toolbar button, which is not reachable until the toolbox is revealed; the user is stuck with
+   no sidebar and no obvious escape.
+   While CS is open, force the rail visible so the user can see it, interact with it, and change
+   the mode in CS if hide-sidebar was not the intent. The rail's width is pinned to
+   --uc-rail-collapsed by 13's [uc-customize-open] rules, so it shows as the correct collapsed
+   strip (40/50/60), not as some intermediate shape.
+   This rule wins over 06's own "a hidden rail has no width" block ([hidden][sidebar-panel-open]
+   → width: 0), because that block sets width / min-width / max-width but not display; display:
+   flex is what actually makes the rail visible.
+   Note: this only prevents the hide DURING CS. After CS closes, if the mode is still hide-sidebar,
+   Firefox hides the rail again (that is hide-sidebar's purpose). To fully avoid the stuck state,
+   either change the mode in CS to expand-on-hover / show-sidebar before closing, or reveal the
+   toolbox (top-edge hover in fullscreen, top of the screen in windowed) and click "Show Sidebar".
+   To undo: delete this rule. */
+:root[uc-customize-open] #sidebar-container[hidden] {
+  display: flex !important;
+}
+
+:root:not([sidebar-expand-on-hover]) #browser:has(#sidebar-container[hidden][sidebar-panel-open]) #sidebar-box {   /* :has() anchored on #browser, not :root */
+  padding-inline-start: unset !important;
+}
+
+/* The rail's contents are laid out for 32px, so at 50px they used to hug the left edge and the bottom buttons looked lopsided. That was fixed here
+   with padding on sidebar-main (and a negative margin on the tabs to cancel it). The same centring now comes from the button-size variables that
+   07 section 18 rule 5 sets on the collapsed rail, and rule 5 keeps them while a panel is open, so only the width is pinned here. To undo: restore the
+   padding-inline-start / padding-inline-end lines and the #vertical-tabs margin rule from the previous version, and put :not([sidebar-panel-open]) back in 07 rule 5. */
+:root:not([sidebar-expand-on-hover]) #sidebar-container[hidden][sidebar-panel-open] sidebar-main {
+  width: var(--uc-rail-collapsed) !important;
+  min-width: var(--uc-rail-collapsed) !important;
+  box-sizing: border-box !important;
+}
+
+/* ==========================================================================
+   14. VERTICAL TABS (rail tab layout, audio badge, titles, "+" button)
+   ========================================================================== */
+/* Favicon-to-title gap: Firefox animates it in 150ms; match the rail. */
+#tabbrowser-tabs[orient="vertical"] :is(.tab-icon-stack, .tab-icon-image) {
+  transition: margin-inline-end var(--uc-sidebar-anim) !important;
+}
+
+/* --- Tab layout & centred favicon alignment --- */
+:is(#sidebar-main, sidebar-main, #sidebar-container, #sidebar-box) .tabbrowser-tab {
+  min-width: 100% !important;
+  max-width: 100% !important;
+  width: 100% !important;
+  margin: -1px !important;
+}
+
+:is(#sidebar-main, sidebar-main, #sidebar-container, #sidebar-box) .tab-content {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  width: 100% !important;
+  padding-inline-start: var(--uc-rail-pad-start) !important;
+  padding-inline-end: 14px !important;
+  padding-bottom: var(--uc-rail-pad-block) !important;
+  padding-top: var(--uc-rail-pad-block) !important;
+}
+
+:is(#sidebar-main, sidebar-main, #sidebar-container, #sidebar-box) :is(.tab-icon-stack, .tab-icon-image) {
+  position: relative !important;
+  width: var(--uc-icon-size) !important;
+  height: var(--uc-icon-size) !important;
+  flex-shrink: 0 !important;
+  margin-inline-start: -3px !important;
+  margin-inline-end: 0 !important;
+  padding-bottom: 0px !important;
+}
+
+/* Expand gap between favicon and label when the sidebar is expanded.
+   Keyed on Firefox's `expanded` attribute, not :hover: with :hover the gap
+   collapsed whenever the mouse left the sidebar (e.g. a context menu opening),
+   shifting titles and nav buttons sideways. */
+#tabbrowser-tabs[expanded] :is(.tab-icon-stack, .tab-icon-image) {
+  margin-inline-end: var(--uc-tab-title-gap, 28px) !important;
+}
+
+/* --- Audio controls & speaker badge --- */
+:is(#sidebar-main, sidebar-main, #sidebar-container, #sidebar-box) .tab-icon-stack:is([muted], [soundplaying], [activemedia-blocked]) {
+  grid-template-areas: "a" !important;
+}
+
+/* Speaker badge in vertical tabs: the <image class="tab-icon-overlay"> inside .tab-icon-stack,
+   which carries the soundplaying / muted / activemedia-blocked attributes. It is pinned to the
+   stack's single grid cell as a badge (the sidebar stack only defines area "a").
+   Uses --uc-audio-top / --uc-audio-right / --uc-audio-size / --uc-audio-pad.
+   The look (ring, icons, muted colours) is in the AUDIO BADGE rules further down. */
+:is(#sidebar-main, sidebar-main, #sidebar-container, #sidebar-box) .tab-icon-overlay {
+  grid-area: 1 / 1 !important;
+  position: absolute !important;
+  top: var(--uc-audio-top) !important;
+  right: var(--uc-audio-right) !important;
+  left: auto !important;
+  bottom: auto !important;
+  width: var(--uc-audio-size) !important;
+  height: var(--uc-audio-size) !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: var(--uc-audio-pad) !important;
+  box-sizing: border-box !important;
+  border-radius: 50% !important;
+  background-color: var(--uc-audio-bg) !important;
+  color: var(--uc-audio-fg) !important;
+  fill: var(--uc-audio-fg) !important;
+  -moz-context-properties: fill !important;
+  box-shadow: 0 0 0 var(--uc-audio-ring-width) var(--uc-audio-ring), 0 1px 5px rgb(0 0 0 / 0.28);
+  margin: 0 !important;
+  transform: none !important;
+  scale: 1 !important;
+  z-index: 2 !important;
+  transition: scale 0.12s ease, box-shadow 0.2s ease;
+}
+
+/* ---- AUDIO BADGE: look, icons and states (horizontal and vertical tabs) ----
+   An accent circle with a thin ring and soft shadow. Play triangle while audio plays, pause
+   bars when muted (greyed accent), stop square when media was blocked from autoplaying. Colours, ring,
+   rim and icon size are the --uc-audio-* tunables in section 2, as are the three icons
+   (--uc-audio-icon-*, SVG data URIs coloured with AccentColorText because `context-fill` painted them black).
+   Horizontal tabs and the expanded vertical rail use the <moz-button> .tab-audio-button (icon drawn on its
+   ::after); the collapsed vertical rail uses the <image class="tab-icon-overlay"> (icon is its
+   list-style-image). */
+.tab-audio-button {
+  --uc-audio-icon: var(--uc-audio-icon-playing);
+  --button-icon-fill: var(--uc-audio-fg) !important;
+  --button-padding-icon: 0 !important;
+  --button-content-alignment: center !important;
+  box-shadow: 0 0 0 var(--uc-audio-ring-width) var(--uc-audio-ring), 0 1px 5px rgb(0 0 0 / 0.28);
+  transition: scale 0.12s ease, box-shadow 0.2s ease;
+}
+
+/* The <moz-button> .tab-audio-button: horizontal tabs, and the audio button beside the title in expanded vertical tabs.
+   Firefox draws its icon as an <img> that did not accept a replacement image here (it kept showing the stock
+   icon). So the stock img is shrunk to nothing (--icon-size) and our icon is drawn on a ::after layer over the
+   button instead. Circle size, icon size, ring and drop shadow all come from the same --uc-audio-* settings
+   (section 2) and the shared .tab-audio-button rule above, exactly like the vertical badge.
+   The circle colour comes from --uc-audio-bg (same as vertical tabs); the icon colour follows --uc-audio-fg (set per
+   theme) so it stays readable on light and dark themes. */
+:is(#TabsToolbar, #tabbrowser-tabs[orient="vertical"]) .tab-audio-button {
+  --icon-size: 0px !important;
+  --button-size-icon-small: var(--uc-audio-size-h) !important;
+  --button-min-height-small: var(--uc-audio-size-h) !important;
+  --button-border-color-ghost: unset !important;
+  --button-border-radius: 30px !important;
+  --button-background-color-ghost-hover: var(--uc-audio-bg) !important;
+  --button-text-color: var(--uc-audio-fg) !important;
+  --button-text-color-ghost: var(--uc-audio-fg) !important;
+  --button-text-color-ghost-hover: var(--uc-audio-fg) !important;
+  position: relative !important;
+  background: var(--uc-audio-bg) !important;
+  border-radius: 30px !important;
+  scale: var(--uc-audio-scale-h) !important;
+  flex-shrink: 0 !important;
+  color: var(--uc-audio-fg) !important;
+  fill: var(--uc-audio-fg) !important;
+}
+
+/* Placement that only suits the horizontal strip (vertical tabs keep Firefox's own placement beside the title).
+   Position: --uc-audio-badge-x / --uc-audio-badge-y in 01-tokens.css (section 2). */
+#TabsToolbar .tab-audio-button {
+  transform: translateY(var(--uc-audio-badge-y));
+  margin-inline-start: var(--uc-audio-badge-x) !important;
+}
+
+/* Selected horizontal tab: the favicon has margin-inline-end: var(--uc-tab-title-gap) (04) to push the title right, which also pushed the
+   badge that far from the favicon. Pull the badge back by the same amount with `translate` (not margin, so the title stays where it is),
+   so it sits on the favicon exactly as it does on an idle tab. --uc-selected-audio-badge-dy is an optional vertical fine nudge
+   (positive = down) in case the selected favicon sits at a different height than the idle one. */
+#TabsToolbar .tabbrowser-tab[selected] .tab-audio-button {
+  translate: calc(var(--uc-tab-title-gap, 28px) * -1) var(--uc-selected-audio-badge-dy, 0px);
+}
+
+/* Firefox's own face and icon: hidden, so only our icon shows */
+:is(#TabsToolbar, #tabbrowser-tabs[orient="vertical"]) .tab-audio-button::part(button) {
+  background-image: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Icon plus white rim, same icons and size as vertical */
+:is(#TabsToolbar, #tabbrowser-tabs[orient="vertical"]) .tab-audio-button::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  border-radius: 50% !important;
+  pointer-events: none !important;
+  box-shadow: inset 0 0 0 var(--uc-audio-rim-width) var(--uc-audio-rim) !important;
+  background-image: var(--uc-audio-icon) !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: calc(var(--uc-audio-size-h) - 2 * var(--uc-audio-pad)) !important;
+}
+
+:is(#TabsToolbar, #tabbrowser-tabs[orient="vertical"]) .tab-audio-button:hover {
+  scale: calc(var(--uc-audio-scale-h) * var(--uc-audio-hover-scale)) !important;
+}
+
+/* media blocked from autoplaying: stop square */
+.tabbrowser-tab[activemedia-blocked] .tab-audio-button {
+  --uc-audio-icon: var(--uc-audio-icon-blocked);
+}
+
+/* muted: greyed-accent badge, pause bars (listed last so it wins when a tab is both playing and muted) */
+.tabbrowser-tab[muted] .tab-audio-button {
+  --uc-audio-bg: var(--uc-audio-bg-muted);
+  --uc-audio-fg: var(--uc-audio-fg-muted);
+  --uc-audio-icon: var(--uc-audio-icon-muted);
+}
+
+/* The same look for the vertical-tab badge (<image class="tab-icon-overlay">): the icon is its
+   list-style-image, coloured by `fill`; the state is an attribute on the image itself.
+   These rules key off #tabbrowser-tabs[orient="vertical"]; selectors starting at the sidebar did not
+   recolour this element. Position and size still come from the sidebar-based rule at the top of
+   section 14 (--uc-audio-top / --uc-audio-right / --uc-audio-size / --uc-audio-pad). */
+#tabbrowser-tabs[orient="vertical"] .tab-icon-overlay:is([soundplaying], [muted], [activemedia-blocked]) {
+  background-color: var(--uc-audio-bg) !important;
+  /* Firefox draws a dark disc with something other than background-color (the computed colour was already
+     the accent while the badge still drew dark). Clearing these is what made the accent circle show, so keep them: */
+  background-image: none !important;
+  border: none !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+  opacity: 1 !important;
+  mask: none !important;
+  color: var(--uc-audio-fg) !important;
+  fill: var(--uc-audio-fg) !important;
+  -moz-context-properties: fill !important;
+  border-radius: 50% !important;
+  box-shadow: 0 0 0 var(--uc-audio-ring-width) var(--uc-audio-ring), 0 1px 5px rgb(0 0 0 / 0.28);
+  transition: scale 0.12s ease, box-shadow 0.2s ease;
+  outline: var(--uc-audio-rim-width) solid var(--uc-audio-rim) !important;
+  outline-offset: calc(var(--uc-audio-rim-width) * -1) !important;
+}
+
+#tabbrowser-tabs[orient="vertical"] .tab-icon-overlay[soundplaying] {
+  list-style-image: var(--uc-audio-icon-playing) !important;
+}
+
+#tabbrowser-tabs[orient="vertical"] .tab-icon-overlay[activemedia-blocked] {
+  list-style-image: var(--uc-audio-icon-blocked) !important;
+}
+
+#tabbrowser-tabs[orient="vertical"] .tab-icon-overlay[muted] {
+  --uc-audio-bg: var(--uc-audio-bg-muted);
+  --uc-audio-fg: var(--uc-audio-fg-muted);
+  list-style-image: var(--uc-audio-icon-muted) !important;
+}
+
+#tabbrowser-tabs[orient="vertical"] .tab-icon-overlay[soundplaying]:hover {
+  scale: var(--uc-audio-hover-scale) !important;
+}
+
+/* --- Tab label & marquee animation (merged: the centered version is the effective one; the earlier
+   left-aligned declarations were overridden by the later "Container & Label Centering" block) --- */
+:is(#sidebar-main, sidebar-main, #sidebar-container, #sidebar-box) .tab-label-container {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  container-type: inline-size !important;
+}
+
+/* The fade at the right edge of the title only matters while the titles are visible. A mask-image forces an
+   offscreen layer per tab, and while the rail is collapsed the titles are invisible anyway (opacity 0, see
+   "Tab titles: fade" below), so the mask is only applied while the rail is expanded.
+   To undo: move the mask-image line back into the rule above and delete this block. */
+#tabbrowser-tabs[orient="vertical"][expanded] .tab-label-container {
+  mask-image: linear-gradient(to right, black calc(100% - 15px), transparent 100%) !important;
+}
+
+:is(#sidebar-main, sidebar-main, #sidebar-container, #sidebar-box) .tab-label {
+  display: inline-block !important;
+  flex: none !important;
+  width: max-content !important;
+  min-width: 100cqw !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-align: center !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  transform: translateX(0);
+  transition: transform 0.25s ease-out;
+}
+
+/* Long titles scroll at a constant speed (--uc-label-speed) however long they are: the script sets
+   --uc-label-dist (px the title has to travel) on the label when you hover the tab, and the duration is
+   distance / speed, plus 25% for the short pause at each end. Linear, so there is no slow start.
+   Without the script --uc-label-dist falls back to 200. */
+@keyframes vertical-tab-text-scroll {
+  0%, 10% {
+    transform: translateX(0);
+  }
+  90%, 100% {
+    transform: translateX(calc(-100% + 100cqw));
+  }
+}
+
+/* Scrolling animation on hover */
+:is(#sidebar-main, sidebar-main, #sidebar-container, #sidebar-box) #tabbrowser-tabs[expanded] .tabbrowser-tab:hover .tab-label {
+  text-align: center !important;
+  animation-name: vertical-tab-text-scroll !important;
+  animation-duration: max(1.5s, calc(var(--uc-label-dist, 200) / var(--uc-label-speed) * 1.25s)) !important;
+  animation-timing-function: linear !important;
+  animation-iteration-count: infinite !important;
+  animation-direction: alternate !important;
+}
+
+/* --- Controls visibility in the collapsed rail --- */
+:is(#sidebar-main, sidebar-main, #sidebar-container, #sidebar-box) :is(#sidebar-select-box, #sidebar-navigation-box, #sidebar-header, #tabs-newtab-button, .sidebar-panel-header) {
+  padding-inline-start: calc(19.5px + (var(--uc-rail-center) - 50px) / 2) !important;
+  margin-inline-start: 0 !important;
+  justify-content: center !important;
+}
+
+/* Tab titles: fade (and slide in from the left) instead of popping in. They stay laid out
+   but invisible while the rail is collapsed; Firefox's expansion takes ~400ms, so wait a
+   moment before fading in, and fade out quickly on collapse. */
+#tabbrowser-tabs[orient="vertical"]:not([expanded]) .tab-label-container {
+  opacity: 0 !important;
+  transform: translateX(calc(var(--uc-label-slide) * -1)) !important;
+  pointer-events: none !important;
+  transition: opacity var(--uc-label-out) ease-in, transform var(--uc-label-out) ease-in !important;
+}
+
+#tabbrowser-tabs[orient="vertical"][expanded] .tab-label-container {
+  opacity: 1 !important;
+  transform: none !important;
+  transition: opacity var(--uc-label-in) ease-out var(--uc-label-delay),
+              transform var(--uc-label-in) ease-out var(--uc-label-delay) !important;
+}
+/* New tab "+" button in the COLLAPSED rail (e.g. "Hide tabs and sidebar", where hovering
+   doesn't expand it). Measured: 6px corners with a 20% accent fill, tighter than the
+   12px tab tiles. Give it the tab radius and remove any outline/ring on hover/press.
+   The expanded look is untouched. To undo: delete this rule. */
+#tabbrowser-tabs[orient="vertical"]:not([expanded]) #tabs-newtab-button {
+  border-radius: var(--uc-newtab-radius) !important;
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+#tabbrowser-tabs[orient="vertical"]:not([expanded]) #tabs-newtab-button:is(:hover, :active) {
+  outline: none !important;
+  box-shadow: none !important;
+  border-radius: var(--uc-newtab-radius) !important;
+}
+
+/* NEW TAB "+" BUTTON: same box as a rail tab tile, "+" centred in the favicon column in EVERY state (collapsed,
+   expanded, mid-slide), so it never moves while the rail animates; only the button's background grows and
+   shrinks with the rail. Size and icon are tunable with --uc-newtab-icon / --uc-newtab-h; everything else
+   follows the density. --uc-newtab-nudge: fine adjustment, positive = right. To undo: delete these two rules. */
+#tabbrowser-tabs[orient="vertical"] #tabs-newtab-button {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: var(--uc-newtab-h) !important;
+  min-height: var(--uc-newtab-h) !important;
+  margin: -1px !important;               /* same as the rail's tabs, so the edges line up */
+  border-radius: var(--uc-newtab-radius) !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  padding-inline-start: calc(var(--uc-rail-pad-start) - 3px + (var(--uc-icon-size) - var(--uc-newtab-icon)) / 2 + var(--uc-newtab-nudge)) !important;
+  padding-inline-end: 0 !important;
+  transition: none !important;
+}
+
+#tabbrowser-tabs[orient="vertical"] #tabs-newtab-button > .toolbarbutton-icon {
+  width: var(--uc-newtab-icon) !important;
+  height: var(--uc-newtab-icon) !important;
+  margin: 0 !important;
+  transition: none !important;
+}
+
+/* Keyboard focus on the "+" button: the collapsed rail removes outlines above (no ring on hover or press), but the ring for keyboard
+   focus has to stay. Placed after those rules; same specificity, so it wins. To undo: delete this rule. */
+#tabbrowser-tabs[orient="vertical"] #tabs-newtab-button:focus-visible {
+  outline: 2px solid var(--uc-focus) !important;
+  outline-offset: -2px !important;
+}
+
+/* RAIL TAB BOXES: the stack can't grow past its tab (it was 1px wider than the tab in the collapsed rail).
+   The tab surface HEIGHT (.tab-content) is in 10-split-frame-fit.css (strip, split pairs) and 14-rail-tiles.css (single rail tiles). */
+#tabbrowser-tabs[orient="vertical"] .tabbrowser-tab .tab-stack {
+  box-sizing: border-box !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}

@@ -1,0 +1,554 @@
+/* 04-horizontal-tabs.css: Sections 8-9: horizontal tabs, throbber, audio badge, tab-strip buttons. Imported by ../userChrome.css; order of the imports matters. */
+
+/* ==========================================================================
+   8. HORIZONTAL TABS, THROBBER & AUDIO INDICATORS
+   ========================================================================== */
+
+#tabbrowser-tabs {
+  --inline-tab-padding: 0px !important;
+  --tab-margin-inline: 0px !important;
+}
+
+.tabbrowser-tab {
+  background-color: transparent !important;
+  border-radius: var(--uc-tab-radius) !important;
+  height: calc(var(--TabsHeight) * 1px + 5px) !important;   /* 50px at Normal */
+  padding-inline: 0px !important;
+  margin-inline: -0.6px !important;
+  margin-block: 0.4px !important;
+  padding-block: 0px !important;
+}
+
+/* FIRST AND LAST TAB'S BORDERs: every tab has margin-inline: -0.6px, so the last tab in the horizontal strip stuck out
+   0.6px past the end of the tab scrollbox (measured: tab right edge 1875.6, scrollbox right edge 1875.0) and the
+   scrollbox clipped its border, most visible on hover when the border is brightest. The last and first tab now keeps its
+   right/left edge inside the scrollbox. Horizontal strip only.
+   To undo: delete this rule. */
+#TabsToolbar #tabbrowser-arrowscrollbox > :nth-child(1 of :is(.tabbrowser-tab:first-child, tab-split-view-wrapper):not([hidden])) {
+  margin-inline-start: 1px !important;
+  margin-inline-end: 0px !important;
+}
+
+#TabsToolbar #tabbrowser-arrowscrollbox > :nth-last-child(1 of :is(.tabbrowser-tab, tab-split-view-wrapper):not([hidden])) {
+  margin-inline-start: -0.2px !important;
+  margin-inline-end: 1px !important;
+}
+
+.tabbrowser-tab .tab-stack,
+.tabbrowser-tab .tab-content {
+  margin: 0px !important;
+  border: 1px solid var(--tab-border-color) !important;
+  box-shadow: inset 0 0 0 1px var(--tab-box-shadow-color) !important;
+  border-radius: var(--uc-tab-radius) !important;
+}
+
+.tab-background,
+.tab-stack {
+  min-height: calc(var(--TabsHeight) * 1px) !important;
+}
+
+.tabbrowser-tab[selected] .tab-background,
+.tabbrowser-tab:not([selected]):hover .tab-background {
+  display: none !important;
+}
+
+/* Tab States & Background Accent Tinting.
+   No element `opacity` on any state: the Tab opacity setting (--uc-alpha-tab in 01, applied to the colours and gradients below) is the only
+   thing that makes a tab see-through, and it is the same for the idle, hovered and selected tab. */
+.tabbrowser-tab[selected] .tab-content {
+  background-color: var(--active-tab-bg) !important;
+}
+
+/* Gradient on the selected tab (not while hovered, so the hover colour still shows) */
+.tabbrowser-tab[selected]:not(:hover) .tab-content {
+  background-image: var(--uc-grad-selected-tab) !important;
+}
+
+/* Idle tab: the shorthand sets background-color and resets background-image to none */
+.tabbrowser-tab:not([selected]) .tab-content {
+  background: var(--inactive-tab-bg) !important;
+}
+
+/* Hovered tab: background-color and background-image set separately so the shorthand above does not reset the gradient */
+.tabbrowser-tab:hover .tab-content {
+  background-color: var(--hover-tab-bg) !important;
+  background-image: var(--uc-grad-hover-tab) !important;
+  opacity: 1 !important;
+}
+
+/* Translucent tabs (Tab opacity below 100%, attribute set by SidebarToggles.uc.js). The selected and the hovered tab paint a gradient that
+   carries the transparency (--uc-alpha-tab in 01), so their flat colour is dropped: two translucent layers would stack and the tab would look
+   more solid than the setting. The idle tab's colour is translucent through --inactive-tab-bg, and Firefox's own idle tab background layer
+   is made see-through so it does not show under it. 15 does the same for the selected tab of a tab group. */
+:root[uc-tab-translucent] .tabbrowser-tab:is([selected], :hover) .tab-content {
+  background-color: transparent !important;
+}
+
+:root[uc-tab-translucent] .tab-background {
+  background: transparent !important;
+}
+
+/* GRADIENT SEAM FIX: a hard step ran across the top of the selected and hovered tab, a few pixels below its top
+   edge (measured from a screenshot: the strip above the line is the gradient's dark END colour, so the gradient
+   was being tiled, with its tail repeating over the top of the tab). The gradient is now sized to exactly
+   the tab's border box, placed at its top-left and not repeated, so it is drawn once from the top edge to the
+   bottom edge. Applies to horizontal and vertical tabs and to the tabs of a split pair.
+   To undo: delete this rule. */
+.tabbrowser-tab:is([selected], :hover) .tab-content {
+  background-origin: border-box !important;
+  background-clip: border-box !important;
+  background-size: 100% 100% !important;
+  background-position: 0 0 !important;
+  background-repeat: no-repeat !important;
+}
+
+/* Tab surface height: the strip and split pairs in 10-split-frame-fit.css, single tiles of the vertical rail in 14-rail-tiles.css */
+
+#TabsToolbar .tabbrowser-tab[selected] .tab-content {
+  padding-left: 0px !important;
+}
+
+#TabsToolbar .tabbrowser-tab[selected] .tab-icon-stack {
+  margin-left: 20px !important;
+  /* NEW: Applies the same variable to push the horizontal title further right */
+  margin-inline-end: var(--uc-tab-title-gap, 28px) !important;
+}
+
+/* Unselected Tab Favicon Centering & Sizing */
+.tabbrowser-tab:not([selected]) .tab-content {
+  padding-inline-start: 18px !important;
+  justify-content: center !important;
+}
+
+/* [fadein] on the three width rules below: Firefox removes it from a tab that is closing
+   so the tab can shrink to nothing. Forcing a fixed width on closing tabs kept them
+   stuck in the strip after they closed. */
+#TabsToolbar .tabbrowser-tab[fadein]:not([selected]):not([pinned]) {
+  min-width: var(--uc-tab-w) !important;
+  max-width: var(--uc-tab-w) !important;
+}
+
+/* Control height for horizontal tabs only */
+#tabbrowser-tabs[orient="horizontal"] .tabbrowser-tab[fadein] {
+  max-height: 59px !important;
+  max-width: 90px !important;
+}
+
+#TabsToolbar .tabbrowser-tab:not([selected]) .tab-label-container {
+  display: none !important;
+}
+
+#TabsToolbar .tabbrowser-tab[fadein][selected]:not([pinned]) {
+  min-width: 220px !important;
+  max-width: 290px !important;
+}
+
+#TabsToolbar .tabbrowser-tab[fadein]:not([selected]):is([soundplaying], [muted], [activemedia-blocked]) {
+  min-width: calc(var(--uc-tab-w) + 28px) !important;
+  max-width: calc(var(--uc-tab-w) + 28px) !important;
+}
+
+#TabsToolbar .tabbrowser-tab[fadein]:not([selected]):is([soundplaying], [muted], [activemedia-blocked]) .tab-icon-image, .tab-throbber {
+  position: relative;
+  top: 0px;
+  left: -1px;
+}
+
+#tabbrowser-tabs[haspinnedtabs]:not([positionpinnedtabs])
+  > #tabbrowser-arrowscrollbox
+  > .tabbrowser-tab:nth-child(1 of :not([pinned], [hidden])) {
+  margin-inline-start: 0 !important;
+}
+
+/* Tab Label Alignment */
+.tab-label-container {
+  align-content: center;
+}
+
+.tab-secondary-label {
+  justify-content: center;
+}
+
+.tab-label,
+.tab-secondary-label {
+  overflow: hidden;
+}
+
+/* LONG TITLES SCROLL (horizontal strip): same marquee as the vertical rail (06, "Tab label & marquee animation").
+   Only the SELECTED tab shows a title in the strip (idle tabs hide it above), so only it scrolls, while hovered.
+   The title box clips and fades its right edge; the label inside is as wide as its text (at least the box, so a short
+   title does not move) and slides back and forth by (text width - box width). The keyframes (vertical-tab-text-scroll)
+   are the ones defined in 06. Duration = distance / --uc-label-speed (+25% for the pause at each end), with the distance
+   (--uc-label-dist) kept up to date by JS/verticalTabLabelSpeed.uc.js; without the script it falls back to 200px.
+   flex: none on the label so the flex row cannot squeeze it back to the box width (that would leave nothing to scroll).
+   To undo: delete this block. */
+#TabsToolbar .tabbrowser-tab .tab-label-container {
+  display: flex !important;
+  justify-content: center !important; /* Centered container content */
+  align-items: center !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  container-type: inline-size !important;
+  mask-image: linear-gradient(to right, black calc(100% - 15px), transparent 100%) !important;
+}
+
+#TabsToolbar .tabbrowser-tab .tab-label {
+  display: inline-block !important;
+  flex: none !important;
+  width: max-content !important;
+  min-width: 100cqw !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-align: center !important; /* Centered text inside the label */
+  text-overflow: clip !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  transform: translateX(0);
+  transition: transform 0.25s ease-out;
+}
+
+#TabsToolbar .tabbrowser-tab[selected]:hover .tab-label {
+  animation-name: vertical-tab-text-scroll !important;
+  animation-duration: max(1.5s, calc(var(--uc-label-dist, 200) / var(--uc-label-speed) * 1.25s)) !important;
+  animation-timing-function: linear !important;
+  animation-iteration-count: infinite !important;
+  animation-direction: alternate !important;
+}
+
+.tabbrowser-tab[selected]:not(:hover) .tab-label-container:not([labeldirection="rtl"]),
+#tabbrowser-tabs:not([closebuttons="activetab"]) .tabbrowser-tab:not(:hover, [pinned]) .tab-label-container:not([labeldirection="rtl"]) {
+  margin-inline-end: 0px;
+}
+
+.tab-icon-image {
+  width: var(--uc-icon-size) !important;
+  height: var(--uc-icon-size) !important;
+  transform: none !important;
+  padding-right: 2px !important;
+  image-rendering: auto !important;   /* Firefox's default smoothing; "pixelated" gives hard edges */
+}
+
+/* AUDIO TABS: centred favicon, no movement (horizontal strip). The idle favicon of a tab playing, muted or
+   blocked sat low and moved on hover/selection, because the favicon lift in "favicon centring" (end of this
+   section) skips these tabs. Give them the same lift while idle and switch off transitions on the icon.
+   If it's still off, change --uc-audio-favicon-lift (section 2); 0px turns the lift off. */
+#TabsToolbar #tabbrowser-arrowscrollbox > .tabbrowser-tab:is([soundplaying], [muted], [activemedia-blocked]):not([selected], :hover) .tab-icon-stack {
+  translate: 0 calc(var(--uc-audio-favicon-lift) * -1) !important;
+}
+
+#TabsToolbar .tabbrowser-tab:is([soundplaying], [muted], [activemedia-blocked])
+  :is(.tab-icon-stack, .tab-icon-image, .tab-icon-overlay) {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* ---- TAB THROBBER (custom SVG), TAB ANIMATIONS & AUDIO INDICATOR ---- */
+/* The throbber has the SAME box as .tab-icon-image (size, padding-right, start margin), so the two are centred on each other in every layout
+   and density. The dots are drawn bigger with `scale` (it does not change layout), around the centre of the content box.
+   --uc-throbber-x/y and --uc-throbber-rail-x/y are optional fine nudges (0px by default). */
+.tab-throbber {
+  /* Reset default styles */
+  border: none !important;
+  border-radius: 0 !important;
+  animation: none !important;
+  background-image: none !important;
+
+  /* Same box as the favicon */
+  box-sizing: content-box !important;
+  width: var(--uc-icon-size) !important;
+  height: var(--uc-icon-size) !important;
+  padding: 0 2px 0 0 !important;      /* = .tab-icon-image padding-right above */
+  margin: 0 !important;
+
+  /* Bigger dots, centred on the picture (content box = border box minus the 2px of padding on the right) */
+  scale: var(--uc-throbber-scale) !important;
+  transform-origin: calc(50% - 1px) 50% !important;
+
+  /* Use SVG as a shape stencil, centred on the content box like the favicon */
+  mask-image: url("../thinking-dots.svg") !important;
+  mask-size: contain !important;
+  mask-repeat: no-repeat !important;
+  mask-position: center !important;
+  mask-origin: content-box !important;
+  mask-clip: content-box !important;
+
+  /* Fill the stencil with Firefox Accent Color */
+  background-color: var(--uc-text-accent) !important;
+}
+
+/* Vertical rail: the favicon has margin-inline-start: -3px there (06), so the throbber gets the same */
+:is(#sidebar-main, sidebar-main, #sidebar-container, #sidebar-box) .tab-throbber {
+  margin-inline-start: -3px !important;
+}
+
+#TabsToolbar .tab-throbber {
+  translate: var(--uc-throbber-x) var(--uc-throbber-y) !important;
+}
+
+#tabbrowser-tabs[orient="vertical"] .tab-throbber {
+  translate: var(--uc-throbber-rail-x) var(--uc-throbber-rail-y) !important;
+}
+
+/* Hide default Firefox loading pseudo-elements */
+.tab-throbber::before,
+.tab-throbber::after {
+  display: none !important;
+}
+
+/* Tab Animations */
+.tabbrowser-tab:not([pinned], [fadein]) {
+  transition-duration: 240ms, 240ms !important;
+  transition-timing-function: ease-out, ease-out !important;
+  visibility: visible !important;
+}
+
+.tab-content:not([fadein], [pinned]) .tab-icon-pending:not([fadein]),
+.tab-icon-image:not([fadein]),
+.tab-label:not([fadein]) {
+  visibility: visible !important;
+}
+
+.tab-label:not([fadein]) {
+  display: flex !important;
+}
+
+.tab-stack {
+  transition: transform 20ms linear;
+}
+
+.tabbrowser-tab:active .tab-stack {
+  transform: scale(0.99);
+}
+
+/* Force closing and hidden tabs to collapse and disappear instantly */
+#sidebar-main .tabbrowser-tab:is([closing], [hidden="true"], [hidden]),
+.tabbrowser-tab:is([closing], [hidden="true"], [hidden]) {
+  display: none !important;
+  height: 0px !important;
+  min-height: 0px !important;
+  max-height: 0px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* The .tab-audio-button (speaker badge beside the favicon) is styled in 06-sidebar-vertical-tabs.css, AUDIO BADGE section. */
+
+.tab-icon-stack:is([muted], [soundplaying], [activemedia-blocked]) {
+  grid-template-areas: "a s";
+}
+
+.tab-icon-overlay {
+  pointer-events: auto;
+}
+
+.tab-icon-overlay:hover {
+  filter: brightness(1.1) !important;
+  opacity: 1 !important;
+}
+
+.tab-content > .tab-icon-stack,
+.tab-icon-stack:hover > .tab-icon-image,
+.tab-icon-stack:is([soundplaying], [muted], [activemedia-blocked]) > * {
+  visibility: visible;
+  opacity: 1 !important;
+}
+
+#TabsToolbar #tabbrowser-tabs .tabbrowser-tab:not([pinned]) .tab-icon-overlay:not([pinned]) {
+  margin-inline-start: -2px !important;
+  margin-inline-end: 2px !important;
+}
+
+/* ---- HORIZONTAL TABS: VERTICAL ALIGNMENT & FAVICON CENTERING ----
+   Everything in the strip is centred in the tab row so single tabs and split view pairs line up.
+   The favicon values below were measured from screenshots (pixel positions of the icon against
+   the tab box), not guessed. */
+#TabsToolbar #tabbrowser-arrowscrollbox > :is(.tabbrowser-tab, tab-split-view-wrapper) {
+  align-self: center !important;
+}
+
+/* FILE-FOLDER TABS (horizontal strip): the tabs sit --uc-tab-drop lower (3px by default) and have a flat bottom, so they hang off the
+   bottom edge of the strip like the tab of a folder in the explorer.exe icon. Single tabs, split pairs and tab groups all move together.
+   The strip clips whatever goes past its bottom edge, so the shifted tabs end flush with it (no bottom border or glow line).
+   To change the drop, add `--uc-tab-drop: 6px;` to :root
+   in section 2 of 01, or edit the fallback here. 0px puts the tabs back.
+   To undo: delete this block. */
+#TabsToolbar #tabbrowser-arrowscrollbox > :is(.tabbrowser-tab, tab-split-view-wrapper, tab-group) {
+  translate: 0 var(--uc-tab-drop, 3px) !important;
+}
+
+#TabsToolbar .tabbrowser-tab,
+#TabsToolbar .tabbrowser-tab :is(.tab-stack, .tab-content) {
+  border-end-start-radius: 0 !important;
+  border-end-end-radius: 0 !important;
+}
+
+#TabsToolbar .tabbrowser-tab:not([selected], [soundplaying], [muted], [activemedia-blocked]) .tab-content {
+  padding-inline-start: var(--uc-favicon-pad) !important;
+}
+
+/* single tabs only: the inactive tab inside a split view pair was already vertically centred */
+#TabsToolbar #tabbrowser-arrowscrollbox > .tabbrowser-tab:not([selected], :hover, [soundplaying], [muted], [activemedia-blocked]) .tab-icon-stack {
+  translate: 0 calc(var(--uc-inactive-favicon-lift) * -1) !important;
+}
+
+
+/* ==========================================================================
+   9. TAB-STRIP BUTTONS (back/forward inside the active tab, All Tabs button)
+   ========================================================================== */
+/*Disable circle backdrop*/
+#back-button > .toolbarbutton-icon,
+#forward-button > .toolbarbutton-icon {
+  border-radius: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+#back-button::before,
+#forward-button::before,
+#back-button > .toolbarbutton-icon::before {
+  display: none !important;
+}
+
+/* Completely hide navigation buttons when disabled */
+:is(#back-button, #forward-button)[disabled] {
+  display: none !important;
+}
+
+/* Style enabled buttons cleanly inside the tab content bar */
+.tab-content :is(#back-button, #forward-button):not([disabled]) {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: var(--uc-tab-nav-icon, 18px) !important;
+  height: var(--uc-tab-nav-icon, 18px) !important;
+  min-width: var(--uc-tab-nav-icon, 18px) !important;
+  min-height: var(--uc-tab-nav-icon, 18px) !important;
+  padding: 1px !important;
+  margin-inline: 0 !important; /* Reset margins; we will apply them individually below */
+  flex-shrink: 0 !important;
+  align-self: center !important;
+  fill: currentColor !important;
+}
+
+/* 1. LEFT GAP: Space between Favicon and the FIRST visible button */
+.tab-content #back-button:not([disabled]),
+.tab-content #back-button[disabled] + #forward-button:not([disabled]) {
+  margin-inline-start: var(--uc-tab-nav-gap, 12px) !important;
+}
+
+/* 2. INNER GAP: Space between the Back and Forward buttons when both are visible */
+.tab-content #back-button:not([disabled]) + #forward-button:not([disabled]) {
+  margin-inline-start: 4px !important;
+}
+
+/* 3. RIGHT GAP: Space between the LAST visible button and the Tab Title */
+.tab-content #forward-button:not([disabled]),
+.tab-content #back-button:not([disabled]):has(+ #forward-button[disabled]) {
+  margin-inline-end: var(--uc-nav-title-gap, 12px) !important;
+}
+
+/* Force the navigation buttons to stay icon-only (hides the text labels) */
+.tab-content :is(#back-button, #forward-button) {
+  -moz-box-orient: horizontal !important;
+}
+
+.tab-content :is(#back-button, #forward-button) > :is(.toolbarbutton-text, .toolbarbutton-label, label) {
+  display: none !important;
+}
+
+/* Vertical rail: back/forward inside the active tab follow --uc-tab-nav-icon (density-tuned).
+   Horizontal strip keeps its 18px. The collapse rules below (width: 0 !important) are more
+   specific, so hiding still wins while the buttons are hidden. Sizes: 01 §2 + 07 §17. */
+#tabbrowser-tabs[orient="vertical"] .tab-content :is(#back-button, #forward-button):not([disabled]) {
+  width: var(--uc-tab-nav-icon) !important;
+  height: var(--uc-tab-nav-icon) !important;
+  min-width: var(--uc-tab-nav-icon) !important;
+  min-height: var(--uc-tab-nav-icon) !important;
+}
+
+/* Hover effect */
+.tab-content :is(#back-button, #forward-button):not([disabled]):hover {
+  background-color: var(--toolbarbutton-hover-background) !important;
+  border-radius: 14px !important;
+}
+
+/* --- Spacing between Nav Buttons and Tab Title (Vertical Tabs Only) --- */
+#tabbrowser-tabs:is([orient="vertical"], [vertical]) .tab-content #forward-button:not([disabled]),
+#tabbrowser-tabs:is([orient="vertical"], [vertical]) .tab-content #back-button:not([disabled]):has(+ #forward-button[disabled]) {
+  margin-inline-end: var(--uc-nav-title-gap, 12px) !important; 
+}
+
+/* Back/forward buttons (moved into the selected tab by moveNavToActiveTab): hidden until
+   you hover the tab, then they open up smoothly. The visible size (18px, 4px/1px margins,
+   1px padding) comes from the button rules earlier in this file; these only collapse it. */
+#tabbrowser-tabs[orient="vertical"] .tab-content :is(#back-button, #forward-button):not([disabled]),
+#TabsToolbar .tab-content :is(#back-button, #forward-button):not([disabled]) {
+  transition-property: width, min-width, padding, margin-inline-start, margin-inline-end, opacity !important;
+  transition-duration: var(--uc-nav-anim) !important;
+  transition-timing-function: ease !important;
+}
+
+/* Horizontal tabs behave the same (the strip has no "expanded" state, so it's just hover). */
+#tabbrowser-tabs[orient="vertical"][expanded] .tabbrowser-tab:not(:hover) .tab-content :is(#back-button, #forward-button):not([disabled]),
+#TabsToolbar .tabbrowser-tab:not(:hover) .tab-content :is(#back-button, #forward-button):not([disabled]) {
+  width: 0 !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+  margin-inline: 0 !important;
+  opacity: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Vertical rail: once hidden, take the back/forward buttons out of the row completely (display: none) so
+   they can't push the selected tab's title right. This used to be `position: absolute`, which took effect
+   instantly and threw the fading buttons to the left edge of the tab. `display` is now transitioned with
+   allow-discrete, so the buttons first shrink and fade in place (--uc-nav-anim) and only then drop out of the
+   row. Only while the rail is expanded: when it collapses they must vanish at once.
+   To undo: delete these two rules. */
+#tabbrowser-tabs[orient="vertical"][expanded] .tab-content :is(#back-button, #forward-button):not([disabled]) {
+  transition-property: width, min-width, padding, margin-inline-start, margin-inline-end, opacity, display !important;
+  transition-behavior: allow-discrete !important;
+}
+
+#tabbrowser-tabs[orient="vertical"][expanded] .tabbrowser-tab:not(:hover) .tab-content :is(#back-button, #forward-button):not([disabled]) {
+  display: none !important;
+  border: 0 !important;
+}
+
+/* Collapsed vertical rail: no back/forward buttons. Firefox sets the `expanded` attribute on
+   #tabbrowser-tabs whenever the rail is open (hover, context menu, or pinned open), so key off
+   that instead of :hover. */
+#tabbrowser-tabs[orient="vertical"]:not([expanded]) :is(#back-button, #forward-button) {
+  display: none !important;
+}
+
+/* All Tabs Button (#alltabs-button) Styling */
+#alltabs-button {
+  background-color: transparent !important;
+  --toolbarbutton-hover-background: var(--uc-hover) !important;
+  --toolbarbutton-active-background: var(--uc-active) !important;
+}
+
+#alltabs-button:hover :is(.toolbarbutton-badge-stack, span.button-background),
+#alltabs-button:not(:has(.toolbarbutton-badge-stack)):hover .toolbarbutton-icon {
+  background-color: var(--uc-hover) !important;
+  border-radius: var(--toolbarbutton-border-radius, 6px) !important;
+  fill: var(--nav-icon-color, currentColor) !important;
+}
+
+#alltabs-button:is([open="true"], [aria-expanded="true"]) :is(.toolbarbutton-badge-stack, span.button-background),
+#alltabs-button:is([open="true"], [aria-expanded="true"]):not(:has(.toolbarbutton-badge-stack)) .toolbarbutton-icon {
+  background-color: var(--uc-active) !important;
+  border-radius: var(--toolbarbutton-border-radius, 6px) !important;
+  fill: var(--nav-icon-color, currentColor) !important;
+}
+
+#alltabs-button:is(:focus-visible, :focus) :is(.toolbarbutton-icon, .toolbarbutton-badge-stack) {
+  outline: 2px solid var(--uc-focus) !important;
+  outline-offset: -1px !important;
+  border-radius: var(--toolbarbutton-border-radius, 6px) !important;
+}

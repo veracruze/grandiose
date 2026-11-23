@@ -1,0 +1,202 @@
+/* 11-fullscreen-rail.css: everything that happens to the toolbox, rail and page area in FULLSCREEN.
+   Imported before 12-fullscreen-overlay.css, which overrides parts of it while overlay mode is on.
+   Scripts involved: fullscreenRailHover.uc.js, fullscreenLeftEdgeReveal.uc.js (and fullscreenOverlayMode.uc.js, which decides whether this file or 12 is in charge).
+   Tunables (01-tokens.css, section 2): --uc-fs-toolbox-anim, --uc-fs-ease, --uc-fs-rail-dur, --uc-rail-expanded-w, --uc-rail-collapsed.
+   To undo: delete this file and its @import line (fullscreen then uses Firefox's own toolbar and rail behaviour).
+
+   MOTION OWNERSHIP:
+     - Overlay mode ON ([uc-fs-overlay-rail]) → 12 owns the rail (position: fixed + transform) and the page (no margin).
+       Everything in this file that would animate the rail's flex-basis or the page's margin is gated on [uc-overlay-off]
+       (equivalent to :not([uc-fs-overlay-rail])), so the two files cannot fight.
+     - Overlay mode OFF ([uc-overlay-off]) → this file owns the flex-basis / margin / view-transition timing. 12's Section 8
+       ([uc-push-managed]) then overrides the geometry per frame from the JS, but the transitions defined here still
+       apply for the intermediate frames.
+   Easing: every fullscreen transition uses var(--uc-fs-ease) (ease-in-out), matching Firefox's own 400ms ease-in-out slide. */
+
+/* ==== Part 1: toolbox slide and page top edge ==== */
+
+/* FULLSCREEN slide. Firefox hides the toolbars by giving #navigator-toolbox an inline margin-top (-height)
+   and shows them by removing it. Because the toolbox is in the page layout, animating that margin
+   resized the page area every frame; the page surface resizes late, so the bottom of the screen got
+   pulled up while the bar closed.
+   Fix: take the toolbox out of the layout in fullscreen (position: fixed), so its margin-top can animate
+   without ever moving or resizing the page. Firefox's margin-top is left alone on purpose: Firefox waits
+   for that margin-top transition to end before it finishes hiding (sets fullscreenNavToolboxHidden and
+   un-hides #fullscr-toggler, which is what lets the bar come back on hover). Cancelling the margin
+   made the bar stick off-screen.
+   z-index is high on purpose: out of the layout, the toolbox has to paint over the page area and the rail.
+   Time and easing: --uc-fs-toolbox-anim / --uc-fs-ease in 01-tokens.css.
+   To undo: delete this block (both the toolbox rule and the #browser padding rules) and add
+   `margin-top var(--uc-fs-toolbox-anim)` back into the transition list of the toolbox height rule in 02-base-layout.css (section 6). */
+@media screen and (min-width: 950px) {
+  :root[inFullscreen]:not([inDOMFullscreen="true"]) #navigator-toolbox {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 1000 !important;
+    transition:
+      height var(--uc-toolbox-anim),
+      margin-top var(--uc-fs-toolbox-anim) !important;
+  }
+
+  /* The page area's TOP edge follows the bar: revealing pushes it down, hiding pulls it up, with the
+     same time and easing as the bar's slide. Its bottom edge never moves. This is padding (not margin)
+     on #browser so it can't clash with the 1px #browser margins in 02-base-layout.css (section 5). The hidden state comes from
+     Firefox's root attribute fullscreenNavToolboxHidden, which is set at the same moment the bar's
+     margin-top starts moving, so the two stay in step. Not applied with vertical tabs (the toolbox is
+     0 high then). */
+  :root[inFullscreen]:not([inDOMFullscreen="true"]):not(#main-window[uc-vertical]) #browser {
+    padding-top: calc((var(--TabsHeight) + var(--TabsBorder)) * 1px) !important;
+    transition: padding-top var(--uc-fs-toolbox-anim) !important;
+  }
+
+  :root[inFullscreen]:not([inDOMFullscreen="true"]):not(#main-window[uc-vertical])[fullscreenNavToolboxHidden] #browser {
+    padding-top: 0 !important;
+  }
+}
+
+/* Reduced motion: no slide, just show/hide. */
+@media screen and (min-width: 950px) and (prefers-reduced-motion: reduce) {
+  :root[inFullscreen] #navigator-toolbox {
+    transition: height var(--uc-toolbox-anim) !important;
+  }
+
+  :root[inFullscreen] #browser {
+    transition: none !important;
+  }
+}
+
+/* ==== Part 2: rail and page animations ==== */
+
+:root[inFullscreen][fullscreenNavToolboxHidden]:not([inDOMFullscreen]) #sidebar-container[sidebar-ongoing-animations] {
+  content-visibility: visible !important;
+}
+
+/* PURPLE PANEL FIX. In fullscreen Firefox hides the rail's contents while the toolbox is hidden
+   (`:root[fullscreenNavToolboxHidden] #sidebar-container { content-visibility: hidden }`). If the toolbox hides while the rail is
+   still hover-expanded (a context menu closed while the pointer was over the rail: Firefox then retries hiding the toolbox), the
+   expanded rail (291px, sidebar-launcher-expanded) was left as an empty panel: its own background, Firefox's toolbox colour,
+   with the tabs and buttons skipped. An expanded rail is in use, so keep it painted; it collapses by itself when the pointer leaves.
+   To undo: delete this rule. */
+:root[sidebar-expand-on-hover][inFullscreen][fullscreenNavToolboxHidden]:not([inDOMFullscreen]) #sidebar-container[sidebar-launcher-expanded]:not([sidebar-panel-open]) {
+  content-visibility: visible !important;
+}
+
+/* (--uc-fs-rail-dur, the one duration for every fullscreen rail/page motion below, and --uc-rail-expanded-w
+   are tunables in 01-tokens.css, section 2. --uc-fs-ease is the shared easing.) */
+
+/* (A script, fullscreenRailPush.uc.js, used to drive the page margin frame by frame here, with the attributes uc-rail-drive and
+   uc-rail-closing. It could never run once Overlay mode existed (fullscreenOverlayMode.uc.js always sets uc-fs-overlay-rail or
+   uc-overlay-off, and the script stood down for both), so the script and its rules were removed. The fullscreen push, when Overlay mode
+   is Off, is sidebarPushSettle.uc.js + the end of 12.) */
+
+/* (removed) the fullscreen margin pins for the rail during Firefox's own animation: they needed [sidebar-ongoing-animations], which Firefox 160 never sets. */
+
+/* Every rail/page slide in fullscreen uses the theme's shared easing (--uc-fs-ease), the quick show/hide of the
+   collapsed rail as well as the expand/collapse. Firefox's durations are left alone. Gated on [uc-overlay-off] — in
+   overlay mode there is no view transition on the rail (12 handles the motion). */
+:root[sidebar-expand-on-hover][inFullscreen][uc-overlay-off]::view-transition-group(*) {
+  animation-timing-function: var(--uc-fs-ease) !important;
+}
+
+/* The page area's margin follows the same easing in the quick show/hide stage (no !important, so
+   the expand and collapse blocks above keep their own durations). Gated on [uc-overlay-off]. */
+:root[sidebar-expand-on-hover][inFullscreen][uc-overlay-off] #tabbrowser-tabbox:not([sidebar-ongoing-animations]) {
+  transition: margin-inline var(--uc-fs-rail-dur) var(--uc-fs-ease);
+}
+
+/* FULLSCREEN, left-hand rail: the page area is moved only by its own margin (above), never by Firefox's
+   snapshot animation. When the rail retracts from fully expanded, the snapshot ran for a different time
+   than the margin and the two fought each other (the page snapped, then slid). Without a snapshot the page's
+   left edge simply follows the margin over --uc-fs-rail-dur and the right edge never moves. The page doesn't
+   change position when the rail merely expands over it, so nothing is lost there.
+   Gated on [uc-overlay-off]: in overlay mode 12 already sets view-transition-name: none on the tabbox.
+   To undo: delete this block. */
+:root[sidebar-expand-on-hover][inFullscreen][uc-overlay-off]:not([sidebar-positionend]) #tabbrowser-tabbox {
+  view-transition-name: none !important;
+}
+
+/* FULLSCREEN, FIRST STAGE (rail fully hidden <-> collapsed rail visible): animate the rail's width, so the
+   page area follows it live instead of jumping.
+   What Firefox does (fullscreen-and-pointerlock.css): while the chrome is hidden (:root[fullscreenNavToolboxHidden],
+   outside DOM fullscreen) #sidebar-container gets `content-visibility: hidden; flex-basis: 0; min-width: 0`. Showing
+   the rail only removes those, so the container goes from 0 to its full width in one frame and the page, which is
+   the next flex item, jumps with it. This stage has no view-transition snapshot (the 3s test showed no change),
+   so the snapshot rules above can't reach it.
+   Here the revealed rail gets an explicit flex-basis (a length can be animated, `auto` can't) and both sizes
+   are transitioned with --uc-fs-ease: the container, and with it the page's left edge, move together while the
+   page's right edge stays put. While hidden or hiding, the rail is kept rendered (so it doesn't vanish at once)
+   and clipped to its shrinking box.
+   Same duration as everything else here (--uc-fs-rail-dur). If it is made long and the pointer reaches the page
+   area while the rail is still growing, Firefox counts it as "in the content" and hides the rail again.
+   Both sides (the right-hand rail used to be left out, so its 50px -> 0 hide jumped); the expanded (hover) rail,
+   panels and DOM fullscreen are not touched. Gated on [uc-overlay-off] — in overlay mode 12's position: fixed +
+   transform replaces the flex-basis animation entirely.
+   To undo: delete this block. */
+:root[sidebar-expand-on-hover][inFullscreen][uc-overlay-off]:not([fullscreenNavToolboxHidden], [inDOMFullscreen]) #sidebar-container:not([sidebar-panel-open], [sidebar-launcher-expanded]) {
+  flex-basis: var(--uc-rail-collapsed) !important;
+  transition:
+    flex-basis var(--uc-fs-rail-dur) var(--uc-fs-ease),
+    min-width var(--uc-fs-rail-dur) var(--uc-fs-ease) !important;
+}
+
+:root[sidebar-expand-on-hover][inFullscreen][uc-overlay-off][fullscreenNavToolboxHidden]:not([inDOMFullscreen]) #sidebar-container#sidebar-container:not([sidebar-panel-open], [sidebar-launcher-expanded]) {   /* no :has(): Firefox 160 never sets [sidebar-ongoing-animations]; the doubled id keeps the old specificity */
+  content-visibility: visible !important;
+  overflow: clip !important;
+  transition:
+    flex-basis var(--uc-fs-rail-dur) var(--uc-fs-ease),
+    min-width var(--uc-fs-rail-dur) var(--uc-fs-ease) !important;
+}
+
+/* FULLSCREEN, FIRST STAGE for the permanently expanded rail (vertical tabs WITHOUT expand-on-hover), Overlay mode OFF.
+   The blocks above are keyed on [sidebar-expand-on-hover]; this rail has none, and Firefox gives it flex-basis 0 <-> auto in one step,
+   so the rail and the page next to it popped. Same recipe: an explicit flex-basis (289px = --uc-rail-expanded-w minus its 1px border,
+   the width the rail really has) that is transitioned with --uc-fs-ease both ways, left or right, every density. With Overlay mode ON
+   the rail is out of the layout (css/12) and this does nothing — hence the explicit [uc-fs-overlay-rail] gate (identical to [uc-overlay-off]).
+   The pointer must not count as "on the page" while the rail is still growing from 0: fullscreenRailHover.uc.js handles that
+   (it uses the rail's final width). To undo: delete this block. */
+:root[inFullscreen]:not([sidebar-expand-on-hover], [fullscreenNavToolboxHidden], [inDOMFullscreen], [uc-fs-overlay-rail]) #sidebar-container[sidebar-launcher-expanded]:not([sidebar-panel-open]) {
+  flex-basis: calc(var(--uc-rail-expanded-w) - var(--uc-rail-border, 1px)) !important;
+  transition:
+    flex-basis var(--uc-fs-rail-dur) var(--uc-fs-ease),
+    min-width var(--uc-fs-rail-dur) var(--uc-fs-ease) !important;
+}
+
+:root[inFullscreen][fullscreenNavToolboxHidden]:not([sidebar-expand-on-hover], [inDOMFullscreen], [uc-fs-overlay-rail]) #sidebar-container[sidebar-launcher-expanded]:not([sidebar-panel-open]) {
+  content-visibility: visible !important;
+  overflow: clip !important;
+  transition:
+    flex-basis var(--uc-fs-rail-dur) var(--uc-fs-ease),
+    min-width var(--uc-fs-rail-dur) var(--uc-fs-ease) !important;
+}
+
+/* FULLSCREEN, FIRST STAGE for the "Hide tabs and sidebar" rail (vertical tabs, NO expand-on-hover, rail not expanded), Overlay mode OFF.
+   The blocks above cover the hover rail ([sidebar-expand-on-hover]) and the permanently expanded rail ([sidebar-launcher-expanded]).
+   This narrow rail (--uc-rail-collapsed wide, 07 section 18 rule 5) matched neither, so Firefox's own flex-basis 0 <-> auto jump ran:
+   the rail and the page next to it popped when the toolbars hid or came back. Same recipe: an explicit flex-basis that is transitioned
+   with --uc-fs-ease over --uc-fs-rail-dur, so the page's left edge follows the rail and its right edge never moves.
+   The rail's inner width is pinned while it hides (07 rule 5 steps aside while fullscreenNavToolboxHidden is set), so the tiles are clipped, not squeezed.
+   fullscreenRailHover.uc.js counts the rail's final width as "not the page" while it grows from 0.
+   To undo: delete this block. */
+:root[uc-vertical][inFullscreen]:not([sidebar-expand-on-hover], [fullscreenNavToolboxHidden], [inDOMFullscreen], [uc-fs-overlay-rail]) #sidebar-container:not([sidebar-panel-open], [sidebar-launcher-expanded]) {
+  flex-basis: var(--uc-rail-collapsed) !important;
+  transition:
+    flex-basis var(--uc-fs-rail-dur) var(--uc-fs-ease),
+    min-width var(--uc-fs-rail-dur) var(--uc-fs-ease) !important;
+}
+
+:root[uc-vertical][inFullscreen][fullscreenNavToolboxHidden]:not([sidebar-expand-on-hover], [inDOMFullscreen], [uc-fs-overlay-rail]) #sidebar-container:not([sidebar-panel-open], [sidebar-launcher-expanded]) {
+  content-visibility: visible !important;
+  overflow: clip !important;
+  transition:
+    flex-basis var(--uc-fs-rail-dur) var(--uc-fs-ease),
+    min-width var(--uc-fs-rail-dur) var(--uc-fs-ease) !important;
+}
+
+:root[uc-vertical][inFullscreen][fullscreenNavToolboxHidden]:not([sidebar-expand-on-hover], [inDOMFullscreen], [uc-fs-overlay-rail]) #sidebar-container:not([sidebar-panel-open], [sidebar-launcher-expanded]) sidebar-main:not([expanded]) {
+  width: var(--uc-rail-collapsed) !important;
+  inline-size: var(--uc-rail-collapsed) !important;
+  min-width: var(--uc-rail-collapsed) !important;
+  max-width: var(--uc-rail-collapsed) !important;
+}

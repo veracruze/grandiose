@@ -1,0 +1,346 @@
+/* 07-split-glows-density.css: Sections 16-18 (split view is in 08, fullscreen in 11 and 12): tab glows, density, collapsed rail. Imported by ../userChrome.css; order of the imports matters. */
+
+/* ==========================================================================
+   16. TAB GLOWS (hovered and inactive tabs)
+   ========================================================================== */
+.tabbrowser-tab:hover .tab-content {
+  box-shadow:
+    inset 0 0 0 1px var(--tab-box-shadow-color),
+    inset 0 0 var(--uc-selected-glow-blur) var(--uc-selected-glow-spread) var(--uc-selected-glow-color) !important;
+}
+
+.tabbrowser-tab:not([selected], :hover):not(tab-split-view-wrapper > .tabbrowser-tab) .tab-content {
+  box-shadow:
+    inset 0 0 0 1px var(--tab-box-shadow-color),
+    inset 0 0 var(--uc-inactive-glow-blur) var(--uc-inactive-glow-spread) var(--uc-inactive-glow-color) !important;
+}
+
+#tabbrowser-tabs[orient="vertical"] .tabbrowser-tab:not([selected], :hover):not(tab-split-view-wrapper > .tabbrowser-tab) .tab-content {
+  box-shadow:
+    inset 0 0 0 1px var(--tab-box-shadow-color),
+    inset 0 0 var(--uc-inactive-glow-blur) var(--uc-inactive-glow-spread) var(--uc-inactive-glow-color) !important;
+}
+
+.tabbrowser-tab[selected]:not(:hover):not(tab-split-view-wrapper > .tabbrowser-tab) .tab-content {
+  box-shadow:
+    inset 0 0 0 1px var(--tab-box-shadow-color),
+    0 0 var(--uc-hover-glow-blur) var(--uc-hover-glow-spread) var(--uc-hover-glow-color) !important;
+}
+
+#tabbrowser-tabs[orient="vertical"] .tabbrowser-tab[selected]:not(:hover):not(tab-split-view-wrapper > .tabbrowser-tab) .tab-content {
+  box-shadow:
+    inset 0 0 0 1px var(--tab-box-shadow-color),
+    inset 0 0 var(--uc-hover-glow-blur) var(--uc-hover-glow-spread) var(--uc-hover-glow-color) !important;
+}
+
+/* ==========================================================================
+   17. DENSITY: Customize Toolbar > Density (Compact / Normal / Touch)
+   Normal uses the defaults in section 2. Each block below only changes the density-controlled
+   variables, so everything else in the file follows automatically. Tab height is
+   --TabsHeight + --TabsBorder, and the navbar is sized from the same two numbers, so they
+   always move together.
+   Derived from these: vertical rail favicon centring (--uc-rail-pad-start, 01 section 2: (rail width - icon) / 2 + 4px, the same formula in every density; Compact gets 12px), the vertical rail's inner padding,
+   the speaker badge position, and the collapsed-rail button padding. The hand-measured nudges
+   (--uc-split-*-nudge, --uc-inactive-favicon-lift) are NOT rescaled; if an
+   icon looks 1-2px off in a density, adjust those here.
+   Menu icons (context menu, app menu, extensions panel) and bookmarks-toolbar favicons have their own per-density sizes:
+   --uc-menu-icon-size / --uc-menu-icon-gap / --uc-bookmark-icon-size (05 sections 10-13). Normal sets none of them: 05 falls back to 16px / 8px / 16px.
+   ========================================================================== */
+
+:root[uidensity="compact"] {
+  --TabsHeight: 34;
+  --TabsBorder: 6;
+  --uc-tab-w: 40px;
+  --uc-tab-title-gap: 8px;
+  --uc-nav-title-gap: 8px;
+  --uc-tab-nav-gap: -3px;
+  --uc-icon-size: 24px;
+  --uc-rail-collapsed: 40px;   /* collapsed rail width (Compact = 40px). Favicons stay positioned for --uc-rail-center; see --uc-rail-pad-start (01 formula, all densities), used in 06-sidebar-vertical-tabs.css */
+  --uc-rail-center: 36px;      /* icons stay positioned for 36px */
+  --uc-newtab-nudge: 0px;      /* "+" glyph: fine adjustment, positive = right. 0px now that the favicon column is centred (it was -1px to hide the 2px the favicons sat to the right) */
+  --uc-rail-buttons-w: 22px;   /* size of the bottom rail buttons (square) while collapsed; their 16px icon stays the same. The space around them is worked out from the rail width */
+  --uc-favicon-pad: 6px;
+  --uc-rail-pad-block: 8px;
+  --uc-urlbar-h: 28px;
+  --uc-menu-pad-block: 3px;
+  --uc-audio-size: 15px;
+  --uc-audio-size-h: 15px;
+  --uc-audio-top: -7px;      /* vertical tabs: position (negative = outside the favicon) */
+  --uc-audio-right: -2px;
+
+  /* Menu and bookmark icon sizes (NEW). Compact keeps the 16px everyone else uses; the gap is the space between a menu icon and its label */
+  --uc-menu-icon-size: 16px;
+  --uc-menu-icon-gap: 8px;
+  --uc-bookmark-icon-size: 16px;
+  --uc-hamburger-gap: 8px;    /* free space to the right of the hamburger (Normal: 8px, fallback in 05) */
+  --uc-hamburger-ext-gap: 1px; /* gap between the Extensions button and the hamburger (the one that was 'doing nothing' is --uc-hamburger-gap, which is the OTHER side) */
+
+  /* Button icon sizes - Compact stays small (NEW lines: without these, Compact would inherit the new beefy Normal values from Section 2) */
+  --uc-toolbar-icon-size: 16px;
+  --uc-toolbar-inner-padding: 4px;
+  --uc-rail-icon-size: 14px;
+  --uc-urlbar-icon-size: 16px;
+  --uc-urlbar-icon-padding: 4px;
+  --uc-urlbar-dropdown-icon: 22px;
+  --uc-tab-nav-icon: 16px;
+  --uc-newtab-icon: 16px;
+}
+
+:root[uidensity="touch"] {
+  --TabsHeight: 49;
+  --TabsBorder: 10;
+  --uc-tab-w: 60px;
+  --uc-tab-title-gap: 10px; /* Plenty of breathing room for Touch */
+  --uc-nav-title-gap: 8px;
+  --uc-tab-nav-gap: -7px;
+  --uc-icon-size: 38px;       /* CHANGED from 24px: Touch was SMALLER than Normal (32px, 01) and equal to Compact. 38px is the value this block's old comment mentions */
+  --uc-rail-collapsed: 60px;
+  --uc-favicon-pad: 8px;       /* horizontal inactive tabs: same as Normal (the pad does not depend on tab width or icon size). Probe: +1px of pad = icon 0.5px right */
+  --uc-rail-buttons-w: 48px;   /* CHANGED from 42px - beefier rail buttons (6px air each side at 60px rail; use 46px for a little more) */
+  --uc-rail-pad-block: 14px;
+  --uc-urlbar-h: 42px;
+  --uc-menu-pad-block: 12px;
+  --uc-audio-size: 22px;
+  --uc-audio-size-h: 22px;
+  --uc-audio-top: -12px;     /* NEW: Touch inherited Normal's -9px / -6px for a bigger badge. Same badge-centre offsets as Normal (1px above, 2px inside the favicon's top-right corner), recomputed for 22px: -1 - 11, 2 - 11 */
+  --uc-audio-right: -9px;
+
+  /* Menu and bookmark icon sizes (NEW): Touch menus and bookmark rows are taller, so their icons grow with them */
+  --uc-menu-icon-size: 20px;
+  --uc-menu-icon-gap: 12px;
+  --uc-bookmark-icon-size: 20px;
+  --uc-hamburger-gap: 6px;
+  --uc-hamburger-ext-gap: 7px;
+
+  /* Button icon sizes - Touch is beefiest (NEW lines; also --uc-rail-buttons-w above changed) */
+  --uc-toolbar-icon-size: 24px;
+  --uc-toolbar-inner-padding: 8px;
+  --uc-toolbar-button-spacing: 2px;
+  --uc-rail-icon-size: 24px;
+  --uc-urlbar-icon-size: 22px;
+  --uc-urlbar-icon-padding: 6px;
+  --uc-urlbar-dropdown-icon: 28px;
+  --uc-tab-nav-icon: 24px;
+  --uc-newtab-icon: 24px;     /* CHANGED from 16px: matches the 24px toolbar and rail icons in Touch */
+}
+
+/* ==========================================================================
+   18. COLLAPSED RAIL (all densities, expand-on-hover ON)
+   ==========================================================================
+   HOW THE SLIDE WORKS (and what this section must NOT do):
+   While the rail opens or closes Firefox keeps it laid out at its EXPANDED width and slides it with a translate on #sidebar-container
+   (400ms ease-in-out). The visible slice shrinks or grows; the contents don't reflow. So during the slide:
+     - sidebar-main, the tab strip and the container are NOT given a new width (that made the rail box collapse to 50px in one frame and
+       cut the tabs down to a square: a width driven by a custom property can't be animated here, it just flips);
+     - the only thing that animates is each tab tile's own `width` (14-rail-tiles.css), real property to real property:
+       100% <-> --uc-active-collapsed, over --uc-sidebar-anim, the same time and easing as Firefox's slide.
+   The fixed collapsed widths below are applied only AFTER the slide has finished (no [sidebar-ongoing-animations], no [expanded]).
+
+   Targets (--uc-rail-collapsed): Standard 50px, Compact 40px, Touch 60px (set in the density blocks above).
+   Rule 5 (hide tabs and sidebar) uses this directly; rules 1–2 and the pre-rule go through --uc-active-collapsed,
+   an alias of --uc-rail-collapsed defined at the top of 01-tokens.css (those rules are invalid without it).
+   
+   FULLSCREEN: the rail's layout width stays at that same collapsed width. It is hidden by the fullscreen files, not by a width of 0:
+   12-fullscreen-overlay.css slides it off screen (transform), 11 animates its flex-basis when overlay mode is off. A 0px target here made
+   every tile 0px wide while the toolbar was hidden and then animated 0 -> 50px on reveal, which fought those slides.
+   To undo: delete this section. */
+
+
+/* OVERLAY-AWARE (fullscreen overlay mode): every ":not([fullscreenNavToolboxHidden])" in rules 1 and 3 below (rest-state widths and button sizes, the
+   slide fade, the hold) is now ":not([fullscreenNavToolboxHidden]:not([uc-fs-overlay-rail]))", the same carve-out rule 5 already had. In overlay mode
+   (12-fullscreen-overlay.css) the rail stays laid out at its collapsed width and is slid off screen with a transform, so it must keep its pinned
+   widths, its button-size variables and the button fade WHILE the toolbar is hidden. Without it the button row snapped to Firefox's own size
+   (--button-size-icon, launcher padding) and showed Firefox's squeezed row during the slide-out. Outside overlay mode nothing changes.
+   To undo: put the plain ":not([fullscreenNavToolboxHidden])" back in those rules. */
+
+/* 1) REST STATE, rail collapsed and not sliding: container, rail and tab strip are exactly the collapsed width.
+   NO :has() ANY MORE. "Collapsed" is [sidebar-launcher-expanded] missing on #sidebar-container: Firefox 160 sets it on the container at the
+   same moment it sets [expanded] on sidebar-main and #tabbrowser-tabs (checked in the Browser Toolbox), and sidebarPushSettle re-holds the
+   same attributes while the rail closes, so it is the same state the old :has(#tabbrowser-tabs[expanded]) tested, as a plain ancestor
+   attribute. The old :not(:has(#tabbrowser-tabbox[sidebar-ongoing-animations])) term is gone: Firefox 160 never sets that attribute
+   (the slide is a view transition), so it was always true. The tripled / doubled #sidebar-container only keeps the specificity the :has()
+   terms used to contribute, so these rules still out-rank 12 section 7. To undo: put the :not(:has(...)) terms back. */
+:root[sidebar-expand-on-hover]:not([fullscreenNavToolboxHidden]:not([uc-fs-overlay-rail])) #sidebar-container#sidebar-container:not([sidebar-panel-open], [sidebar-launcher-expanded]),
+:root[sidebar-expand-on-hover]:not([fullscreenNavToolboxHidden]:not([uc-fs-overlay-rail])) #sidebar-container#sidebar-container#sidebar-container:not([sidebar-launcher-expanded]) :is(#sidebar-main, sidebar-main) {
+  width: var(--uc-active-collapsed) !important;
+  inline-size: var(--uc-active-collapsed) !important;
+  min-width: var(--uc-active-collapsed) !important;
+  max-width: var(--uc-active-collapsed) !important;
+}
+
+:root[sidebar-expand-on-hover]:not([fullscreenNavToolboxHidden]:not([uc-fs-overlay-rail])) #sidebar-container#sidebar-container#sidebar-container:not([sidebar-panel-open], [sidebar-launcher-expanded]) sidebar-main :is(#tabbrowser-tabs, #tabbrowser-arrowscrollbox, #pinned-tabs-container) {
+  width: 100% !important;
+  inline-size: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+/* The bottom buttons are sized from the real collapsed width, so button + padding = rail width at every density.
+   Applied in every state, not only at rest: the variables used to be dropped the moment the rail started to expand (rule matched
+   only without [expanded] / [sidebar-ongoing-animations]), which changed the rail's content width in the middle of Firefox's slide
+   and made it lunge open without easing. To undo: restore the :not(...) conditions. */
+:root[sidebar-expand-on-hover] sidebar-main {
+  --button-size-icon: var(--uc-rail-buttons-w) !important;
+  --icon-size: var(--uc-rail-icon-size) !important; /* NEW */
+  --sidebar-launcher-button-padding-inline: calc((var(--uc-active-collapsed) - var(--uc-rail-buttons-w)) / 2) !important;
+}
+
+/* 2) (removed) The clip-during-the-slide rules: they needed #tabbrowser-tabbox[sidebar-ongoing-animations], which Firefox 160 never sets. */
+
+/* 3) THE BUTTON ROW FADES OUT AS THE RAIL SLIDES AND FADES BACK IN WHEN IT HAS SETTLED. */
+:root[sidebar-expand-on-hover] sidebar-main {
+  --uc-rail-buttons-trans: opacity var(--uc-rail-buttons-fade-in, 140ms) ease-out var(--uc-rail-buttons-settle, 10ms);
+  --uc-rail-chevron-anim-name: uc-chevron-in;
+  --uc-rail-chevron-anim-duration: var(--uc-rail-chevron-fade-in, 60ms);
+  --uc-rail-chevron-anim-delay: calc(var(--uc-rail-buttons-settle, 10ms) + var(--uc-rail-chevron-delay-in, 0ms));
+  --uc-rail-chevron-anim-ease: ease-out;
+}
+
+/* (removed) the "while Firefox slides" fade-out rule (same dead attribute); the HOLD rules below do the fade. */
+
+/* HOLD. :root#main-window instead of :has(#tabbrowser-tabbox): that :has() was always true and was only there to add one ID of specificity over the
+   plain rules above. An id on the root gives the same weight without a selector the browser has to re-check on every DOM change. */
+:root#main-window[sidebar-expand-on-hover][uc-rail-hold]:not([fullscreenNavToolboxHidden]:not([uc-fs-overlay-rail])) sidebar-main {
+  --uc-rail-buttons-opacity: 0;
+  --uc-rail-buttons-trans: opacity var(--uc-rail-buttons-fade-out, 0ms) ease-in;
+  --uc-rail-chevron-anim-name: uc-chevron-out;
+  --uc-rail-chevron-anim-duration: var(--uc-rail-chevron-fade-out, 180ms);
+  --uc-rail-chevron-anim-delay: var(--uc-rail-chevron-delay-out, 0ms);
+  --uc-rail-chevron-anim-ease: ease-in;
+}
+
+:root#main-window[sidebar-expand-on-hover][uc-rail-hold="snap"]:not([fullscreenNavToolboxHidden]:not([uc-fs-overlay-rail])) sidebar-main {
+  --uc-rail-buttons-trans: none;
+  --uc-rail-chevron-anim-duration: 0s;
+}
+
+/* HORIZONTAL TABS */
+
+:root:not([uc-vertical]) sidebar-main {
+  --uc-rail-buttons-opacity: 1 !important;
+  --uc-rail-buttons-trans: none !important;
+  --uc-rail-buttons-max-height: none !important;
+  --uc-rail-chevron-anim-name: none !important;
+  --uc-rail-chevron-anim-duration: 0s !important;
+  --uc-rail-chevron-anim-delay: 0s !important;
+}
+
+/* SHADOW-DOM RULES */
+.buttons-wrapper:has(> .overflow-button) {
+  opacity: var(--uc-rail-buttons-opacity, 1) !important;
+  transition: var(--uc-rail-buttons-trans, none) !important;
+  max-height: var(--uc-rail-buttons-max-height, none) !important;
+}
+
+/* The line/glow of the tools splitter above the bottom buttons */
+#sidebar-tools-and-extensions-splitter {
+  appearance: none !important;
+  opacity: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  filter: none !important;
+  pointer-events: none !important;
+}
+
+#sidebar-tools-and-extensions-splitter::before,
+#sidebar-tools-and-extensions-splitter::after {
+  content: none !important;
+  box-shadow: none !important;
+  background: none !important;
+}
+
+/* 4) HIDE TABS AND SIDEBAR: every tool button goes into the » chevron. Also while a sidebar panel (Customize...) is open: this rule used to say
+   ":not([sidebar-panel-open])", so opening a panel switched the button row to the one-row limit below and the chevron moved. (Expand-on-hover never
+   had the problem: 13 pins its button sizes while a panel is open.) To undo: put :not([sidebar-panel-open]) back after #sidebar-container. */
+:root#main-window[uc-vertical]:not([sidebar-expand-on-hover]) #sidebar-container sidebar-main:not([expanded]) {
+  --uc-rail-buttons-max-height: 0px;
+}
+
+/* ---- Limit the vertical rail's button wrapper to one row ONLY in hide-sidebar mode (not always-show) ---- */
+:root#main-window[uc-vertical]:not([sidebar-expand-on-hover]):not([uc-sidebar-mode="always-show"]) sidebar-main {
+  --uc-rail-buttons-max-height: calc(var(--uc-rail-buttons-w) + 16px);
+}
+
+/* 5) HIDE TABS AND SIDEBAR: the narrow rail.
+   The container itself is still left to 13 while a panel is open (its selector below keeps :not([sidebar-panel-open])), but sidebar-main, its button
+   sizes and its tab strip keep these values with the panel open too. Without that, Firefox's own sizes came back when Customize opened and the chevron
+   / buttons shifted sideways (the hand-made padding that 06 used for the hidden-rail case is gone for the same reason). To undo: put
+   :not([sidebar-panel-open], [sidebar-launcher-expanded]) back in the three sidebar-main selectors below. */
+:root#main-window[uc-vertical]:not([sidebar-expand-on-hover], [fullscreenNavToolboxHidden]:not([uc-fs-overlay-rail])) #sidebar-container:not([sidebar-panel-open], [sidebar-launcher-expanded]),
+:root#main-window[uc-vertical]:not([sidebar-expand-on-hover], [fullscreenNavToolboxHidden]:not([uc-fs-overlay-rail])) #sidebar-container:not([sidebar-launcher-expanded]) sidebar-main:not([expanded]) {
+  width: var(--uc-rail-collapsed) !important;
+  inline-size: var(--uc-rail-collapsed) !important;
+  min-width: var(--uc-rail-collapsed) !important;
+  max-width: var(--uc-rail-collapsed) !important;
+}
+
+:root#main-window[uc-vertical]:not([sidebar-expand-on-hover], [fullscreenNavToolboxHidden]:not([uc-fs-overlay-rail])) #sidebar-container:not([sidebar-launcher-expanded]) sidebar-main:not([expanded]) {
+  --button-size-icon: var(--uc-rail-buttons-w) !important;
+  --icon-size: var(--uc-rail-icon-size) !important; /* NEW */
+  --sidebar-launcher-button-padding-inline: calc((var(--uc-rail-collapsed) - var(--uc-rail-buttons-w)) / 2) !important;
+}
+
+:root#main-window[uc-vertical]:not([sidebar-expand-on-hover], [fullscreenNavToolboxHidden]:not([uc-fs-overlay-rail])) #sidebar-container:not([sidebar-launcher-expanded]) sidebar-main:not([expanded]) :is(#tabbrowser-tabs, #tabbrowser-arrowscrollbox, #pinned-tabs-container) {
+  width: 100% !important;
+  inline-size: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+/* EXPANDED RAIL WIDTH */
+:root {
+  --sidebar-expanded-launcher-width: calc(var(--uc-rail-expanded-w) - var(--uc-rail-border)) !important;
+}
+
+.buttons-wrapper:has(> .overflow-button) .bottom-actions > moz-button,
+.buttons-wrapper:has(> .overflow-button) .tools-and-extensions > moz-button {
+  margin-inline: auto !important;
+}
+
+/* Center the LitElement containers inside the button wrapper */
+.buttons-wrapper:has(> .overflow-button) > .bottom-actions,
+.buttons-wrapper:has(> .overflow-button) > .tools-and-extensions {
+  align-self: center !important;
+  margin-inline: auto !important;
+  padding: 0 !important;
+}
+
+/* Ensure the LitElement moz-button itself stays centered */
+.buttons-wrapper:has(> .overflow-button) > .bottom-actions > moz-button,
+.buttons-wrapper:has(> .overflow-button) > .tools-and-extensions > moz-button {
+  margin-inline: auto !important;
+}
+
+/* Cap the button height and center them in expand-on-hover ONLY when expanded.
+   Firefox 160 propagates the expanded state as sidebar-launcher-expanded="" on
+   #sidebar-container (and on #tabbrowser-tabbox, #sidebar-box, #sidebar-launcher-splitter).
+   sidebar-main[expanded] is kept as a fallback in case a build re-exposes it. */
+:root[sidebar-expand-on-hover] #sidebar-container[sidebar-launcher-expanded] sidebar-main,
+:root[sidebar-expand-on-hover] sidebar-main[expanded] {
+  --uc-rail-buttons-max-height: 110px !important;
+  justify-content: center !important;
+}
+
+/* ---- RAIL BUTTONS FOLLOW DENSITY IN EVERY MODE AND STATE ----
+   One source of truth: --uc-rail-buttons-w (box) and --uc-rail-icon-size (glyph), set per density in 01 §2 and 07 §17.
+   Applies to .tools-and-extensions, .bottom-actions and the extension buttons: they are all <moz-button type="icon ghost">, which reads
+   --button-size-icon (box) and --icon-size (glyph) from its host chain.
+   Not gated on [uc-vertical] or on the rail state, so always-show, expanded, mid-slide and horizontal-tabs mode are covered.
+   The padding variable stays in the state rules above (it depends on the rail width, which differs per state).
+   To undo: put the :root#main-window[uc-vertical] gate back and delete --button-size-icon. */
+:root sidebar-main {
+  --button-size-icon: var(--uc-rail-buttons-w) !important;
+  --button-size-icon-small: var(--uc-rail-icon-size) !important;
+  --icon-size: var(--uc-rail-icon-size) !important;
+}
+/* Vertical spacing for .buttons-wrapper top buttons */
+.buttons-wrapper:has(> .overflow-button) > .bottom-actions,
+.buttons-wrapper:has(> .overflow-button) > .tools-and-extensions {
+  gap: var(--uc-rail-buttons-gap, 4px) !important;
+  /* keep existing: */
+  align-self: center !important;
+  margin-inline: auto !important;
+  padding: 0 !important;
+}

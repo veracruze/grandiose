@@ -1,0 +1,2 @@
+/* Agent style sheet, loaded into every document by JS/userChrome_ag_css.sys.mjs.
+   Intentionally empty. fx-autoconfig's sample rule (dark tooltips) was removed so it does not change the UI. */

@@ -1,0 +1,1648 @@
+/* ==========================================================================
+   userContent.css — about:newtab, Bonjourr-style transparent layout
+   Verified against the Firefox 160+ "nova" newtab DOM:
+     .top-sites-list-wrapper > ul.top-sites-list > li.top-site-outer
+     .widgets-container > .widget-wrapper > article.clocks-widget | .weather-widget
+   Every declaration carries !important: user-origin CSS loses to the page's
+   own author-origin CSS otherwise.
+
+   NOTE ON UNITS: the page viewport is ~1870x1020 at 1920x1080 (50px vertical-tab
+   rail, taskbar), so every vw/vh value below was calibrated against that, not 1920.
+   ========================================================================== */
+
+/* Styles web content and Firefox's own content pages (about:newtab, the Screenshots / PiP overlays).
+   The about:newtab section was written against the Firefox 160 "nova" new tab page. That page is Firefox's own markup: after a Firefox update
+   re-check it (see shadow-dom-dependencies.md, section J). If a class is renamed, its rule just stops matching and that part falls back to
+   Firefox's own look; nothing here can break the browser.
+   WHAT APPLIES TO EVERY WEB PAGE: only the scrollbar rule in "SCROLLBAR COLOURS" below (it follows the page's colour scheme).
+   Everything else is scoped to about:newtab / about:home, about:blank (PiP) or the Screenshots overlay. */
+
+/* @namespace must come before every other rule (only @charset / @import may precede it), or the whole rule is ignored.
+   It is used by the xul|scrollbar rule in the "SCROLLBAR COLOURS" section. */
+@namespace xul url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul);
+
+/* ==========================================================================
+   NATIVE PIP VIDEO TRANSPARENCY
+   ========================================================================== */
+@-moz-document url-prefix("about:blank") {
+  html, body {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+  }
+  
+  /* Firefox sets an inline style on this video, so we need !important to beat it */
+  #playervideo {
+    background-color: transparent !important;
+    background-image: none !important;
+  }
+}
+
+/* ==========================================================================
+   SCREENSHOT / MINI-WINDOW OVERLAY TOOLBAR
+   Target: userContent.css
+   ========================================================================== */
+
+/* 1. The Wrapper: Sleek solid gradient fallback */
+#buttons-container .buttons-wrapper {
+  background: linear-gradient(135deg, rgba(45, 45, 55, 0.95), rgba(25, 25, 30, 0.95)) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  
+  border-radius: 12px !important;
+  padding: 6px !important;
+  gap: 6px !important;
+  display: flex !important;
+}
+
+/* 2. Base Button Style */
+#buttons-container .screenshots-button {
+  appearance: none !important;
+  -moz-appearance: none !important;
+  background: transparent !important;
+  border: none !important;
+  color: #f0f0f0 !important;
+  font-family: system-ui, -apple-system, sans-serif !important;
+  font-size: 13px !important;
+  padding: 8px 14px !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  transition: background-color 0.15s ease, transform 0.1s ease !important;
+  
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important; 
+}
+
+/* 3. Hover and Active States */
+#buttons-container .screenshots-button:hover {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+#buttons-container .screenshots-button:active {
+  background-color: rgba(255, 255, 255, 0.25) !important;
+  transform: scale(0.96) !important;
+}
+
+/* 4. The Primary Button ("Move to Mini Window") */
+#buttons-container .screenshots-button.primary, 
+#buttons-container #pop {
+  background-color: #0060df !important;
+  color: #ffffff !important;
+  font-weight: 500 !important;
+}
+
+#buttons-container .screenshots-button.primary:hover, 
+#buttons-container #pop:hover {
+  background-color: #0250bb !important;
+}
+
+/* 5. Style the Icon */
+#buttons-container #pop img {
+  width: 16px !important;
+  height: 16px !important;
+  /* Uncomment the line below if the icon is dark and blending into the blue */
+  /* filter: invert(1) brightness(2) !important; */ 
+}
+
+/* 6. Accent Color Focus Ring */
+/* Use the system Accent Color. If you want the ring to show only for keyboard
+   navigation, the :focus-visible selector below handles that. */
+#buttons-container #pop:focus,
+#buttons-container #pop:focus-visible {
+  outline: 2px solid AccentColor !important;
+  outline-offset: 2px !important;
+  box-shadow: none !important; /* Clears default purple glow */
+}
+
+/* ==========================================================================
+   SCROLLBAR COLOURS (every web page)
+   ========================================================================== */
+/* Scrollbars follow the colour scheme the PAGE is shown in (the Color Scheme switch in the Customize panel, or a site forced light / dark with
+   Ctrl+Alt+L / Ctrl+Alt+D), without touching page colours. Dark values are the ones this theme always used. */
+* {
+  scrollbar-color: #666 #222 !important; /* thumb, track: dark */
+}
+
+@media (prefers-color-scheme: light) {
+  * {
+    scrollbar-color: #9a9a9a #ececec !important; /* thumb, track: light */
+  }
+}
+
+/* Native scrollbar parts (may have no effect in current Firefox) */
+xul|scrollcorner, xul|resizer, xul|scrollbar {
+  color-scheme: dark !important;
+}
+
+/* Native controls in the specific containers */
+#flash_scroller,
+#flash_scroller input[type="range"],
+.category-bar.custom-scrollbar-container,
+.category-list.custom-scrollbar-x {
+  color-scheme: dark !important;
+}
+
+
+/* Local Poppins aliases. @font-face must sit OUTSIDE @-moz-document. */
+@font-face { font-family: "BJ Sans"; font-weight: 100; src: local("Poppins Thin"),       local("Poppins-Thin"); }
+@font-face { font-family: "BJ Sans"; font-weight: 200; src: local("Poppins ExtraLight"), local("Poppins-ExtraLight"); }
+@font-face { font-family: "BJ Sans"; font-weight: 300; src: local("Poppins Light"),      local("Poppins-Light"); }
+@font-face { font-family: "BJ Sans"; font-weight: 400; src: local("Poppins Regular"),    local("Poppins-Regular"); }
+
+@-moz-document url-prefix("about:newtab"), url-prefix("about:home") {
+
+  /* ------------------------------------------------------------------------
+     0. TOKENS
+     ------------------------------------------------------------------------ */
+  :root {
+    color-scheme: dark !important;
+    background: transparent !important;
+
+    /* Bonjourr layer */
+    --bj-ink: #DCDCDC;
+    --bj-ink-dim: color-mix(in srgb, #DCDCDC 78%, transparent);
+    --bj-shadow: 0 2px 14px rgb(0 0 0 / .5);
+    /* three-layer drop shadow: tight contact + soft body + wide ambient */
+    --bj-text-shadow: 0 1px 2px rgb(0 0 0 / .55), 0 3px 12px rgb(0 0 0 / .55), 0 8px 32px rgb(0 0 0 / .35);
+    /* same look as a filter, for boxes that clip with overflow:hidden (shortcut labels) */
+    --bj-drop-shadow: drop-shadow(0 1px 2px rgb(0 0 0 / .6)) drop-shadow(0 2px 9px rgb(0 0 0 / .5));
+    --bj-clock-tracking: 0.07em;               /* digit spacing; was -0.05em */
+    --bj-left: 7.8vw;                              /* clock/greeting left edge: x=200 on screen */
+    --bj-clock: clamp(56px, 5vw, 104px);           /* ~94px */
+    --bj-label: clamp(14px, .98vw, 20px);          /* clock region label, ~18px */
+    --bj-weather: clamp(32px, 2.5vw, 52px);        /* "Today's Weather", ~52px */
+    --bj-greet-w: clamp(300px, 21.4vw, 460px);     /* greeting/weather column: right edge x=600 */
+    --bj-sub: clamp(14px, 1vw, 22px);              /* weather description, ~18.7px */
+    --bj-temp: clamp(22px, 1.5vw, 32px);           /* temperature, ~28px */
+    --bj-tile: clamp(48px, 3vw, 60px);             /* ~56px */
+    --bj-pitch: clamp(76px, 4.93vw, 96px);         /* ~92px -> 15 tiles per 1400px row */
+    --bj-tile-label: clamp(11px, .78vw, 15px);     /* ~14.6px */
+    --bj-font: "Poppins", "BJ Sans", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+
+    /* ACCENT: normally pushed by SidebarToggles.uc.js (user sheet overriding --bj-theme-src / --bj-on-accent
+       from the Customize SIDEBAR's Colour source / Accent). The about:newtab Appearance picker is hidden (section 13),
+       because it changes the real Firefox theme and light/dark mode. When no override is registered
+       (Default theme + system accent) the fallback below applies.
+       A content page only receives a handful of theme variables. Measured on about:newtab
+       with Alpenglow Dark: --newtab-*, --sidebar-*, --in-content-zap-gradient, and the pair
+         --lwt-sidebar-highlight-background-color  (#7643e5: the theme's real accent)
+         --lwt-sidebar-highlight-text-color        (readable text colour on it)
+       That pair is the accent source. A theme without a sidebar highlight (Automatic,
+       built-in Light / Dark) leaves it unset, and every var() below falls back to the gold. */
+    --bj-theme-src: var(--lwt-sidebar-highlight-background-color);
+    --bj-on-accent: var(--lwt-sidebar-highlight-text-color, #ffffff);
+
+    /* base = the theme colour, with lightness clamped so it stays visible on the dark
+       popups and readable under white text; the other levels step from it */
+    --bj-accent-t:         oklch(from var(--bj-theme-src) clamp(0.42, l, 0.62) c h / 1);
+    --bj-accent-hover-t:   oklch(from var(--bj-accent-t) min(calc(l + 0.08), 0.95) c h / 1);
+    --bj-accent-active-t:  oklch(from var(--bj-accent-t) max(calc(l - 0.08), 0.15) c h / 1);
+    --bj-accent-mid-t:     oklch(from var(--bj-accent-t) min(calc(l + 0.16), 0.95) calc(c * 0.8) h / 1);
+    --bj-accent-light-t:   oklch(from var(--bj-accent-t) min(calc(l + 0.24), 0.95) calc(c * 0.6) h / 1);
+    --bj-accent-lighter-t: oklch(from var(--bj-accent-t) min(calc(l + 0.34), 0.97) calc(c * 0.4) h / 1);
+
+    --bj-accent: var(--bj-accent-t, #9c6b1f);
+    --bj-accent-hover: var(--bj-accent-hover-t, #b6822b);
+    --bj-accent-active: var(--bj-accent-active-t, #805718);
+    --bj-accent-mid: var(--bj-accent-mid-t, #c99a43);
+    --bj-accent-light: var(--bj-accent-light-t, #d7ad5e);
+    --bj-accent-lighter: var(--bj-accent-lighter-t, #f4d28a);
+
+    /* Firefox newtab variables */
+    --newtab-background-color: transparent !important;
+    --newtab-background-color-secondary: transparent !important;
+    --newtab-border-color: transparent !important;
+    --newtab-text-primary-color: #DCDCDC !important;
+    --newtab-text-secondary-color: rgb(220 220 220 / .85) !important;
+    --semi-transparent: rgb(255 255 255 / .14) !important;
+
+    /* Glass / gold accent (menus, modals) */
+    --glass-ink: #10263f !important;
+    --glass-gold: var(--bj-accent) !important;
+    --glass-text: #f4f7fb !important;
+    --glass-muted: #c8d2df !important;
+    --glass-popup-bg: color-mix(in srgb, #10263f 62%, transparent) !important;
+    --glass-popup-border: color-mix(in srgb, var(--bj-accent) 58%, transparent) !important;
+    --glass-popup-hover: color-mix(in srgb, var(--bj-accent) 32%, transparent) !important;
+
+    --focus-outline-color: var(--bj-accent) !important;
+    --focus-outline: 2px solid var(--bj-accent) !important;
+    --newtab-focus-outline: color-mix(in srgb, var(--bj-accent) 32%, transparent) !important;
+    --newtab-focus-border: var(--bj-accent) !important;
+    --newtab-focus-border-selected: var(--bj-accent) !important;
+    --newtab-primary-action-background: var(--bj-accent) !important;
+    --newtab-primary-action-background-dimmed: color-mix(in srgb, var(--bj-accent) 28%, transparent) !important;
+    --newtab-button-background: color-mix(in srgb, #10263f 82%, transparent) !important;
+    --newtab-button-focus-background: color-mix(in srgb, var(--bj-accent) 22%, #10263f) !important;
+    --newtab-button-focus-border: var(--bj-accent) !important;
+    --newtab-button-hover-background: color-mix(in srgb, var(--bj-accent) 24%, #10263f) !important;
+    --newtab-button-active-background: color-mix(in srgb, var(--bj-accent) 40%, #10263f) !important;
+  }
+
+  html, body { overflow: hidden !important; }   /* delete if you want the page to scroll */
+  body {
+    font-family: var(--bj-font) !important;
+    color: var(--bj-ink) !important;
+  }
+
+  /* Firefox sets `font: caption` / system-ui on several widgets, which beats the
+     inherited body family. Force Poppins everywhere it is visible. It inherits
+     through shadow roots (moz-button, moz-input-*, panel-list) too. */
+  .top-site-outer .title,
+  .top-site-outer .title .title-label,
+  .top-site-outer .title span,
+  .clocks-widget,
+  .weather-widget,
+  .clocks-panel,
+  .customize-menu,
+  panel-list,
+  panel-item {
+    font-family: var(--bj-font) !important;
+  }
+
+  /* ------------------------------------------------------------------------
+     1. TRANSPARENCY (explicit list: no blanket section/div resets)
+     ------------------------------------------------------------------------ */
+  html, body, #root,
+  .nova-outer-wrapper, .container, .content, .content-full-width,
+  .top-sites, .top-sites-list-wrapper,
+  .widgets-section-container, .widgets-container, .widget-wrapper,
+  .clocks-widget, .weather-widget,
+  .wallpaper, .wallpaper-container, #wallpaper, .wallpaper-preview {
+    background: none !important;
+    background-image: none !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+
+  /* ------------------------------------------------------------------------
+     2. HIDE CHROME (exact classes from the DOM dump)
+     ------------------------------------------------------------------------ */
+  .search-wrapper,
+  .logo-and-wordmark-wrapper,
+  .logo-and-wordmark,
+  .section-top-bar,
+  .widgets-title-container,      /* the "Widgets ^ …" header */
+  .widgets-add-button,
+  .widgets-row-toggle {
+    display: none !important;
+  }
+
+  /* ------------------------------------------------------------------------
+     3. CLOCKS — wrapper is fixed, article stays in normal flow inside it
+     Reference: digit tops y≈60, labels y≈164, 56px between columns.
+     ------------------------------------------------------------------------ */
+  .widget-wrapper:has(> .clocks-widget) {
+    position: fixed !important;
+    top: 4.7vh !important;
+    left: var(--bj-left) !important;
+    z-index: 1 !important;
+    width: max-content !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .clocks-widget {
+    position: relative !important;
+    display: block !important;
+    width: max-content !important;
+    max-width: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Invisible hover bridge above the clocks so the toolbar stays reachable
+     (it only covers the strip ABOVE the widget, never the rows themselves). */
+  .clocks-widget::before {
+    content: "" !important;
+    position: absolute !important;
+    inset: -44px -16px auto -16px !important;
+    height: 44px !important;
+    z-index: 0 !important;
+  }
+
+  /* toolbar (add clock, menu): compact, left-aligned above the first clock.
+     220ms hover-off buffer: delay only applies to the fade-OUT. */
+  .clocks-widget .widget-toolbar {
+    position: absolute !important;
+    inset: auto !important;
+    top: -34px !important;
+    left: 0 !important;
+    width: max-content !important;
+    height: auto !important;
+    block-size: auto !important;
+    padding: 0 !important;
+    justify-content: flex-start !important;
+    gap: 6px !important;
+    opacity: 0 !important;
+    transition: opacity 150ms ease 220ms !important;
+  }
+  .clocks-widget:hover .widget-toolbar,
+  .clocks-widget:focus-within .widget-toolbar,
+  .clocks-widget:has(panel-list[open]) .widget-toolbar {
+    opacity: 1 !important;
+    transition-delay: 0ms !important;
+  }
+  .clocks-widget:has(panel-list[open]) .widget-toolbar moz-button {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transform: none !important;
+  }
+  .clocks-widget.is-panel-open .widget-toolbar,
+  .clocks-widget:has(.clocks-panel) .widget-toolbar,
+  .clocks-widget:has(.clocks-panel)::before { display: none !important; }
+
+  /* while ANY clocks panel (add / search / edit) exists, the clocks are hidden
+     so the card replaces them in place instead of stacking under them.
+     Keyed on the panel's presence, not on .is-panel-open, because the edit
+     panel (.clocks-panel.clocks-edit-panel) doesn't always set that class. */
+  .clocks-widget:has(.clocks-panel) .clocks-list { display: none !important; }
+
+  .clocks-list {
+    display: flex !important;
+    flex-flow: row nowrap !important;
+    gap: 0 3vw !important;                /* 56px @ 1870, matches the reference gap */
+    width: max-content !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    list-style: none !important;
+  }
+
+  .clocks-row {
+    position: relative !important;
+    display: flex !important;
+    /* Firefox gives each row `flex: 1 1 0`, so every column is stretched to the width of
+       the WIDEST one: narrow clocks get a huge trailing gap, wide ones almost none.
+       Size each column to its own content and let `gap` on the list set the spacing. */
+    flex: 0 0 auto !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    width: auto !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: none !important;
+    border: 0 !important;             /* removes the lines above the clocks */
+    box-shadow: none !important;
+  }
+  .clocks-row::before,
+  .clocks-row::after { display: none !important; }
+
+  .clocks-time,
+  .clocks-row.hides-time-on-inline-actions:hover .clocks-time,
+  .clocks-row.hides-time-on-inline-actions:focus-within .clocks-time {
+    order: 1 !important;
+    display: block !important;
+    margin: 0 !important;
+    font-size: var(--bj-clock) !important;
+    font-weight: 200 !important;
+    /* Firefox forces tabular-nums, which gives every column the same width.
+       Bonjourr uses proportional digits, so "01:22" is a narrower column. */
+    font-variant-numeric: normal !important;
+    line-height: 1.05 !important;
+    letter-spacing: var(--bj-clock-tracking) !important;
+    color: var(--bj-ink) !important;
+    text-shadow: var(--bj-text-shadow) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  .clocks-meta {
+    order: 2 !important;
+    display: flex !important;
+    margin-top: -.25vw !important;    /* pulls the label up: ref gap digit→label is ~34px */
+  }
+  .clocks-label,
+  .clocks-city,
+  .clocks-timezone { display: none !important; }
+
+  /* the region chip becomes the Bonjourr label ("Türkiye", "UTC", …) */
+  .clocks-label-chip,
+  [class*="clocks-chip-"] {
+    background: none !important;
+    border: 0 !important;
+    padding: 0 !important;
+    font-size: var(--bj-label) !important;
+    font-weight: 300 !important;
+    line-height: 1.2 !important;
+    color: var(--bj-ink-dim) !important;
+    text-shadow: var(--bj-text-shadow) !important;
+  }
+
+  /* per-clock edit/remove buttons: moved from over the digits to the label line,
+     right edge of the column, so they never cover the time */
+  .clocks-row-actions {
+    position: absolute !important;
+    top: auto !important;
+    bottom: -8px !important;
+    right: 0 !important;
+    display: flex !important;
+    gap: 2px !important;
+    padding: 2px !important;
+    margin: 0 !important;
+    border-radius: 99px !important;
+    background: var(--pop-bg) !important;
+    border: 1px solid var(--pop-border) !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: opacity 150ms ease 220ms !important;
+  }
+  .clocks-row:hover .clocks-row-actions,
+  .clocks-row:focus-within .clocks-row-actions {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transition-delay: 0ms !important;
+  }
+
+  /* ------------------------------------------------------------------------
+     4. WEATHER + GREETING
+     Reference: greeting 54px at x=200, column right edge x=600, description
+     right-aligned under it (18.7px, 29px line), icon + temperature on the
+     last line, right-aligned.
+     ------------------------------------------------------------------------ */
+  .widget-wrapper:has(> .weather-widget) {
+    position: fixed !important;
+    top: 32vh !important;
+    left: var(--bj-left) !important;
+    z-index: 1 !important;
+    width: var(--bj-greet-w) !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .weather-widget {
+    position: relative !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: var(--bj-ink) !important;
+    text-shadow: var(--bj-text-shadow) !important;
+  }
+
+  .weather-widget::before {
+    content: "Today's Weather :" !important;  /* static: CSS can't read the clock. Other languages: the :lang() rules right after this block */
+    align-self: stretch !important;
+    text-align: left !important;
+    white-space: nowrap !important;      /* long translations (tr, ru, pt) must not wrap onto a 2nd line */
+    font-size: var(--bj-weather) !important;
+    font-weight: 200 !important;
+    letter-spacing: -0.01em !important;
+    margin-bottom: .35em !important;
+  }
+
+  /* "Today's Weather" in the page language (the newtab sets lang on its root from Firefox's interface language;
+     not listed or no lang = "Today's Weather"). 14 languages: tr de nl fr es it pt pl cs sv ru ja ko zh. */
+  :root:lang(tr) .weather-widget::before { content: "Bugünün hava durumu :" !important; }
+  :root:lang(de) .weather-widget::before { content: "Wetter heute :"         !important; }
+  :root:lang(nl) .weather-widget::before { content: "Weer van vandaag :"     !important; }
+  :root:lang(fr) .weather-widget::before { content: "Météo du jour :"        !important; }
+  :root:lang(es) .weather-widget::before { content: "El tiempo de hoy :"     !important; }
+  :root:lang(it) .weather-widget::before { content: "Meteo di oggi :"        !important; }
+  :root:lang(pt) .weather-widget::before { content: "Previsão de hoje :"     !important; }
+  :root:lang(pl) .weather-widget::before { content: "Pogoda na dziś :"       !important; }
+  :root:lang(cs) .weather-widget::before { content: "Dnešní počasí :"        !important; }
+  :root:lang(sv) .weather-widget::before { content: "Dagens väder :"         !important; }
+  :root:lang(ru) .weather-widget::before { content: "Погода сегодня :"       !important; }
+  :root:lang(ja) .weather-widget::before { content: "今日の天気 :"           !important; }
+  :root:lang(ko) .weather-widget::before { content: "오늘의 날씨 :"          !important; }
+  :root:lang(zh) .weather-widget::before { content: "今日天气 :"             !important; }
+
+  .weather-widget .forecast-row,
+  .weather-widget .forecast-footer,
+  .weather-widget .weather-anchor,
+  .weather-widget .widget-title { display: none !important; }
+
+  /* context-menu button: sits just outside the column's right edge, fades with a
+     220ms hover-off buffer, and stays visible while its panel-list is open */
+  .weather-widget .widget-title-bar {
+    position: absolute !important;
+    top: 4px !important;
+    left: 100% !important;
+    right: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    margin: 0 !important;
+    padding: 0 0 0 8px !important;      /* padding (not margin) = no hover gap */
+    white-space: nowrap !important;
+    opacity: 0 !important;
+    transition: opacity 150ms ease 220ms !important;
+  }
+  .weather-widget:hover .widget-title-bar,
+  .weather-widget:focus-within .widget-title-bar,
+  .weather-widget:has(panel-list[open]) .widget-title-bar {
+    opacity: 1 !important;
+    transition-delay: 0ms !important;
+  }
+
+  .weather-widget .weather-container,
+  .weather-widget .weather-conditions-view {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    background: none !important;
+    border: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* grid: description spans the full column on top, icon + temperature below,
+     both pushed to the right edge */
+  .weather-widget .weather-info-link {
+    display: grid !important;
+    grid-template-columns: 1fr auto auto !important;
+    grid-template-areas:
+      "desc desc desc"
+      ".    icon temp" !important;
+    align-items: center !important;
+    column-gap: 10px !important;
+    row-gap: 8px !important;
+    width: 100% !important;
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+  .weather-widget .weather-info-column { display: contents !important; }
+
+  .weather-widget .weather-info-description {
+    grid-area: desc !important;
+    justify-self: end !important;
+    text-align: right !important;
+    /* the small-widget variant clips this to 1px; undo it */
+    position: static !important;
+    clip-path: none !important;
+    width: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+    white-space: normal !important;
+    max-width: 100% !important;
+    font-size: var(--bj-sub) !important;
+    font-weight: 300 !important;
+    line-height: 1.55 !important;
+    color: var(--bj-ink-dim) !important;
+  }
+  .weather-widget .weather-icon-column {
+    grid-area: icon !important;
+    justify-self: end !important;
+    width: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .weather-widget .weather-info-row {
+    grid-area: temp !important;
+    justify-self: end !important;
+    display: flex !important;
+    align-items: baseline !important;
+    gap: 10px !important;
+    font-size: var(--bj-temp) !important;
+    font-weight: 200 !important;
+  }
+  .weather-widget .temperature-unit {
+    font-size: var(--bj-temp) !important;
+    font-weight: 200 !important;
+    color: var(--bj-ink) !important;
+  }
+  .weather-widget .high-low-row,
+  .weather-widget .high-temperature,
+  .weather-widget .low-temperature {
+    font-size: clamp(12px, .8vw, 16px) !important;
+    font-weight: 300 !important;
+    color: var(--bj-ink-dim) !important;
+  }
+  .weather-widget .weather-icon-column,
+  .weather-widget .weather-icon {
+    background-color: transparent !important;   /* kills the dark rounded chip */
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+  .weather-widget .weather-icon {
+    width: 2.1vw !important;                    /* ~40px, same as the reference */
+    min-width: 28px !important;
+    height: auto !important;
+    transform: none !important;
+    filter: grayscale(1) brightness(1.5) drop-shadow(0 2px 6px rgb(0 0 0 / .45)) !important;
+  }
+
+  /* location search: the widget turns into a compact solid card instead of
+     keeping the greeting and sitting in a 4-column absolutely positioned box */
+  .weather-widget.weather-search-active {
+    position: relative !important;
+    inset: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    padding: 16px !important;
+    align-items: stretch !important;
+    text-shadow: none !important;
+    color: #f4f7fb !important;
+    background: var(--pop-bg) !important;
+    border: 1px solid var(--pop-border) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 18px 42px rgb(0 0 0 / .48) !important;
+    z-index: 6 !important;
+  }
+  .weather-widget.weather-search-active::before { display: none !important; }
+  .weather-widget.weather-search-active .weather-search-container {
+    position: relative !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+  .weather-widget.weather-search-active .location-input-wrapper {
+    width: 100% !important;
+    margin: 0 !important;
+  }
+  .weather-widget.weather-search-active moz-input-search,
+  .weather-widget.weather-search-active moz-input-text,
+  .weather-widget.weather-search-active input { width: 100% !important; }
+  /* suggestion list: div.location-search-results[role=listbox]
+       > div.location-search-result[role=option]
+           > span.location-search-result-city + span.location-search-result-region */
+  .weather-widget .location-search-results {
+    position: static !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+    width: 100% !important;
+    max-height: 200px !important;
+    margin: 0 !important;
+    padding: 4px !important;
+    overflow-y: auto !important;
+    background: var(--pop-bg) !important;
+    border: 1px solid var(--pop-border) !important;
+    border-radius: 10px !important;
+    box-shadow: none !important;
+  }
+  .weather-widget .location-search-result {
+    display: flex !important;
+    align-items: baseline !important;
+    gap: 10px !important;
+    padding: 8px 10px !important;
+    border-radius: 8px !important;
+    color: #f4f7fb !important;
+    text-shadow: none !important;
+    cursor: default !important;
+  }
+  .weather-widget .location-search-result:hover,
+  .weather-widget .location-search-result[aria-selected="true"],
+  .weather-widget .location-search-result:focus-visible {
+    background: var(--pop-bg-hover) !important;
+    outline: none !important;
+  }
+  .weather-widget .location-search-result:focus-visible {
+    box-shadow: inset 0 0 0 2px var(--bj-accent) !important;
+  }
+  .weather-widget .location-search-result-city {
+    font-size: 14px !important;
+    font-weight: 400 !important;
+  }
+  .weather-widget .location-search-result-region {
+    margin-inline-start: auto !important;
+    font-size: 12px !important;
+    font-weight: 300 !important;
+    color: #a9a9b3 !important;
+  }
+
+  /* ------------------------------------------------------------------------
+     5. SHORTCUTS — fix the WRAPPER, flow the list inside it
+     Firefox renders at most topSitesRows x 8 tiles (8 columns is hard-coded),
+     so 2 rows = 16 tiles. Use 3 rows for up to 24.
+     Reference: first icon row top y≈684, 92px pitch, 116px row pitch.
+     ------------------------------------------------------------------------ */
+  .top-sites-list-wrapper {
+    position: fixed !important;
+    top: 64.5vh !important;
+    left: 0 !important;
+    right: 0 !important;
+    margin-inline: auto !important;
+    width: min(1400px, 84vw) !important;
+    max-width: none !important;
+    padding: 0 !important;
+    z-index: 1 !important;
+  }
+
+  .top-sites-list {
+    display: flex !important;                 /* overrides any grid */
+    grid-template-columns: none !important;
+    flex-flow: row wrap !important;
+    justify-content: center !important;
+    align-items: flex-start !important;
+    gap: 19px 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    list-style: none !important;
+  }
+
+  /* display:flex also defeats .nova-hide-for-xs (tiles 13-16 in your dump) */
+  .top-sites-list .top-site-outer {
+    display: flex !important;
+    flex: 0 0 var(--bj-pitch) !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    width: var(--bj-pitch) !important;
+    max-width: var(--bj-pitch) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: none !important;
+    border: 0 !important;
+  }
+
+  .top-site-outer .top-site-inner,
+  .top-site-outer .top-site-inner > a {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    width: 100% !important;
+    text-decoration: none !important;
+  }
+
+  .top-site-outer .tile {
+    width: var(--bj-tile) !important;
+    height: var(--bj-tile) !important;
+    margin: 0 auto !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    border-radius: 14px !important;
+    overflow: hidden !important;
+    transition: transform 160ms cubic-bezier(.2, .8, .2, 1) !important;   /* compositor-only */
+  }
+  .top-site-outer:hover .tile { transform: translateY(-3px) scale(1.06) !important; }
+
+  /* px via token, NOT %: a % height under an auto-height parent collapses to 0
+     and makes background-image icons / letter fallbacks invisible. */
+  .top-site-outer .tile .icon-wrapper {
+    width: var(--bj-tile) !important;
+    height: var(--bj-tile) !important;
+    border-radius: inherit !important;
+  }
+  .top-site-outer .tile .rich-icon {
+    width: var(--bj-tile) !important;
+    height: var(--bj-tile) !important;
+    background-size: cover !important;
+    border-radius: inherit !important;
+    filter: none !important;
+    opacity: 1 !important;
+  }
+  .top-site-outer .tile .top-site-icon,
+  .top-site-outer .tile .default-icon,
+  .top-site-outer .tile .search-topsite,
+  .top-site-outer .tile .icon-wrapper img {
+    width: var(--bj-tile) !important;
+    height: var(--bj-tile) !important;
+    object-fit: contain !important;
+    background-size: contain !important;
+    filter: none !important;
+    opacity: 1 !important;
+  }
+
+  /* Labels. Firefox sets `font: caption` (Segoe UI) on .title, so the labels were
+     not Poppins at all; also sizes .title-label to a fixed 75px, narrower than our
+     92px pitch. Full width, Poppins Light ~14.6px, 2 lines, tight leading. */
+  .top-site-outer .title {
+    display: block !important;
+    width: 100% !important;
+    margin-top: 6px !important;
+    padding: 0 !important;
+    font-family: var(--bj-font) !important;
+    font-size: var(--bj-tile-label) !important;
+    font-weight: 300 !important;
+    line-height: 1.15 !important;
+    text-align: center !important;
+    filter: var(--bj-drop-shadow) !important;
+  }
+  .top-site-outer .title .title-label {
+    display: -webkit-box !important;
+    -webkit-box-orient: vertical !important;
+    -webkit-line-clamp: 2 !important;         /* Bonjourr wraps labels to 2 lines */
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    padding: 0 2px !important;
+    text-align: center !important;
+    overflow-wrap: anywhere !important;
+  }
+  .top-site-outer .title span {
+    font-size: var(--bj-tile-label) !important;
+    font-weight: 300 !important;
+    line-height: 1.15 !important;
+    color: var(--bj-ink-dim) !important;
+    text-shadow: none !important;   /* shadow comes from the filter on .title */
+  }
+
+  /* ------------------------------------------------------------------------
+     6. CUSTOMIZE BUTTON + SETTINGS DIALOG
+     DOM: menu.personalizeButtonWrapper > span
+            > moz-button.open-customization-button[type=primary][label=Customize]
+            > dialog.customize-menu          (the settings panel lives in here too)
+     The button rules are scoped to the button only, so they cannot leak into
+     the dialog's toggles, selects and buttons.
+     ------------------------------------------------------------------------ */
+  .personalizeButtonWrapper {
+    background: transparent !important;
+    box-shadow: none !important;
+    /* reference gear sits ~47px from both edges; Firefox default is ~39px */
+    inset-block-end: calc(var(--space-xlarge) + 8px) !important;
+    inset-inline-end: calc(var(--space-xlarge) + 8px) !important;
+  }
+
+  /* primary moz-button: colours come from these variables, not from `color` */
+  .open-customization-button {
+    --button-background-color-primary: transparent !important;
+    --button-background-color-primary-hover: transparent !important;
+    --button-background-color-primary-active: transparent !important;
+    --button-border-color-primary: transparent !important;
+    --button-text-color-primary: var(--bj-ink) !important;
+    --button-text-color-primary-hover: #ffffff !important;
+    --button-text-color-primary-active: #ffffff !important;
+    --icon-color-primary: var(--bj-ink) !important;
+    --icon-color: var(--bj-ink) !important;
+    color: var(--bj-ink) !important;
+    text-shadow: var(--bj-shadow) !important;
+    filter: none !important;
+    opacity: .6 !important;
+    transition: opacity 150ms ease !important;
+  }
+  .open-customization-button:hover,
+  .open-customization-button:focus-visible,
+  .open-customization-button[aria-expanded="true"] { opacity: 1 !important; }
+
+  .open-customization-button::part(button) {
+    background: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+    color: var(--bj-ink) !important;
+  }
+
+  /* settings dialog: the page tokens make its default fill transparent,
+     so give it the same solid neutral card as the other popups */
+  .customize-menu {
+    color-scheme: dark !important;
+    color: #f4f7fb !important;
+    background: var(--pop-bg) !important;
+    border: 1px solid var(--pop-border) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 18px 42px rgb(0 0 0 / .48) !important;
+    --customize-menu-bg: var(--pop-bg) !important;   /* footer gradient + fade use this */
+    --newtab-background-color-secondary: var(--pop-bg) !important;
+    --newtab-text-primary-color: #f4f7fb !important;
+  }
+  .customize-menu .customize-menu-content { background: transparent !important; }
+
+  /* ------------------------------------------------------------------------
+     7. MENUS, MODALS, FOCUS — the original gold language, neutral fills
+     Gold = borders, rings, links, primary button. No navy tint, no grayscale.
+     Fills are opaque on purpose: the page itself is transparent, so
+     backdrop-filter has nothing of the desktop to blur and a translucent
+     popup would just be hard to read.
+     ------------------------------------------------------------------------ */
+  :root {
+    --pop-bg: #18181b;
+    --pop-bg-hover: #2a2a2e;
+    --pop-bg-active: #36363b;
+    --pop-border: color-mix(in srgb, var(--bj-accent) 74%, transparent);
+    --pop-border-hover: var(--bj-accent-mid);
+    --pop-shadow: 0 10px 28px rgb(0 0 0 / .42);
+
+    /* the tokens Firefox's own popup / dialog / panel CSS reads */
+    --popup-background-color: var(--pop-bg) !important;
+    --popup-border-color: var(--pop-border) !important;
+    --popup-border-radius: 14px !important;
+    --popup-box-shadow: var(--pop-shadow) !important;
+    --panel-background-color: var(--pop-bg) !important;
+    --panel-text-color: #f4f7fb !important;
+    --panel-menuitem-border-radius: 8px !important;
+    --newtab-overlay-color: rgb(0 0 0 / .4) !important;
+  }
+
+  /* gold ring on hover / keyboard focus; the tile itself stays a bare icon */
+  .top-site-outer:is(:hover, :has(a:focus-visible)) .tile {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--bj-accent) 70%, transparent) !important;
+  }
+
+  .top-site-outer .context-menu-button {
+    color: var(--glass-text) !important;
+    background-color: var(--pop-bg) !important;
+    border: 1px solid var(--pop-border) !important;
+    border-radius: 50% !important;
+    box-shadow: none !important;
+    outline: none !important;
+    transition: background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease !important;
+  }
+  .top-site-outer .context-menu-button:hover,
+  .top-site-outer .context-menu-button:active,
+  .top-site-outer .context-menu-button[aria-expanded="true"] {
+    color: #ffffff !important;
+    background-color: var(--pop-bg-hover) !important;
+    border-color: var(--pop-border-hover) !important;
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--bj-accent) 20%, transparent) !important;
+  }
+  .top-site-outer .context-menu-button:focus-visible,
+  .top-site-outer .context-menu-button[aria-expanded="true"]:focus {
+    outline: 2px solid var(--bj-accent) !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--bj-accent) 22%, transparent) !important;
+  }
+
+  panel-list {
+    color-scheme: dark !important;
+    --panel-list-background-color: var(--pop-bg) !important;
+    --panel-list-text-color: #f4f7fb !important;
+    --panel-list-border-color: var(--pop-border) !important;
+    --panel-list-border-radius: 12px !important;
+    --panel-list-box-shadow: var(--pop-shadow) !important;
+    --button-background-color-menu-hover: var(--pop-bg-hover) !important;
+    --button-text-color-menu-hover: #ffffff !important;
+    --button-background-color-menu-active: var(--pop-bg-active) !important;
+    --button-text-color-menu-active: #ffffff !important;
+    --focus-outline: 2px solid var(--bj-accent) !important;
+    --focus-outline-color: var(--bj-accent) !important;
+    --panel-separator-color: color-mix(in srgb, var(--bj-accent) 35%, transparent) !important;
+  }
+
+  /* edit-shortcut modal: neutral dim + blur of the page behind, solid card */
+  .modalOverlayOuter:has(.topsite-form) {
+    background: transparent !important;
+    background-image: none !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+  .modalOverlayOuter:has(.topsite-form)::backdrop {
+    background: rgb(0 0 0 / .4) !important;
+    backdrop-filter: blur(10px) !important;
+  }
+
+  .edit-topsites .modal,
+  .edit-topsites .modal:has(.topsite-form),
+  .modal:has(.topsite-form) {
+    color-scheme: dark !important;
+    color: var(--glass-text) !important;
+    background: var(--pop-bg) !important;
+    background-image: none !important;
+    border: 1px solid var(--pop-border) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 18px 42px rgb(0 0 0 / .48) !important;
+  }
+
+  .topsite-form {
+    color: var(--glass-text) !important;
+    --link-color: var(--bj-accent-light) !important;
+    --link-color-hover: var(--bj-accent-lighter) !important;
+    --link-color-active: var(--bj-accent-mid) !important;
+    --focus-outline-color: var(--bj-accent) !important;
+    --focus-outline: 2px solid var(--bj-accent) !important;
+    --button-background-color: var(--pop-bg-hover) !important;
+    --button-background-color-hover: var(--pop-bg-active) !important;
+    --button-background-color-active: #43434a !important;
+    --button-text-color: #f4f7fb !important;
+    --button-text-color-hover: #ffffff !important;
+    --button-border-color: var(--pop-border) !important;
+    --button-border-color-hover: var(--pop-border-hover) !important;
+  }
+
+  .topsite-form .section-title,
+  .topsite-form label,
+  .topsite-form .form-input-container,
+  .topsite-form .topsite-form-footer {
+    color: var(--glass-text) !important;
+  }
+
+  .topsite-form input:not([type="checkbox"]) {
+    color: var(--glass-text) !important;
+    background: #101012 !important;
+    border: 1px solid var(--pop-border) !important;
+    border-radius: 9px !important;
+    box-shadow: none !important;
+    outline: none !important;
+    caret-color: var(--bj-accent-light) !important;
+  }
+  .topsite-form input:not([type="checkbox"])::placeholder {
+    color: #9a9aa2 !important;
+    opacity: 1 !important;
+  }
+  .topsite-form input:not([type="checkbox"]):focus,
+  .topsite-form input:not([type="checkbox"]):focus-visible {
+    background: #0b0b0d !important;
+    border-color: var(--pop-border-hover) !important;
+    outline: 2px solid var(--bj-accent) !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--bj-accent) 66%, transparent),
+      0 0 0 4px color-mix(in srgb, var(--bj-accent) 20%, transparent) !important;
+  }
+
+  .topsite-form .enable-custom-image-input,
+  .topsite-form .enable-custom-image-input:link,
+  .topsite-form .enable-custom-image-input:visited {
+    color: var(--bj-accent-light) !important;
+    text-decoration-color: currentColor !important;
+  }
+  .topsite-form .enable-custom-image-input:hover  { color: var(--bj-accent-lighter) !important; text-decoration: none !important; }
+  .topsite-form .enable-custom-image-input:active { color: var(--bj-accent-mid) !important; }
+  .topsite-form .enable-custom-image-input:focus,
+  .topsite-form .enable-custom-image-input:focus-visible {
+    color: var(--bj-accent-lighter) !important;
+    outline: 2px solid var(--bj-accent) !important;
+    outline-offset: 3px !important;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--bj-accent) 18%, transparent) !important;
+    border-radius: 4px !important;
+  }
+
+  .topsite-form moz-button {
+    color: var(--glass-text) !important;
+    --focus-outline-color: var(--bj-accent) !important;
+    --focus-outline: 2px solid var(--bj-accent) !important;
+  }
+  .topsite-form moz-button[type="primary"] {
+    --button-background-color: var(--bj-accent) !important;
+    --button-background-color-hover: var(--bj-accent-hover) !important;
+    --button-background-color-active: var(--bj-accent-active) !important;
+    --button-text-color: var(--bj-on-accent) !important;
+    --button-text-color-hover: var(--bj-on-accent) !important;
+    --button-border-color: var(--bj-accent) !important;
+    --button-border-color-hover: var(--bj-accent-light) !important;
+  }
+  /* Focus ring: keyboard only, and shaped like the pill button.
+     The old rules drew a square 2px gold outline (offset 3px) on the moz-button HOST
+     for plain :focus, so pressing/holding the mouse on Cancel (mousedown focuses it)
+     flashed a square frame around the pill. Mouse focus now gets no ring at all. */
+  .topsite-form moz-button:focus,
+  .topsite-form moz-button:active,
+  .topsite-form moz-button:focus-within {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+  .topsite-form moz-button:focus-visible {
+    outline: 2px solid var(--bj-accent) !important;
+    outline-offset: 3px !important;
+    border-radius: 999px !important;     /* host has no radius of its own, so the ring was square */
+  }
+  .topsite-form moz-button::part(button):focus,
+  .topsite-form moz-button::part(button):active {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+
+  /* ------------------------------------------------------------------------
+     8. SETTINGS DIALOG CONTENTS, WIDGET BUTTONS, WEATHER MENU
+     moz-toggle / moz-select / moz-box-button / theme-picker live in shadow
+     roots, so the only reliable hook is Firefox's own design tokens. They are
+     overridden on the dialog and inherit down through every shadow boundary.
+     .clocks-panel and the weather search card share the same token block.
+     ------------------------------------------------------------------------ */
+  .customize-menu,
+  .clocks-panel,
+  .weather-widget.weather-search-active {
+    color-scheme: dark !important;
+    /* the clock search results and several inputs read this one; the page-wide
+       value is transparent, which made those dropdowns unreadable */
+    --newtab-background-color-secondary: var(--pop-bg) !important;
+    --button-text-color-ghost: #f4f7fb !important;
+    --button-text-color-ghost-hover: #ffffff !important;
+    --button-text-color-ghost-active: #ffffff !important;
+    --button-background-color-ghost: transparent !important;
+    --button-background-color-ghost-hover: var(--pop-bg-hover) !important;
+    --button-background-color-ghost-active: var(--pop-bg-active) !important;
+    --text-color: #f4f7fb !important;
+    --text-color-deemphasized: #a9a9b3 !important;
+    --icon-color: #f4f7fb !important;
+    --background-color-canvas: var(--pop-bg) !important;
+    --background-color-box: #202024 !important;
+    --border-color: rgb(255 255 255 / .14) !important;
+    --border-color-card: color-mix(in srgb, var(--bj-accent) 45%, transparent) !important;
+    --border-color-interactive: var(--pop-border) !important;
+    --border-color-interactive-hover: var(--pop-border-hover) !important;
+    --border-color-interactive-active: var(--bj-accent-light) !important;
+    --color-accent-primary: var(--bj-accent) !important;
+    --color-accent-primary-hover: var(--bj-accent-hover) !important;
+    --color-accent-primary-active: var(--bj-accent-active) !important;
+    --focus-outline-color: var(--bj-accent) !important;
+    --focus-outline: 2px solid var(--bj-accent) !important;
+    --link-color: var(--bj-accent-light) !important;
+    --link-color-hover: var(--bj-accent-lighter) !important;
+    --link-color-active: var(--bj-accent-mid) !important;
+    --button-background-color: var(--pop-bg-hover) !important;
+    --button-background-color-hover: var(--pop-bg-active) !important;
+    --button-background-color-active: #43434a !important;
+    --button-text-color: #f4f7fb !important;
+    --button-text-color-hover: #ffffff !important;
+    --button-border-color: var(--pop-border) !important;
+    --button-border-color-hover: var(--pop-border-hover) !important;
+    --toggle-background-color: #3a3a40 !important;
+    --toggle-background-color-hover: #46464d !important;
+    --toggle-background-color-pressed: var(--bj-accent) !important;
+    --toggle-background-color-pressed-hover: var(--bj-accent-hover) !important;
+    --toggle-border-color: #6b6b73 !important;
+    --toggle-border-color-hover: #8a8a93 !important;
+    --toggle-border-color-active: var(--bj-accent-light) !important;
+    --toggle-dot-background-color: #f4f7fb !important;
+    --toggle-dot-background-color-pressed: #ffffff !important;
+  }
+
+  .customize-menu h2 {
+    color: #f4f7fb !important;
+    font-weight: 400 !important;
+  }
+  .customize-menu .divider {
+    background: color-mix(in srgb, var(--bj-accent) 35%, transparent) !important;
+    border-color: color-mix(in srgb, var(--bj-accent) 35%, transparent) !important;
+  }
+  .customize-menu .category-list label { color: var(--bj-ink-dim) !important; }
+
+  .customize-menu .wallpaper-input {
+    border: 1px solid var(--pop-border) !important;
+    border-radius: 12px !important;
+    box-shadow: none !important;
+    transition: box-shadow 140ms ease !important;
+  }
+  .customize-menu .wallpaper-input:hover {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--bj-accent) 70%, transparent) !important;
+  }
+  .customize-menu .wallpaper-input:focus-visible,
+  .customize-menu .wallpaper-input[aria-expanded="true"],
+  .customize-menu .wallpaper-input.selected {
+    outline: 2px solid var(--bj-accent) !important;
+    outline-offset: 2px !important;
+  }
+
+  .customize-menu #settings-link,
+  .customize-menu #settings-link:link,
+  .customize-menu #settings-link:visited {
+    color: var(--bj-accent-light) !important;
+    background: none !important;
+    text-decoration-color: currentColor !important;
+  }
+  .customize-menu #settings-link:hover { color: var(--bj-accent-lighter) !important; }
+
+  /* ghost icon buttons: dialog close, clock edit/remove, widget menu */
+  .clocks-row-action-button,
+  .clocks-search-back,
+  .weather-context-menu-button,
+  .widget-toolbar moz-button {
+    --icon-color: var(--bj-ink) !important;
+    --button-text-color: var(--bj-ink) !important;
+    --button-text-color-hover: #ffffff !important;
+    --button-background-color: transparent !important;
+    --button-background-color-hover: var(--pop-bg-hover) !important;
+    --button-background-color-active: var(--pop-bg-active) !important;
+    --button-border-color: transparent !important;
+    --button-text-color-ghost: var(--bj-ink) !important;
+    --button-text-color-ghost-hover: #ffffff !important;
+    --button-text-color-ghost-active: #ffffff !important;
+    --button-background-color-ghost: transparent !important;
+    --button-background-color-ghost-hover: var(--pop-bg-hover) !important;
+    --button-background-color-ghost-active: var(--pop-bg-active) !important;
+    color: var(--bj-ink) !important;
+  }
+  .customize-menu moz-button[type~="ghost"]::part(button):hover,
+  .clocks-row-action-button::part(button):hover,
+  .clocks-search-back::part(button):hover,
+  .weather-context-menu-button::part(button):hover {
+    background: var(--pop-bg-hover) !important;
+  }
+
+  /* weather / widget context menus (panel-list + submenus + separator).
+     Both the --panel-* and --panel-list-* spellings are set: the first set is
+     what panel-list.css reads, the second is what the earlier file used.
+     Positioning is NOT overridden: panel-list places itself with inline styles
+     computed from the anchor rect, fighting that only misplaces it. */
+  panel-list {
+    --panel-background: var(--pop-bg) !important;
+    --panel-color: #f4f7fb !important;
+    --panel-border-color: var(--pop-border) !important;
+    --panel-border-radius: 12px !important;
+    --panel-shadow: var(--pop-shadow) !important;
+    z-index: 10 !important;
+    max-width: min(320px, 90vw) !important;
+  }
+  panel-item {
+    --button-text-color: #f4f7fb !important;
+    --button-text-color-hover: #ffffff !important;
+    --button-background-color: transparent !important;
+    --button-background-color-hover: var(--pop-bg-hover) !important;
+    --button-background-color-active: var(--pop-bg-active) !important;
+    --icon-color: #f4f7fb !important;
+  }
+  panel-list hr {
+    border: 0 !important;
+    height: 1px !important;
+    margin: 4px 0 !important;
+    background: color-mix(in srgb, var(--bj-accent) 35%, transparent) !important;
+  }
+
+  /* any widget with an open dropdown, a search card or an edit panel is lifted
+     above the shortcuts wrapper (all three are z-index:1 siblings otherwise) */
+  .widget-wrapper:has(> .clocks-widget.is-panel-open),
+  .widget-wrapper:has(> .weather-widget.weather-search-active),
+  .widget-wrapper:has(panel-list[open]) {
+    z-index: 6 !important;
+  }
+
+  /* clock add/edit form: it replaces the clocks list while open. Firefox draws it
+     `position:absolute; inset:0` inside the widget, but the widget collapses to 0
+     height once the list is hidden, so the card was clipped / mis-sized.
+     Now it is a normal in-flow card: its own height, compact width, scrolls
+     internally if the clock list is long. */
+  .clocks-panel {
+    position: relative !important;
+    inset: auto !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+    width: min(380px, 90vw) !important;
+    max-width: 380px !important;
+    height: auto !important;
+    max-height: 70vh !important;
+    overflow-y: auto !important;
+    padding: 16px !important;
+    color: #f4f7fb !important;
+    text-shadow: none !important;
+    background: var(--pop-bg) !important;
+    border: 1px solid var(--pop-border) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 18px 42px rgb(0 0 0 / .48) !important;
+    z-index: 2 !important;
+    --input-background-color: #101012 !important;
+    --input-text-color: #f4f7fb !important;
+    --input-border-color: var(--pop-border) !important;
+    --input-border-color-hover: var(--pop-border-hover) !important;
+  }
+  .clocks-panel .clocks-search-header {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+  .clocks-panel .clocks-location-wrapper { flex: 1 1 auto !important; min-width: 0 !important; }
+  .clocks-panel moz-input-search,
+  .clocks-panel moz-input-text { display: block !important; width: 100% !important; }
+
+  /* the stock rules size the edit list with `flex: 1 1 0; min-block-size: 0`,
+     which collapses it inside an auto-height card */
+  .clocks-widget .clocks-edit-panel { flex: none !important; gap: 10px !important; }
+  .clocks-panel .clocks-edit-list {
+    flex: 0 1 auto !important;
+    min-block-size: auto !important;
+    max-block-size: min(46vh, 360px) !important;
+    justify-content: flex-start !important;
+    overflow-y: auto !important;
+  }
+  .clocks-panel .clocks-edit-item { min-block-size: 44px !important; }
+  .clocks-panel .clocks-edit-item-actions { inset-inline-end: 8px !important; }
+
+  /* clock search suggestions: solid, bordered, above the card contents */
+  .clocks-panel .clocks-search-results {
+    z-index: 3 !important;
+    max-block-size: 180px !important;
+    background: var(--pop-bg) !important;
+    border: 1px solid var(--pop-border) !important;
+    border-radius: 10px !important;
+    box-shadow: var(--pop-shadow) !important;
+  }
+  .clocks-panel .clocks-search-result:hover,
+  .clocks-panel .clocks-search-result:focus { background: var(--pop-bg-hover) !important; }
+
+  /* primary moz-buttons read the -primary variables (the first topsite-form
+     rules set --button-background-color, which a primary button ignores) */
+  .clocks-form-submit,
+  .topsite-form moz-button[type="primary"],
+  .customize-menu moz-button[type="primary"] {
+    --button-background-color-primary: var(--bj-accent) !important;
+    --button-background-color-primary-hover: var(--bj-accent-hover) !important;
+    --button-background-color-primary-active: var(--bj-accent-active) !important;
+    --button-text-color-primary: var(--bj-on-accent) !important;
+    --button-text-color-primary-hover: var(--bj-on-accent) !important;
+    --button-border-color-primary: var(--bj-accent) !important;
+  }
+
+  /* ------------------------------------------------------------------------
+     9. REDUCED MOTION (Windows: Settings > Accessibility > Visual effects > Animation effects off)
+     ------------------------------------------------------------------------ */
+  @media (prefers-reduced-motion: reduce) {
+    .top-site-outer .tile,
+    .clocks-widget .widget-toolbar,
+    .clocks-row-actions,
+    .weather-widget .widget-title-bar,
+    .open-customization-button,
+    .top-site-outer .context-menu-button,
+    .customize-menu .wallpaper-input {
+      transition: none !important;
+    }
+    .top-site-outer:hover .tile { transform: none !important; }
+  }
+
+  /* ------------------------------------------------------------------------
+     10. NO MORE VIOLET: recolour Firefox's palette + every button / toggle state
+     Firefox's nova tokens derive accent, hover, active, selected, text and
+     toolbar-button colours from --color-violet-* and --color-violet-desaturated-*.
+     Redefining the two ramps on :root recolours everything derived from them,
+     in all states, without chasing selectors. In the dark scheme:
+       accent = violet-30, accent hover = violet-20, accent active = violet-10
+       button hover = desaturated-50, button active = desaturated-40
+       text = desaturated-0
+     ------------------------------------------------------------------------ */
+  :root {
+    accent-color: var(--bj-accent);
+
+    --color-violet-0: color-mix(in srgb, var(--bj-accent) 18%, #ffffff) !important;
+    --color-violet-10: var(--bj-accent-light) !important;
+    --color-violet-20: var(--bj-accent-hover) !important;
+    --color-violet-30: var(--bj-accent) !important;
+    --color-violet-40: color-mix(in srgb, var(--bj-accent) 88%, #000000) !important;
+    --color-violet-50: var(--bj-accent) !important;
+    --color-violet-60: var(--bj-accent-active) !important;
+    --color-violet-70: color-mix(in srgb, var(--bj-accent) 62%, #000000) !important;
+    --color-violet-80: color-mix(in srgb, var(--bj-accent) 40%, #000000) !important;
+    --color-violet-90: color-mix(in srgb, var(--bj-accent) 22%, #000000) !important;
+    --color-violet-desaturated-0: #f4f7fb !important;
+    --color-violet-desaturated-10: #e6e6ea !important;
+    --color-violet-desaturated-20: #d0d0d6 !important;
+    --color-violet-desaturated-30: #b4b4bc !important;
+    --color-violet-desaturated-40: #36363b !important;
+    --color-violet-desaturated-50: #2a2a2e !important;
+    --color-violet-desaturated-60: #3a3a40 !important;
+    --color-violet-desaturated-70: #202024 !important;
+    --color-violet-desaturated-80: #18181b !important;
+    --color-violet-desaturated-90: #101012 !important;
+
+    /* hard-coded violet rgba() in the nova toolbar tokens */
+    --toolbarbutton-background-color-hover: rgb(255 255 255 / .10) !important;
+    --toolbarbutton-background-color-active: rgb(255 255 255 / .16) !important;
+    --info-bar-border-color: rgb(255 255 255 / .14) !important;
+
+    /* links */
+    --link-color: var(--bj-accent-light) !important;
+    --link-color-hover: var(--bj-accent-lighter) !important;
+    --link-color-active: var(--bj-accent-mid) !important;
+
+    /* primary button: rest / hover / active / disabled / selected */
+    --button-background-color-primary: var(--bj-accent) !important;
+    --button-background-color-primary-hover: var(--bj-accent-hover) !important;
+    --button-background-color-primary-active: var(--bj-accent-active) !important;
+    --button-background-color-primary-disabled: color-mix(in srgb, var(--bj-accent) 40%, #18181b) !important;
+    --button-border-color-primary: var(--bj-accent) !important;
+    --button-text-color-primary: var(--bj-on-accent) !important;
+    --button-text-color-primary-active: var(--bj-on-accent) !important;
+    --color-accent-primary-selected: var(--bj-accent-active) !important;
+
+    /* default / selected buttons */
+    --button-background-color: #2a2a2e !important;
+    --button-background-color-hover: #36363b !important;
+    --button-background-color-active: #43434a !important;
+    --button-background-color-selected: #43434a !important;
+    --button-border-color: var(--pop-border) !important;
+    --button-border-color-selected: var(--bj-accent-mid) !important;
+    --button-text-color: #f4f7fb !important;
+    --button-text-color-selected: #ffffff !important;
+
+    /* muted buttons (grays here were slightly violet) */
+    --button-background-color-muted: #2a2a2e !important;
+    --button-background-color-muted-hover: #36363b !important;
+    --button-background-color-muted-active: #43434a !important;
+    --button-background-color-muted-selected: #43434a !important;
+
+    /* destructive buttons keep red, gold focus */
+    --focus-outline-color: var(--bj-accent) !important;
+
+    /* toggles, everywhere (not just in the settings dialog) */
+    --toggle-background-color: #3a3a40 !important;
+    --toggle-background-color-hover: #46464d !important;
+    --toggle-background-color-pressed: var(--bj-accent) !important;
+    --toggle-background-color-pressed-hover: var(--bj-accent-hover) !important;
+    --toggle-background-color-pressed-active: var(--bj-accent-active) !important;
+    --toggle-border-color: #6b6b73 !important;
+    --toggle-border-color-hover: #8a8a93 !important;
+    --toggle-border-color-active: var(--bj-accent-light) !important;
+    --toggle-dot-background-color: #f4f7fb !important;
+    --toggle-dot-background-color-pressed: #ffffff !important;
+  }
+
+  /* text selection */
+  ::selection { background: var(--bj-accent) !important; color: #ffffff !important; }
+
+  /* promo / feature-highlight popovers: violet-to-orange gradient border and glow */
+  .wallpaper-feature-highlight-modal,
+  .widgets-row-highlight-modal,
+  .widgets-callout {
+    --nova-highlight-border-gradient-start: var(--bj-accent-light) !important;
+    --nova-highlight-border-gradient-end: var(--bj-accent) !important;
+    --nova-highlight-shadow: 0 6px 22px rgb(0 0 0 / .42) !important;
+  }
+
+  /* ------------------------------------------------------------------------
+     11. EDIT-SHORTCUT FORM
+     DOM: .modal > form.topsite-form
+            > .form-input-container
+                > h3.section-title
+                > .fields-and-preview
+                    > .form-wrapper (label x2: title, url [+ custom image row])
+                    > li.top-site-outer   (live preview)
+            > footer.topsite-form-footer
+                > button.enable-custom-image-input
+                > section.actions > moz-button-group (Save, Cancel)
+     Layout: title / [fields | framed preview] / hairline / [link ........ buttons]
+     ------------------------------------------------------------------------ */
+  .edit-topsites .modal,
+  .edit-topsites-wrapper .modal {
+    box-sizing: border-box !important;
+    width: min(560px, 94vw) !important;
+    max-width: 94vw !important;
+  }
+  .modalOverlayOuter:has(.topsite-form) { max-width: 94vw !important; }
+
+  .topsite-form {
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 18px !important;
+    padding: 24px !important;
+  }
+  .topsite-form .form-input-container {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 18px !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .topsite-form .section-title {
+    margin: 0 !important;
+    font-size: 18px !important;
+    font-weight: 400 !important;
+  }
+
+  /* fields on the left, preview on the right */
+  .topsite-form .fields-and-preview {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 112px !important;
+    align-items: start !important;
+    gap: 24px !important;
+  }
+  .topsite-form .form-wrapper {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+    width: auto !important;
+    min-width: 0 !important;
+  }
+  .topsite-form label {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+    font-size: 13px !important;
+    font-weight: 300 !important;
+    color: var(--glass-muted) !important;
+  }
+  .topsite-form .form-wrapper input[type="text"] {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: 36px !important;
+    margin: 0 !important;
+    padding: 0 12px !important;
+    font-size: 14px !important;
+  }
+  .topsite-form .field.url input[type="text"] { padding-inline-end: 40px !important; }
+
+  /* framed live preview */
+  .topsite-form .fields-and-preview > .top-site-outer {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-self: center !important;
+    box-sizing: border-box !important;
+    width: 112px !important;
+    max-width: 112px !important;
+    margin: 0 !important;
+    padding: 14px 6px 10px !important;
+    background: #101012 !important;
+    border: 1px solid rgb(255 255 255 / .10) !important;
+    border-radius: 12px !important;
+    pointer-events: none !important;
+  }
+
+  /* footer: link on the left, buttons on the right, hairline above */
+  .topsite-form .topsite-form-footer {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-wrap: wrap !important;
+    gap: 12px 16px !important;
+    margin: 0 !important;
+    padding: 16px 0 0 !important;
+    border-top: 1px solid color-mix(in srgb, var(--bj-accent) 35%, transparent) !important;
+  }
+  .topsite-form .topsite-form-footer .actions {
+    margin: 0 !important;
+    margin-inline-start: auto !important;
+    padding: 0 !important;
+    border: 0 !important;
+  }
+  .topsite-form .actions .button-group { gap: 8px !important; }
+  .topsite-form .enable-custom-image-input {
+    padding: 0 !important;
+    border: 0 !important;
+    background: none !important;
+    font-size: 13px !important;
+    cursor: pointer !important;
+  }
+
+  @media (max-width: 560px) {
+    .topsite-form { padding: 18px !important; }
+    .topsite-form .fields-and-preview { grid-template-columns: minmax(0, 1fr) !important; }
+  }
+
+  .customize-menu { max-width: 100vw !important; box-sizing: border-box !important; }
+
+  /* ------------------------------------------------------------------------
+     12. SMALL FRAMES: shortcuts only
+     Below the breakpoint the clocks and the weather column are hidden and the
+     shortcut grid is centred in the window. Breakpoint: narrower than 1100px
+     (the 4 clocks need ~1250px) or shorter than 640px. Edit both numbers here.
+     `safe center` keeps the top row reachable (scrollable) if the grid is taller
+     than the window.
+     ------------------------------------------------------------------------ */
+  @media (max-width: 1100px), (max-height: 640px) {
+    .widget-wrapper:has(> .clocks-widget),
+    .widget-wrapper:has(> .weather-widget) {
+      display: none !important;
+    }
+
+    .top-sites-list-wrapper {
+      top: 0 !important;
+      bottom: 0 !important;
+      display: flex !important;
+      align-items: safe center !important;
+      width: min(1400px, 94vw) !important;
+      overflow-y: auto !important;
+      scrollbar-width: thin !important;
+      scrollbar-color: rgb(220 220 220 / .35) transparent !important;
+    }
+    .top-sites-list-wrapper .top-sites-list { margin-block: auto !important; }
+
+  }
+
+  /* ------------------------------------------------------------------------
+     13. LOCKED DOWN: only clocks + weather, no Appearance / Wallpaper
+     A) Widgets: every widget wrapper that doesn't hold the clocks or weather
+        article is removed (Lists, Timer, Crossword, Picture of the day, and
+        anything Firefox adds later), plus their promo callouts.
+     B) Customize dialog: Wallpaper AND Appearance (theme picker) are removed. The picker activates real Firefox
+        themes and flips light/dark mode; that runs in privileged code and cannot be redirected from CSS.
+     C) Customize dialog: the on/off toggles for the four widgets are removed.
+        I don't have the dialog DOM, so C matches the toggle's id / Fluent id by
+        keyword. If one survives, send me the dialog's DOM.
+     ------------------------------------------------------------------------ */
+  .widget-wrapper:not(:has(> .clocks-widget, > .weather-widget)),
+  .lists,
+  .focus-timer,
+  .widgets-row-highlight-anchor,
+  .widgets-row-feature-highlight,
+  .widgets-survey-callout,
+  .omc-highlight-slot,
+  .wallpaper-feature-highlight {
+    display: none !important;
+  }
+
+  .customize-menu :is(
+    .appearance-section,
+    theme-picker,
+    .themes-mgmt-panel,
+    #wallpapers-section,
+    .wallpapers-section,
+    #wallpapers-toggle,
+    .wallpaper-list,
+    .category-list
+  ) {
+    display: none !important;
+  }
+
+  :is(#widgets-section, .widgets-section, .widgets-mgmt-panel) :is(
+    [id*="crossword" i], [data-l10n-id*="crossword" i],
+    [id*="list" i],      [data-l10n-id*="list" i],
+    [id*="timer" i],     [data-l10n-id*="timer" i],
+    [id*="picture" i],   [data-l10n-id*="picture" i],
+    [id*="potd" i],      [data-l10n-id*="potd" i]
+  ) {
+    display: none !important;
+  }
+}

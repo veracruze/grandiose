@@ -1,0 +1,15 @@
+/* 18-firefox-160-fixes.css: Compatibility patches for Firefox 160 view transitions and sidebar visibility. */
+
+/* ---- FF 160: opt the sidebar chain out of view transitions ---- */
+:root[sidebar-expand-on-hover] #sidebar-container,
+:root[sidebar-expand-on-hover] sidebar-main {
+  view-transition-name: none !important;
+}
+
+/* ---- FF 160: sidebarAutoHide forces the rail visible ---- */
+:root[uc-sidebar-auto-revealed] #sidebar-container[hidden] {
+  display: flex !important;
+  width: var(--uc-rail-collapsed) !important;
+  min-width: var(--uc-rail-collapsed) !important;
+  max-width: var(--uc-rail-collapsed) !important;
+}

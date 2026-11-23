@@ -1,0 +1,53 @@
+/* 09-menubar.css: puts the menu bar (File, Edit, View...) under the toolbar row, lined up with the urlbar.
+   Imported from userChrome.css (see its module list for the order).
+   The menu bar keeps its normal behaviour: hidden until you press Alt. It now drops down over the page
+   instead of pushing it, so nothing jumps. Tunables are the --uc-menubar-* variables in 01-tokens.css (section 2). */
+
+/* The menu bar aligns to the address bar via CSS anchor positioning.
+   #urlbar-container carries the anchor name; the menubar falls back to
+   --uc-menubar-left (01-tokens.css) only where anchors are unavailable. */
+#urlbar-container {
+  anchor-name: --uc-urlbar;
+}
+
+#toolbar-menubar {
+  position: fixed !important;
+  position-anchor: --uc-urlbar;
+  top: var(--uc-menubar-top) !important;
+  left: anchor(--uc-urlbar left, var(--uc-menubar-left)) !important;
+  right: auto !important;
+  width: max-content !important;
+  max-width: calc(100vw - var(--uc-menubar-left)) !important;
+  z-index: 100 !important;
+}
+
+/* The menu bar lives inside the toolbox, and a z-index on the bar itself can't lift it above the page: the
+   whole toolbox has to sit above the browser container. This is what made it open but stay invisible. */
+#navigator-toolbox {
+  z-index: 1000 !important;
+}
+
+/* look: only while it is showing, so the hidden bar never draws a stray line */
+#toolbar-menubar:not([inactive="true"]) {
+  background: var(--uc-bg) !important;   /* solid on purpose: --toolbar-bgcolor follows the Surface opacity setting and the bar sits over the page */
+  border: 1px solid var(--tab-border-color) !important;
+  border-top: 0 !important;
+  border-radius: 0 0 var(--uc-menubar-radius) var(--uc-menubar-radius) !important;
+  padding-inline: 4px !important;
+  /* slim: the density setting gives toolbars a tall minimum height, so set it explicitly */
+  box-sizing: border-box !important;
+  height: var(--uc-menubar-height) !important;
+  min-height: var(--uc-menubar-height) !important;
+  align-items: center !important;
+}
+
+#toolbar-menubar:not([inactive="true"]) #menubar-items,
+#toolbar-menubar:not([inactive="true"]) #main-menubar {
+  align-items: center !important;
+  margin-block: 0 !important;
+}
+
+#toolbar-menubar:not([inactive="true"]) #main-menubar > menu {
+  padding-block: 0 !important;
+  min-height: 0 !important;
+}

@@ -1,0 +1,662 @@
+/* 01-tokens.css: Sections 1-4: accent palette, tunables, Firefox theme tokens, light/dark colours. Imported by ../userChrome.css; order of the imports matters. */
+
+/* Collapsed-rail width alias used by the expand-on-hover rules in 07 §18 (rule 1 and the pre-rule): the theme's collapsed width
+   (Compact 40, Standard 50, Touch 60). Without it those rules are invalid. To undo: set it back to `initial`. */
+:root { --uc-active-collapsed: var(--uc-rail-collapsed); }
+
+/* ==========================================================================
+   1. MASTER ACCENT PALETTE  (edit colours HERE, nowhere else)
+   Everything below is AccentColor mixed with white (tint) or black (shade).
+   --uc-tint-N  = AccentColor with N% white   (tint-10 = nearly accent, tint-90 = nearly white)
+   --uc-shade-N = AccentColor with N% black   (shade-10 = nearly accent, shade-90 = nearly black)
+   The state names (hover, selected, ...) just point at a step of this ramp, and are set
+   separately for light and dark in the two theme blocks in section 4.
+   ========================================================================== */
+
+:root {
+  --uc-accent-base: AccentColor;       /* the accent the whole palette is built from. "Accent colour" in the Customize panel overrides it; unset = your system accent */
+  --uc-accent-text: AccentColorText;   /* readable text/icon colour on the accent */
+  --uc-accent: var(--uc-accent-base);
+
+  --uc-tint-10: color-mix(in srgb, var(--uc-accent-base), white 10%);
+  --uc-tint-20: color-mix(in srgb, var(--uc-accent-base), white 20%);
+  --uc-tint-30: color-mix(in srgb, var(--uc-accent-base), white 30%);
+  --uc-tint-40: color-mix(in srgb, var(--uc-accent-base), white 40%);
+  --uc-tint-50: color-mix(in srgb, var(--uc-accent-base), white 50%);
+  --uc-tint-60: color-mix(in srgb, var(--uc-accent-base), white 60%);
+  --uc-tint-70: color-mix(in srgb, var(--uc-accent-base), white 70%);
+  --uc-tint-80: color-mix(in srgb, var(--uc-accent-base), white 80%);
+  --uc-tint-90: color-mix(in srgb, var(--uc-accent-base), white 90%);
+  --uc-tint-95: color-mix(in srgb, var(--uc-accent-base), white 95%);
+  --uc-tint-98: color-mix(in srgb, var(--uc-accent-base), white 98%);
+
+  --uc-shade-10: color-mix(in srgb, var(--uc-accent-base), black 10%);
+  --uc-shade-20: color-mix(in srgb, var(--uc-accent-base), black 20%);
+  --uc-shade-30: color-mix(in srgb, var(--uc-accent-base), black 30%);
+  --uc-shade-40: color-mix(in srgb, var(--uc-accent-base), black 40%);
+  --uc-shade-50: color-mix(in srgb, var(--uc-accent-base), black 50%);
+  --uc-shade-60: color-mix(in srgb, var(--uc-accent-base), black 60%);
+  --uc-shade-70: color-mix(in srgb, var(--uc-accent-base), black 70%);
+  --uc-shade-80: color-mix(in srgb, var(--uc-accent-base), black 80%);
+  --uc-shade-90: color-mix(in srgb, var(--uc-accent-base), black 90%);
+
+  /* SURFACE PALETTE: the same tints and shades, but built from the Gradient colour (pref uc.gradient.color, written by SidebarToggles.uc.js as
+     --uc-gradient-color). Unset = the accent, so nothing changes until a colour is chosen. Only the steps the surfaces use are defined. */
+
+  --uc-surface-base: var(--uc-gradient-color, var(--uc-accent-base));
+  --uc-sf-tint-10: color-mix(in srgb, var(--uc-surface-base), white 10%);
+  --uc-sf-tint-20: color-mix(in srgb, var(--uc-surface-base), white 20%);
+  --uc-sf-tint-30: color-mix(in srgb, var(--uc-surface-base), white 30%);
+  --uc-sf-tint-40: color-mix(in srgb, var(--uc-surface-base), white 40%);
+  --uc-sf-tint-50: color-mix(in srgb, var(--uc-surface-base), white 50%);
+  --uc-sf-tint-60: color-mix(in srgb, var(--uc-surface-base), white 60%);
+  --uc-sf-tint-70: color-mix(in srgb, var(--uc-surface-base), white 70%);
+  --uc-sf-tint-80: color-mix(in srgb, var(--uc-surface-base), white 80%);
+  --uc-sf-tint-90: color-mix(in srgb, var(--uc-surface-base), white 90%);
+  --uc-sf-shade-10: color-mix(in srgb, var(--uc-surface-base), black 10%);
+  --uc-sf-shade-20: color-mix(in srgb, var(--uc-surface-base), black 20%);
+  --uc-sf-shade-30: color-mix(in srgb, var(--uc-surface-base), black 30%);
+  --uc-sf-shade-40: color-mix(in srgb, var(--uc-surface-base), black 40%);
+  --uc-sf-shade-50: color-mix(in srgb, var(--uc-surface-base), black 50%);
+  --uc-sf-shade-60: color-mix(in srgb, var(--uc-surface-base), black 60%);
+  --uc-sf-shade-70: color-mix(in srgb, var(--uc-surface-base), black 70%);
+  --uc-sf-shade-80: color-mix(in srgb, var(--uc-surface-base), black 80%);
+  --uc-sf-shade-90: color-mix(in srgb, var(--uc-surface-base), black 90%);
+  
+  /* States that are the same in light and dark */
+  --uc-focus: var(--uc-accent);               /* focus ring / focused border */
+  --uc-focused: var(--uc-hover);              /* background of a keyboard-focused button */
+  
+  /* Primary (blue-style) button. Black base with white text: accent-independent, always readable.
+     Hover goes slightly LIGHTER (shade-90 = 90% black + 10% accent, still very dark) so white text
+     stays readable. Active goes a step lighter still (shade-80). The previous --uc-primary-hover was
+     tint-70 (70% white), which made hover white-on-white and unreadable everywhere primary buttons
+     appear (permission prompts, password save, download complete doorhangers). */
+  --uc-primary: black;
+  --uc-primary-hover: var(--uc-shade-90);
+  --uc-primary-active: var(--uc-shade-80);
+}
+
+/* ==========================================================================
+   2. TUNABLES  (every --uc-* knob and layout number lives here)
+   Grouped by what they control. Nothing below is used before it is defined, and no value
+   here depends on file order, so the groups can be re-sorted freely.
+   ========================================================================== */
+:root {
+  /* ---- Layout sizing (Normal values; the density blocks in section 17 override TabsHeight/TabsBorder) ---- */
+  --tab-border-radius: 5px !important;
+  --uc-tab-radius: 5px;   /* corners of every tab (04). Own name on purpose: Firefox can redefine --tab-border-radius on inner elements */
+  --NavbarWidth: 66;           /* the navbar takes this % of the window width ... */
+  --uc-navbar-cap: 1325px;     /* ... but is never wider than this % of THIS width (the window width at which it stops growing; was a hard-coded media query in 02) */
+  --uc-navbar-tabs-gap: 2px;   /* gap between the navbar and the tab strip */
+  --TabsHeight: 45;
+  --TabsBorder: 8;
+  --NavbarHeightSmall: calc(var(--TabsHeight) + var(--TabsBorder));
+
+  /* ---- Focus ---- */
+  --uc-focus-color: var(--uc-accent); /* focus outline / focused field border: follows the accent (and the Accent colour override). For a fixed colour, put one here, e.g. rgba(0, 200, 200, 0.7) */
+
+  /* ---- Density-controlled sizes (Normal values; overridden per density in section 17) ---- */
+  --uc-tab-drop: 3px;        /*Horizontal tabs' height*/
+  --uc-tab-w: 50px;          /* horizontal tabs: width of an inactive tab */
+  --uc-pinned-w: calc(var(--TabsHeight) * 1px + 5px);   /* horizontal tabs: width of a pinned tab. Same as the tab height (04), so it is a square; set e.g. 60px for wider */
+  --uc-icon-size: 32px;           /* favicon size (both tab layouts) */
+  --uc-rail-pad-block: 12px; /* vertical tabs: space above and below the favicon in a tab */
+  --uc-rail-pad-start: calc((var(--uc-rail-collapsed) - var(--uc-icon-size)) / 2 + 4px); /* Vertical rail favicon (and throbber, and "+" button) centring on the RAIL, one formula for Normal and Touch: Normal 13px, Touch 15px. The rail tabs have a -1px margin, so their own box sits 1px left of the rail's centre; the probe (icon vs tab centre) reads 0 at +3px but the icon then looks 1px left of the rail (2px less space on the left). +4px centres it on the rail.*/
+  --uc-push-back-delay: 10ms;
+  --uc-urlbar-h: 34px;       /* floating urlbar height (vertical-tabs mode) */
+  --uc-menu-pad-block: 6px;  /* extension panel rows */
+  --uc-rail-buttons-w: 36px; /* CHANGED from 32px - beefier bottom-rail buttons (7px air each side at 50px rail) */
+  --uc-rail-buttons-gap: 0px; /* Vertical spacing of .buttons-wrapper top buttons */
+    /* Free space to the right of the hamburger menu */
+  --uc-hamburger-gap: 7px; /* CHANGED from 8px to match the new button sizes */
+  /* Visible gap between the Extensions button and the hamburger, backdrop edge to backdrop edge (05, hamburger rule).
+     4px = the natural spacing every navbar button has (2px margin each side), i.e. nothing extra. Raise it for more air; per density in 07 §17. */
+  --uc-hamburger-ext-gap: 5px;
+  /* ---- Button icon sizes (Normal; overridden per density in section 17) ----
+     These control how big the glyph inside a button is. The button's own box (padding,
+     min-height, width) stays Firefox's, or is set elsewhere. Grouped here so the density
+     blocks in section 17 can override every button size in one place. NEW group. */
+  /* Added on top of the per-density gap (--uc-hamburger-gap here, 07 for Compact/Touch).
+     Positive = more space, negative = less. Never set this in a density block. */
+  --uc-hamburger-gap-adjust: 0px;
+  --uc-hamburger-ext-gap-adjust: 0px;
+  --uc-toolbar-icon-size: 20px;      /* NEW - navbar toolbar button icons (was Firefox's 16px) */
+  --uc-toolbar-inner-padding: 6px;   /* NEW - navbar button padding around the icon (was Firefox's 6px) */
+  --uc-rail-icon-size: 20px;         /* NEW - icon inside a bottom-rail button (moz-button) */
+  --uc-urlbar-icon-size: 18px;       /* NEW - urlbar page-action / go / revert / identity icons */
+  --uc-urlbar-icon-padding: 4px;     /* NEW - urlbar icon padding */
+  --uc-urlbar-dropdown-icon: 26px;   /* NEW - urlbar dropdown row type icon and favicon */
+  --uc-tab-nav-icon: 20px;           /* NEW - back/forward inside the active vertical tab */
+
+  /* Background image position: the image is centred on the WINDOW, then moved by this much (css/17 draws it on one fixed layer behind the window, and the layer grows by this offset so no edge shows); the rail only tints
+     what is behind it (06), so it needs no position of its own. Positive x = image moves right, positive y = down. */
+  --uc-bg-x: 0px;
+  --uc-bg-y: 0px;
+
+  /* ---- Sidebar rail ---- */
+  /* Sidebar (Firefox animates the rail with translate over 400ms ease-in-out) */
+  --uc-sidebar-anim: 400ms ease-in-out;
+  --uc-button-radius: 6px;   /* corners of popup notification buttons ("Allow", "Keep Changes", ...) */
+  --uc-newtab-radius: 12px;  /* "+" new tab button corners in the collapsed rail (matches the tab tiles) */
+  --uc-rail-radius: 12px;    /* corners of the sidebar rail, its panels and the sidebar page (06), and the clip that rounds the rail while it slides (07, section 18) */
+  --uc-rail-collapsed: 50px; /* width of the collapsed rail (measured in the correct state) */
+  --uc-rail-expanded-w: 290px; /* must equal the real expanded rail width (Browser Toolbox > sidebar-main > width). Used by css/12 (the page push) */
+  --uc-rail-border: 1px;       /* the rail's own border: the open rail is --uc-rail-expanded-w in total, so Firefox's expanded-width variable gets that minus this (07, section 18) */
+  --uc-fs-rail-dur: 400ms;     /* ONE duration for every fullscreen rail/page motion (page margin, rail width). 400ms = the rail's own slide; longer slows everything together */
+  --uc-rail-center: var(--uc-rail-collapsed); /* width the favicons are positioned for. Make --uc-rail-collapsed smaller than this and the rail shrinks from the RIGHT only; icons stay where they are */
+
+  /* ---- Vertical tab titles and back/forward buttons ---- */
+  /* Vertical tab titles: fade in (sliding slightly from the left) as the rail expands */
+  --uc-label-slide: 10px;    /* how far left of its final spot the title starts */
+  --uc-label-in: 240ms;      /* fade-in duration */
+  --uc-label-delay: 150ms;   /* wait this long into the rail's expansion before fading in */
+  --uc-label-out: 90ms;      /* fade-out duration when the rail collapses */
+  --uc-nav-anim: 180ms;      /* back/forward buttons: reveal/hide duration */
+  --uc-end-dir: right;       /* the side the END of a line of text is on (title fade-out in 06). The RTL block before section 3 flips it */
+  --uc-label-speed: 45;      /* vertical tab titles too long to fit: scroll speed in px per second (needs JS/verticalTabLabelSpeed.uc.js; without it every title takes about 5.6s). Smaller = slower */
+
+  /* ---- Address bar text colours (needs JS/urlHostHighlight.uc.js; used in section 7) ---- */
+  --uc-url-host-color: var(--uc-text);                                       /* the site's domain: full contrast */
+  --uc-url-dim-color: color-mix(in srgb, var(--uc-text) 60%, transparent);   /* everything else in the address (also the dim parts of the status feed and tab preview). 60% keeps about 4.5:1 against the bar in both themes with the default accent; 45% was about 3-4:1. Lower it for a stronger domain-vs-rest contrast */
+
+  /* ---- Security badge in the address bar (no script: Firefox's own #identity-box classes; styled in 03-urlbar.css) ----
+     The lock/identity icon is collapsed in this theme, so a page on plain http:// or with mixed content would look like any other. A
+     small badge is drawn at the start of the bar when the identity box says so: a circle with ! (http) or a triangle with ! (mixed content / certificate override),
+     different shapes so colour is not the only cue. The colours are written into the two SVGs below (#b45309 amber, #d93025 red; %23 = #). */
+  --uc-security-size: 14px;
+  --uc-security-icon-insecure: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2016%2016'%3E%3Ccircle%20cx='8'%20cy='8'%20r='7.5'%20fill='%23b45309'/%3E%3Crect%20x='7'%20y='3.5'%20width='2'%20height='6'%20rx='1'%20fill='white'/%3E%3Ccircle%20cx='8'%20cy='12'%20r='1.2'%20fill='white'/%3E%3C/svg%3E");
+  --uc-security-icon-broken: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2016%2016'%3E%3Cpath%20d='M8%201.2L15.2%2014.2H0.8Z'%20fill='%23d93025'%20stroke='%23d93025'%20stroke-width='1'%20stroke-linejoin='round'/%3E%3Crect%20x='7.1'%20y='5.6'%20width='1.8'%20height='4.6'%20rx='.9'%20fill='white'/%3E%3Ccircle%20cx='8'%20cy='12.1'%20r='1'%20fill='white'/%3E%3C/svg%3E");
+
+  /* ---- Floating urlbar (vertical-tabs mode): fades in at the bottom of the window (Ctrl+L / hover) ---- */
+  --uc-urlbar-left: calc(var(--uc-rail-expanded-w) + 10px);   /* preferred distance from the left edge: clears the fully expanded rail, plus 10px */
+  --uc-urlbar-bottom: 20px;  /* distance from the bottom edge of the window */
+  --uc-urlbar-width: 550px;  /* maximum width */
+  --uc-urlbar-gap: 12px;     /* minimum space kept at the right edge of the window */
+  --uc-urlbar-min-left: calc(var(--uc-rail-collapsed) + 12px); /* never slide closer to the left edge than this (collapsed rail + gap) */
+
+  /* ---- Status text as a chat-style JSON feed (vertical tabs only; needs JS/statusJson.uc.js, styled at the end of 03-urlbar.css) ---- */
+  /* Mirror image of the floating urlbar: same bottom edge, same distance from the (right) window edge as the urlbar has from the left.
+     Small, readable pills; the size follows the density only a little (--uc-urlbar-h, section 17). */
+  --uc-status-hold: 3s;        /* how long a line stays fully visible */
+  --uc-status-fade-out: 50ms;  /* then it fades out this fast and is removed */
+  --uc-status-right: var(--uc-urlbar-left);          /* distance from the right edge: mirrors the urlbar's left offset (rail width + 10px) */
+  --uc-status-right-rail: var(--uc-urlbar-left);     /* sidebar on the right: the same number already clears the expanded rail */
+  --uc-status-bottom: var(--uc-urlbar-bottom);       /* same bottom edge as the floating urlbar */
+  --uc-status-gap: 4px;        /* space between two lines */
+  --uc-status-max-w: min(520px, 45vw, calc(100vw - var(--uc-status-right) - 12px));   /* width limit of one line (also never past the left window edge) */
+  --uc-status-font: "Cascadia Mono", Consolas, ui-monospace, monospace;
+  --uc-status-size: calc(12px + (var(--uc-urlbar-h) - 34px) * 0.2);   /* 12px Standard, about 11px Compact, 14px Touch */
+  --uc-status-pad-y: 4px;      /* space above and below the text inside a line */
+  --uc-status-pad-x: 12px;     /* space at the left and right inside a line */
+  --uc-status-radius: 14px;    /* pill corners */
+  --uc-status-bg-strength: 92%;   /* same fill strength as the floating urlbar */
+
+  /* ---- Tab groups (15-pinned-groups.css) ---- */
+  --uc-group-label-strength: 28%;        /* the group's own colour behind its name: how strong (0% = no fill) */
+  --uc-group-label-hover-strength: 45%;  /* ...while the pointer is over it */
+  --uc-group-radius: 6px;                /* corners of the group name */
+  --uc-group-glow-strength: 90%;         /* open group: the inner glow in the group's colour while the group holds the selected tab (its reach is --uc-split-glow-* in this section) */
+  --uc-group-glow-idle-strength: 45%;    /* ...and while another tab is selected (reach: --uc-split-idle-glow-*) */
+  --uc-group-selected-tint: 30%;         /* the selected tab of an open group: how much of the group's colour is mixed into its surface (0% = the normal selected tab) */
+
+  /* ---- Pinned tabs: the pin on the favicon (15-pinned-groups.css; its colour, --uc-pin-color, is set per theme in section 4) ---- */
+  --uc-pin-size: 11px;
+  --uc-pin-icon: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2016%2016'%3E%3Cpath%20d='M4.5%201.5h7v1.5h-1v4l2.5%202.5v1H8.6L8%2015l-.6-4.5H3v-1L5.5%207V3h-1z'/%3E%3C/svg%3E");   /* the pin shape (a mask, so --uc-pin-color paints it) */
+
+  /* ---- Menu bar (09-menubar.css): shown with Alt, drops down just under the toolbar row, starting at the urlbar's left edge ---- */
+  --uc-menubar-left: 120px;  /* distance from the left edge of the window: the FALLBACK. 09 lines the bar up with the urlbar's left edge by CSS anchor positioning (anchor name --uc-urlbar) and uses this value only where that anchor is not available */
+  --uc-menubar-top: calc(var(--NavbarHeightSmall) * 1px);  /* distance from the top of the window = just below the toolbar/tab row. Follows Compact/Normal/Touch (= --TabsHeight + --TabsBorder). Add +1px to go 1px lower */
+  --uc-menubar-height: 30px; /* height of the bar while it shows (Touch density made it ~55px). Smaller = slimmer */
+  --uc-menubar-radius: 8px;  /* rounded bottom corners (0px = square) */
+
+  /* ---- Speaker badge (both tab layouts; look and icons are in the AUDIO BADGE rules, end of section 14) ---- */
+  --uc-audio-bg: var(--uc-accent);          /* badge while audio plays: your accent colour */
+  --uc-audio-fg: var(--uc-accent-text);           /* icon on it: readable on the accent (system, or your override) */
+  --uc-audio-bg-muted: color-mix(in srgb, var(--uc-accent) 45%, gray);  /* badge when the tab is muted: your accent, greyed */
+  --uc-audio-fg-muted: var(--uc-accent-text);
+  --uc-audio-ring: color-mix(in srgb, var(--uc-bg) 92%, transparent);         /* thin outline that separates the badge from the favicon */
+  --uc-audio-rim: var(--uc-tint-50);   /* rim inside the badge edge: your accent mixed 50% with white, same as the vertical badge's outline */
+  --uc-audio-rim-width: .1px;
+  --uc-audio-ring-width: 1px;   /* outer ring around the badge. Was 1.5px: half a pixel is drawn as a soft, uneven edge. Keep it a whole number */
+  --uc-audio-hover-scale: 1;    /* grow on hover: 1 = none; 1.12 = the old look. A scaled circle is re-sampled, which is where jagged edges came from */
+  --uc-audio-icon-playing: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2016%2016'%3E%3Cpath%20style='fill:AccentColorText'%20d='M5.6%203.7v8.6c0%20.5.5.8.9.5l6-4.3a.6.6%200%200%200%200-1l-6-4.3c-.4-.3-.9%200-.9.5Z'/%3E%3C/svg%3E");  /* play triangle: audio is playing */
+  --uc-audio-icon-muted: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2016%2016'%3E%3Crect%20style='fill:AccentColorText'%20x='3.8'%20y='3'%20width='3.2'%20height='10'%20rx='1.1'/%3E%3Crect%20style='fill:AccentColorText'%20x='9'%20y='3'%20width='3.2'%20height='10'%20rx='1.1'/%3E%3C/svg%3E");    /* pause bars: the tab is muted */
+  --uc-audio-icon-blocked: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2016%2016'%3E%3Crect%20style='fill:AccentColorText'%20x='3.5'%20y='3.5'%20width='9'%20height='9'%20rx='1.9'/%3E%3C/svg%3E");  /* stop square: media was blocked from autoplaying */
+  --uc-audio-top: -9px;      /* vertical tabs: position (negative = outside the favicon) */
+  --uc-audio-right: -6px;
+  --uc-audio-size: 16px;     /* vertical tabs: circle size. Smaller than the old 18px: a small circle has less edge to look rough. Keep it a whole number */
+  --uc-audio-pad: 2px;       /* vertical tabs: space around the icon (smaller = bigger icon) */
+  --uc-audio-badge-y: -9px;  /* horizontal tabs: badge height. More negative = higher (-12px moves it 2px up) */
+  --uc-audio-badge-x: -7px;  /* horizontal tabs: badge horizontal position. Less negative = further right */
+  --uc-audio-size-h: var(--uc-audio-size);  /* horizontal tabs: same circle size as vertical */
+  --uc-audio-scale-h: .85;                    /* no shrinking */
+
+  /* ---- Horizontal rail: new-tab "+" button ---- */
+  /*Standard*/
+  --uc-newtab-x: 0px;
+  --uc-newtab-y: -3px;
+
+  /* ---- Vertical rail: new-tab "+" button ---- */
+  --uc-newtab-icon: 20px;   /* CHANGED from 16px - size of the "+" glyph */
+  --uc-newtab-h: calc(var(--uc-icon-size) + var(--uc-rail-pad-block) * 2); /* height: same as a tab tile. Shrink to make the button slimmer */
+  --uc-newtab-nudge: .3px;   /* fine adjustment of the "+", positive = right */
+
+  /* ---- Horizontal tabs: favicon position ---- */
+  /* Inactive 50px tabs, left/right: the tab content is centred inside this much left padding,
+     so every 2px less moves the icon 1px left (18px was the original value). 16px puts the icon
+     in the middle of the tab; the first try, 14px, was 1px too far left. */
+  --uc-favicon-pad: 8px;   /* centres the icon in an inactive tab at every density; Compact overrides it (section 17). 2px more = icon 1px further right */
+  --uc-tab-title-gap: 12px;  /* Vertical tabs: space between the favicon and the tab title */
+  --uc-nav-title-gap: 4px;
+  --uc-tab-nav-gap: -9px;
+  /* Inactive single tabs, up/down: while not hovered, the icon sat about 5px lower than when
+     hovered (the hovered icon is exactly centred). This lifts it to the hovered position, so it
+     no longer jumps when the mouse arrives. Set to 0px to turn it off. */
+  --uc-inactive-favicon-lift: 0px;
+  --uc-audio-favicon-lift: var(--uc-inactive-favicon-lift);  /* same lift for tabs playing/muted/blocked audio */
+
+  /* ---- Split view tabs ---- */
+  --uc-split-radius: 6px;      /* outer corners of a split view pair */
+  --uc-split-glow-blur: 0px;   /* inner glow of the pair that holds the selected tab: how far it reaches in */
+  --uc-split-glow-spread: 3px; /* ...and how strong/solid it is (0px = softer) */
+  --uc-split-idle-glow-blur: 6px;           /* pair that does NOT hold the selected tab (a third tab is selected): subtle neutral inner glow, how far it reaches in */
+  --uc-split-idle-glow-blur-vertical: var(--uc-split-idle-glow-blur);  /* same, vertical rail only (set e.g. 6px for tighter) */
+  --uc-split-idle-glow-spread: 3px;            /* ...and how solid it is: set separately from the active pair's spread (same value by default; 0px = the old, softer look) */
+  --uc-split-selected-nudge: 0px; /* vertical rail: pulls the pair's selected tab content back this far
+                                     when the rail is expanded (set 0px to turn the fix off) */
+  --uc-split-idle-nudge: 0px;     /* same, but while the pair does NOT hold the selected tab (a third tab is
+                                     selected). If the icon jumps the other way, try 1px here. */
+
+  /* ---- Tab glows (07-split-glows-density.css, section 16) ----
+     Selected= selected single tab: accent colour, its own values below (same numbers as the active split pair, not linked).
+     Hover   = same reach as active, neutral colour.
+     Inactive= thin glow, neutral colour. Neutral = tint-10 (light) / shade-10 (dark), set in section 4.
+     To use the accent colour for any of them, set its -color to var(--uc-accent). */
+  --uc-selected-glow-blur: 0px;       /* selected single tab: its own values (independent of the split view ones; they start out equal) */
+  --uc-selected-glow-spread: 1px;
+  --uc-hover-glow-blur: var(--uc-split-glow-blur);          /* hovered tab: same reach as the active glow */
+  --uc-hover-glow-spread: var(--uc-split-glow-spread);
+  --uc-inactive-glow-blur: var(--uc-split-idle-glow-blur);     /* inactive tabs, not hovered: how far the glow reaches (horizontal: outward, vertical: inward) */
+  --uc-inactive-glow-spread: var(--uc-split-glow-spread);   /* ...and how solid it is (0px = thin and soft). blur 0px / spread 0px turns it off */
+
+  /* ---- Button state colours (both themes) ----
+     The theme's own text colour laid over the surface at low strength: a neutral shade of the accent
+     family that follows light/dark by itself and never picks up Nova's purple. Raise a % for a stronger state. */
+  --uc-btn-idle-strength: 6%;       /* resting fill of buttons that have one */
+  --uc-btn-hover-strength: 10%;
+  --uc-btn-selected-strength: 15%;  /* selected / checked / pressed-state */
+  --uc-btn-active-strength: 20%;    /* while the mouse button is down */
+  --uc-btn-icon: var(--uc-text);    /* colour of the SVG icons on buttons (toolbar, sidebar rail, panels). Same as the theme's text colour */
+  --uc-btn-idle: color-mix(in srgb, var(--uc-text) var(--uc-btn-idle-strength), transparent);
+  --uc-hover: color-mix(in srgb, var(--uc-text) var(--uc-btn-hover-strength), transparent);
+  --uc-selected: color-mix(in srgb, var(--uc-text) var(--uc-btn-selected-strength), transparent);
+  --uc-active: color-mix(in srgb, var(--uc-text) var(--uc-btn-active-strength), transparent);
+
+  /* ---- Toggle switches (<moz-toggle>: about:preferences, doorhangers...) ----
+     Built the same way as the buttons above, so they follow light/dark by themselves: the OFF track is the theme's own text colour
+     (--uc-text: dark in the light theme, light in the dark theme) laid over the surface, stronger than the button fills so an
+     empty track stays visible. The ON track is the primary-button black (--uc-primary and its hover/active steps, section 1) with a
+     white dot, the same fixed black/white pair the primary buttons use. For an accent-coloured ON track, set --uc-toggle-on to
+     var(--uc-accent), the hover/active ones to var(--uc-shade-10) / var(--uc-shade-20), and --uc-toggle-dot-on to var(--uc-accent-text). */
+  --uc-toggle-off-strength: 30%;
+  --uc-toggle-off-hover-strength: 40%;
+  --uc-toggle-off-active-strength: 50%;
+  --uc-toggle-off: color-mix(in srgb, var(--uc-text) var(--uc-toggle-off-strength), transparent);
+  --uc-toggle-off-hover: color-mix(in srgb, var(--uc-text) var(--uc-toggle-off-hover-strength), transparent);
+  --uc-toggle-off-active: color-mix(in srgb, var(--uc-text) var(--uc-toggle-off-active-strength), transparent);
+  --uc-toggle-border: color-mix(in srgb, var(--uc-text) 60%, transparent);   /* outline of the OFF track */
+  --uc-toggle-dot: var(--uc-text);                                           /* the dot while OFF */
+  --uc-toggle-on: var(--uc-primary);
+  --uc-toggle-on-hover: var(--uc-primary-hover);
+  --uc-toggle-on-active: var(--uc-primary-active);
+  --uc-toggle-dot-on: white;                                                 /* the dot while ON (fixed, like the primary buttons' label) */
+
+  /* ---- Background image and translucent surfaces ----
+     Customize sidebar panel: Background image, Image dimming, Surface opacity, Tab opacity, Popup opacity (SidebarToggles.uc.js writes these as
+     inline variables and sets the attributes uc-bg-image, uc-translucent, uc-tab-translucent and uc-popup-translucent on the window; unset = the
+     values here). The image is painted once, on a fixed layer behind the window (17), and shows through whatever is translucent: the toolbar, the rail and
+     its panels (History...), the tabs, and pages whose own background is transparent (for example with a userstyle). The address bar stays
+     solid. Popups (menus, panels) are separate windows: they can be translucent but show what is behind them, not the image. */
+  --uc-bg-image: none;     /* url("file:///...") from the Customize panel; none = plain backdrop colour */
+  --uc-bg-scrim: 40%;      /* image dimming: how much of the backdrop colour is laid over the image (0% = the image as it is) */
+  --uc-bg-image-opacity: 0.5;  /* image opacity: how strongly the image shows (0 = invisible, 1 = as it is). "Image opacity (%)" in the Customize panel (SidebarToggles.uc.js writes it as 0-1); css/17 reads it. Keep the 50 default in SidebarToggles.uc.js in step */
+  --uc-alpha-chrome: 100%; /* toolbar, rail and sidebar panels: 100% = solid (the look without an image) */
+  --uc-alpha-tab: 100%;    /* tabs (selected, hovered, idle) */
+  --uc-alpha-popup: 100%;  /* menus and panels */
+  --uc-bg-toolbar: color-mix(in srgb, var(--uc-bg) var(--uc-alpha-chrome), transparent);
+  --uc-panel-layer: linear-gradient(color-mix(in srgb, var(--uc-bg-panel) var(--uc-alpha-chrome), transparent), color-mix(in srgb, var(--uc-bg-panel) var(--uc-alpha-chrome), transparent));   /* the sidebar panels' colour at Surface opacity (06) */
+
+    /* ---- Gradients (selected + hovered tab, toolbar, sidebar rail, panels, menus) ---- */
+  --uc-gradient-amount: 9%;   /* how far each gradient drifts from its flat colour: toward --uc-gradient-hi at the start, toward --uc-gradient-lo at the end. 0% = flat (gradients off) */
+  --uc-gradient-accent: 25%;  /* how much of the pure accent colour is mixed into the base colour of every gradient (the "Gradient accent" field in the Customize panel). 0% = the plain surface colour */
+  --uc-gradient-hi-white: 30%;  /* the light end of the drift is the accent with this much white (0% = the pure accent) */
+  --uc-gradient-lo-black: 30%;  /* the dark end of the drift is the accent with this much black (0% = the pure accent) */
+  --uc-gradient-hi: color-mix(in srgb, var(--uc-surface-base), white var(--uc-gradient-hi-white));
+  --uc-gradient-lo: color-mix(in srgb, var(--uc-surface-base), black var(--uc-gradient-lo-black));  --uc-gradient-angle: 180deg; /* direction of the gradient (toolbar, sidebar rail, panels) */
+  --uc-gradient-angle-tab-h: 0deg; /* tabs in the horizontal strip: top to bottom, so side-by-side tabs (and split pairs) get identical gradients and no seam */
+  --uc-gradient-angle-tab-v: 270deg;  /* tabs in the vertical rail: left to right, so stacked tabs (and split pairs) get identical gradients and no seam */
+
+  /* base colours of the gradients: the surface colour with the accent mixed in */
+  --uc-gb-chrome: color-mix(in srgb, var(--uc-bg-sidebar), var(--uc-surface-base) var(--uc-gradient-accent));
+  --uc-gb-panel: color-mix(in srgb, var(--uc-bg-panel), var(--uc-surface-base) var(--uc-gradient-accent));
+  --uc-gb-selected-tab: color-mix(in srgb, var(--uc-tab-selected), var(--uc-surface-base) var(--uc-gradient-accent));
+  --uc-gb-hover-tab: color-mix(in srgb, var(--uc-tab-hover), var(--uc-surface-base) var(--uc-gradient-accent));
+
+  --uc-grad-selected-tab: linear-gradient(in oklab var(--uc-gradient-angle), color-mix(in srgb, color-mix(in srgb, var(--uc-gb-selected-tab), var(--uc-gradient-hi) var(--uc-gradient-amount)) var(--uc-alpha-tab), transparent), color-mix(in srgb, color-mix(in srgb, var(--uc-gb-selected-tab), var(--uc-gradient-lo) var(--uc-gradient-amount)) var(--uc-alpha-tab), transparent));
+  --uc-grad-toolbar: linear-gradient(in oklab var(--uc-gradient-angle), color-mix(in srgb, color-mix(in srgb, var(--uc-gb-chrome), var(--uc-gradient-hi) var(--uc-gradient-amount)) var(--uc-alpha-chrome), transparent), color-mix(in srgb, color-mix(in srgb, var(--uc-gb-chrome), var(--uc-gradient-lo) var(--uc-gradient-amount)) var(--uc-alpha-chrome), transparent));
+  --uc-grad-sidebar: linear-gradient(in oklab var(--uc-gradient-angle), color-mix(in srgb, color-mix(in srgb, var(--uc-gb-chrome), var(--uc-gradient-hi) var(--uc-gradient-amount)) var(--uc-alpha-chrome), transparent), color-mix(in srgb, color-mix(in srgb, var(--uc-gb-chrome), var(--uc-gradient-lo) var(--uc-gradient-amount)) var(--uc-alpha-chrome), transparent));
+  --uc-grad-hover-tab: linear-gradient(in oklab var(--uc-gradient-angle), color-mix(in srgb, color-mix(in srgb, var(--uc-gb-hover-tab), var(--uc-gradient-hi) var(--uc-gradient-amount)) var(--uc-alpha-tab), transparent), color-mix(in srgb, color-mix(in srgb, var(--uc-gb-hover-tab), var(--uc-gradient-lo) var(--uc-gradient-amount)) var(--uc-alpha-tab), transparent));
+  --uc-grad-panel: linear-gradient(in oklab var(--uc-gradient-angle), color-mix(in srgb, color-mix(in srgb, var(--uc-gb-panel), var(--uc-gradient-hi) var(--uc-gradient-amount)) var(--uc-alpha-popup), transparent), color-mix(in srgb, color-mix(in srgb, var(--uc-gb-panel), var(--uc-gradient-lo) var(--uc-gradient-amount)) var(--uc-alpha-popup), transparent));
+
+  /* ---- Sidebar panels in fullscreen (13-sidebar-panel-cover.css; needs sidebarContextMenuHold.uc.js for the leave animation) ----
+     History / Bookmarks / Customize slide in from the screen edge they are on and slide back out. Windowed mode and DOM fullscreen
+     (video) are not touched. 0ms turns that half off. Reduced motion turns both off. */
+  --uc-panel-anim-dur: 220ms;    /* enter */
+  --uc-panel-leave-dur: 50ms;     /* leave */
+  --uc-panel-slide: 40px;        /* how far from its final place the panel starts / ends */
+
+  /* ---- Toolbox ---- */
+  --uc-toolbox-anim: 300ms ease-in-out;  /* toolbox height animation when vertical tabs turn on/off */
+  --uc-fs-ease: ease-in-out;              /* ONE easing for every fullscreen rail/page motion. Matches Firefox's own 400ms ease-in-out slide so the theme's slides feel native; change here to change all of them */
+  --uc-fs-toolbox-anim: 400ms var(--uc-fs-ease);    /* fullscreen: the navbar + tab strip sliding in and out. Same time and easing as the rail (--uc-fs-rail-dur / --uc-fs-ease) so they move together */
+
+  /* ---- Tab throbber (loading dots) ---- */
+  --uc-throbber-scale: 1.125;   /* dots are drawn this much bigger than the favicon (was 36px against 32px). 1 = same size as the favicon */
+  --uc-throbber-x: 1px;         /* horizontal tab strip, fine nudge: positive = right */
+  --uc-throbber-y: 0px;         /* horizontal tab strip, fine nudge: positive = down */
+  --uc-throbber-rail-x: 0px;    /* vertical rail, fine nudge: positive = right */
+  --uc-throbber-rail-y: 0px;    /* vertical rail, fine nudge: positive = down */
+}
+
+/* ==========================================================================
+   3. FIREFOX THEME-TOKEN OVERRIDES
+   Points Firefox's own colour variables at the --uc-* palette / theme colours.
+   ========================================================================== */
+:root {
+  /* System Accent & Focus Overrides */
+  --color-accent-primary: var(--uc-tint-90) !important;
+  --color-accent-primary-hover: var(--uc-tint-80) !important;
+  --color-accent-primary-active: var(--uc-shade-20) !important;
+  --accent-color: var(--uc-accent) !important;
+  --focus-outline-color: var(--uc-focus-color) !important;
+  --focus-ring-color: var(--uc-focus) !important;
+  --input-border-color-focus: var(--uc-focus) !important;
+  --toolbar-field-focus-border-color: var(--uc-focus-color) !important;
+
+  /* URL Bar Text & Accent Styling */
+  --urlbar-popup-action-color: var(--uc-text-accent) !important;
+  --urlbar-popup-url-color: var(--uc-text-accent) !important;
+
+  /* Component Button Variables */
+  /* Primary button tokens — legacy AND current names point at the SAME colours, so buttons using
+     either set render identically. Before this, `--button-background-color-primary` was tint-20
+     (light accent) with black text while `--button-primary-bgcolor` was black, so doorhanger
+     buttons looked different depending on which token the underlying markup happened to use.
+     These are the FALLBACK path: 05-panels-menus-buttons.css ALSO overrides `::part(button)` on
+     `moz-button[type="primary"]` with the same values, so buttons that go through the shadow part
+     look the same as buttons that only see the tokens. Both paths must stay in sync — if you
+     change one, change both. */
+  --button-primary-bgcolor: var(--uc-primary) !important;
+  --button-primary-hover-bgcolor: var(--uc-primary-hover) !important;
+  --button-primary-active-bgcolor: var(--uc-primary-active) !important;
+  --button-background-color-primary: var(--uc-primary) !important;
+  --button-background-color-primary-hover: var(--uc-primary-hover) !important;
+  --button-background-color-primary-active: var(--uc-primary-active) !important;
+  --button-text-color-primary: white !important;
+  --button-text-color-primary-hover: white !important;
+  --button-text-color-primary-active: white !important;
+  --button-background-color-disabled: var(--uc-selected) !important;
+  --button-text-color-disabled: var(--uc-text) !important;
+  --button-checked-background: var(--uc-selected) !important;
+  --button-border-color-checked: var(--uc-focus) !important;
+
+  --panel-item-hover-bg: var(--uc-hover) !important;
+}
+
+/* Button colour tokens, set on the elements that carry or redefine them, not on EVERY element: Firefox redefines
+   these tokens on individual elements and inside components (a panel footer button or <moz-button> sets its own
+   hover colour), and a closer definition beats one inherited from :root, so Nova's purple defaults would win.
+   Declaring ~55 variables on `*` made every element in the window build its own variable map instead of sharing
+   its parent's, which costs style time and memory. The list below is :root plus the button-like elements, panels,
+   menus and the containers whose shadow DOM holds buttons (variables inherit into a shadow root from its host).
+   If some button still turns purple, add its element (or its container) to this list.
+   Each button type has its own token family (plain, ghost = icon-only buttons, icon, panel rows), so all are
+   pointed at the state colours from section 2. Rules with an id or class (like the audio badge) are more
+   specific and win. To undo: put `*` back as the only selector. */
+:root,
+moz-button, moz-toggle, moz-checkbox, moz-radio, moz-select,
+button, toolbarbutton, .subviewbutton, .panel-subview-footer-button, menuitem, menu,
+popupnotification, panel, panelview, panelmultiview, menupopup,
+#navigator-toolbox, #urlbar, #tabbrowser-tabs,
+#sidebar-main, sidebar-main, #sidebar-container, #sidebar-box {
+  --button-background-color: var(--uc-btn-idle) !important;
+  --button-background-color-hover: var(--uc-hover) !important;
+  --button-background-color-active: var(--uc-active) !important;
+  --button-background-color-selected: var(--uc-selected) !important;
+  --button-background-color-ghost: transparent !important;
+  --button-background-color-ghost-hover: var(--uc-hover) !important;
+  --button-background-color-ghost-active: var(--uc-active) !important;
+  --button-background-color-ghost-selected: var(--uc-selected) !important;
+  --button-background-color-icon: transparent !important;
+  --button-background-color-icon-hover: var(--uc-hover) !important;
+  --button-background-color-icon-active: var(--uc-active) !important;
+  --button-background-color-menu: transparent !important;
+  --button-background-color-menu-hover: var(--uc-hover) !important;
+  --button-background-color-menu-active: var(--uc-active) !important;
+  --panel-item-hover-bgcolor: var(--uc-hover) !important;
+  --panel-item-active-bgcolor: var(--uc-active) !important;
+  --toolbarbutton-hover-background: var(--uc-hover) !important;
+  --toolbarbutton-active-background: var(--uc-active) !important;
+  --toolbarbutton-checked-background: var(--uc-selected) !important;
+  --toolbarbutton-selected-bgcolor: var(--uc-selected) !important;
+
+  /* the other <moz-button> types (toolbar, menu rows, muted) use their own token names */
+  --button-background-color-toolbar: transparent !important;
+  --button-background-color-toolbar-hover: var(--uc-hover) !important;
+  --button-background-color-toolbar-active: var(--uc-active) !important;
+  --button-background-color-toolbar-selected: var(--uc-selected) !important;
+  --button-background-color-menu-selected: var(--uc-selected) !important;
+  --button-background-color-muted: var(--uc-btn-idle) !important;
+  --button-background-color-muted-hover: var(--uc-hover) !important;
+  --button-background-color-muted-active: var(--uc-active) !important;
+  --button-background-color-muted-selected: var(--uc-selected) !important;
+
+  /* SVG icons: moz-button draws its icon as `fill: var(--button-icon-fill)`, toolbar buttons use
+     --toolbarbutton-icon-fill. Pointing both at one colour paints every icon the same. */
+  --button-icon-fill: var(--uc-btn-icon) !important;
+  --toolbarbutton-icon-fill: var(--uc-btn-icon) !important;
+  --icon-color: var(--uc-btn-icon) !important;
+
+  /* label / icon-font colour in every state, so no state turns purple */
+  --button-text-color: var(--uc-text) !important;
+  --button-text-color-hover: var(--uc-text) !important;
+  --button-text-color-active: var(--uc-text) !important;
+  --button-text-color-selected: var(--uc-text) !important;
+  --button-text-color-ghost: var(--uc-text) !important;
+  --button-text-color-ghost-hover: var(--uc-text) !important;
+  --button-text-color-ghost-active: var(--uc-text) !important;
+  --button-text-color-ghost-selected: var(--uc-text) !important;
+  --button-text-color-toolbar: var(--uc-text) !important;
+  --button-text-color-toolbar-hover: var(--uc-text) !important;
+  --button-text-color-toolbar-active: var(--uc-text) !important;
+  --button-text-color-toolbar-selected: var(--uc-text) !important;
+  --button-text-color-menu: var(--uc-text) !important;
+  --button-text-color-menu-hover: var(--uc-text) !important;
+  --button-text-color-menu-active: var(--uc-text) !important;
+  --button-text-color-menu-selected: var(--uc-text) !important;
+
+  /* <moz-toggle> reads its own --toggle-* tokens (its default for the track is var(--button-background-color), which is only
+     6% of the text colour here, so an OFF toggle was nearly invisible). They are set on the moz-toggle host, which is on the list
+     above; variables inherit into its shadow root, so .toggle-button picks them up. Values come from section 2. */
+  --toggle-background-color: var(--uc-toggle-off) !important;
+  --toggle-background-color-hover: var(--uc-toggle-off-hover) !important;
+  --toggle-background-color-active: var(--uc-toggle-off-active) !important;
+  --toggle-background-color-pressed: var(--uc-toggle-on) !important;
+  --toggle-background-color-pressed-hover: var(--uc-toggle-on-hover) !important;
+  --toggle-background-color-pressed-active: var(--uc-toggle-on-active) !important;
+  --toggle-border-color: var(--uc-toggle-border) !important;
+  --toggle-dot-background-color: var(--uc-toggle-dot) !important;
+  --toggle-dot-background-color-on-pressed: var(--uc-toggle-dot-on) !important;
+}
+
+/* ==========================================================================
+   4. LIGHT / DARK THEME COLOURS  (Windows theme + accent colour)
+   ========================================================================== */
+/* The chrome follows the TOOLBAR's colour scheme only (-moz-toolbar-prefers-color-scheme). It used to be "or" with prefers-color-scheme, so when
+   Windows and the Firefox theme disagreed both blocks matched and the later (dark) one won. Now exactly one block matches.
+   If every colour vanishes after a Firefox update, that media feature was renamed: to check, run matchMedia("(-moz-toolbar-prefers-color-scheme: dark)").media in the Browser Console: "not all" means Firefox no longer knows that feature.
+   Light Theme Variables (Windows Light Theme + Accent Color) */
+@media (-moz-toolbar-prefers-color-scheme: light), (prefers-color-scheme: light) {
+  :root {
+    /* Master state colours (light): surfaces are tints, text is a shade */
+    --uc-bg: var(--uc-tint-95);               /* window, toolbar - much brighter */
+        /* Make the surfaces translucent */
+    --uc-alpha-chrome: 70%;   /* Toolbar and Sidebar rail */
+    --uc-alpha-tab: 60%;      /* Tabs */
+    --uc-bg-scrim-layer: linear-gradient(color-mix(in srgb, var(--uc-shade-60) var(--uc-bg-scrim), transparent), color-mix(in srgb, var(--uc-shade-60) var(--uc-bg-scrim), transparent));   
+    --uc-bg-sidebar: var(--uc-tint-80);       /* sidebar rail - light but distinct from page */
+    --uc-bg-panel: var(--uc-tint-98);         /* sidebar panel - almost pure white */
+    --uc-text: var(--uc-shade-90);
+    --uc-pin-color: #000;                     
+    --uc-text-accent: var(--uc-shade-60);     
+    --uc-hover-glow-color: var(--uc-tint-10);
+    --uc-selected-glow-color: var(--uc-tint-10);
+    --uc-split-glow-color: var(--uc-tint-10);
+    --uc-split-idle-glow-color: var(--uc-tint-10);
+    --uc-inactive-glow-color: var(--uc-tint-10);
+    --uc-icon: var(--uc-shade-70);            
+    --uc-tab-selected: var(--uc-tint-90);     /* lighter selected tab */
+    --uc-tab-unfocused: var(--uc-tint-98);    /* nearly invisible idle tabs */
+    --uc-tab-hover: var(--uc-tint-80);        /* soft hover */
+
+    --panel-bg: transparent !important;
+    --urlbar-focused-bg: #f5f5f5;
+    --statuspanel-text: #303030;
+    --navbar-border-color: transparent;
+    --navbar-box-shadow-color: transparent;
+    --tab-border-color: rgba(0, 0, 0, 0.15);
+    --tab-box-shadow-color: rgba(0, 0, 0, 0.05);
+    --tab-selected-textcolor: var(--uc-text) !important;
+    --lwt-selected-tab-text: var(--uc-text) !important;
+    --context-icon-fill: #555555;
+    --nav-icon-color: var(--uc-icon);
+
+    --active-tab-bg: color-mix(in srgb, var(--uc-tab-selected) var(--uc-alpha-tab), transparent) !important;
+    --inactive-tab-bg: color-mix(in srgb, var(--uc-tab-unfocused) var(--uc-alpha-tab), transparent) !important;
+    --hover-tab-bg: color-mix(in srgb, var(--uc-tab-hover) var(--uc-alpha-tab), transparent) !important;
+
+    /* Sidebar Light Accent Mix */
+    --sidebar-bg-custom: var(--uc-bg-sidebar) !important;
+    --sidebar-panel-bg: var(--uc-bg-panel) !important;
+    --sidebar-text-color: var(--uc-text) !important;
+    --sidebar-border-color: rgba(0, 0, 0, 0.12) !important;
+  }
+
+}
+
+/* Dark Theme Variables (Windows Dark Theme + Accent Color)
+   Every surface/state shade was lifted one palette step (10%) to make the dark theme less black.
+   For lighter still, lower every shade-N below by another 10; for darker, raise them.
+   Button states are not shades any more: see "Button state colours" in section 2. */
+@media (-moz-toolbar-prefers-color-scheme: dark), (prefers-color-scheme: dark) {
+  :root {
+    /* Master state colours (dark): surfaces are shades, text is a tint */
+    --uc-bg: var(--uc-shade-60);              /* window, toolbar */
+    --uc-bg-scrim-layer: linear-gradient(color-mix(in srgb, var(--uc-shade-60) var(--uc-bg-scrim), transparent), color-mix(in srgb, var(--uc-shade-60) var(--uc-bg-scrim), transparent));   /* the image dimming layer: the backdrop colour at --uc-bg-scrim (used by the rail and sidebar panels in 06; 02 paints the same on the window) */
+    --uc-bg-sidebar: var(--uc-shade-70);      /* sidebar rail */
+    --uc-bg-panel: var(--uc-shade-60);        /* sidebar panel */
+    --uc-text: var(--uc-tint-90);
+    --uc-pin-color: #fff;                     /* the pin on a pinned tab: white on the dark theme */
+    --uc-text-accent: white;      /* accent-flavoured text (urlbar links, throbber) */
+    --uc-hover-glow-color: var(--uc-shade-10);
+    --uc-selected-glow-color: var(--uc-shade-10);
+    --uc-split-idle-glow-color: var(--uc-shade-10);
+    --uc-split-glow-color: var(--uc-shade-10);
+    --uc-inactive-glow-color: var(--uc-shade-10);
+    --uc-icon: var(--uc-tint-20);             /* toolbar / nav icons */
+    --uc-tab-selected: var(--uc-shade-20);
+    --uc-tab-unfocused: var(--uc-shade-60);
+    --uc-tab-hover: var(--uc-shade-10);
+
+    --panel-bg: transparent !important;
+    --urlbar-focused-bg: #1c1c1c;
+    --statuspanel-text: #C0C0C0;
+    --navbar-border-color: transparent;
+    --navbar-box-shadow-color: transparent;
+    --tab-border-color: rgba(100, 100, 100, 0.4);
+    --tab-box-shadow-color: rgba(10, 10, 10, 0.15);
+    --context-icon-fill: #808080;
+    --nav-icon-color: var(--uc-icon);
+    --tab-selected-textcolor: var(--uc-text) !important;   /* same as the light block: without it the selected tab's text keeps Firefox's own dark-theme colour */
+    --lwt-selected-tab-text: var(--uc-text) !important;
+
+    --active-tab-bg: color-mix(in srgb, var(--uc-tab-selected) var(--uc-alpha-tab), transparent) !important;
+    --inactive-tab-bg: color-mix(in srgb, var(--uc-tab-unfocused) var(--uc-alpha-tab), transparent) !important;
+    --hover-tab-bg: color-mix(in srgb, var(--uc-tab-hover) var(--uc-alpha-tab), transparent) !important;
+
+    /* Sidebar Dark Accent Mix */
+    --sidebar-bg-custom: var(--uc-bg-sidebar) !important;
+    --sidebar-panel-bg: var(--uc-bg-panel) !important;
+    --sidebar-text-color: var(--uc-text) !important;
+    --sidebar-border-color: rgba(255, 255, 255, 0.1) !important;
+  }
+
+}
+
+/* SURFACES FROM THE GRADIENT COLOUR: every surface and gradient (toolbar, rail, panels, menus, tabs) reads these, so the "Gradient colour"
+   field in the Customize panel recolours all of them. Same steps as the blocks above, taken from the --uc-sf-* palette (section 1).
+   To undo: delete this block. */
+@media (-moz-toolbar-prefers-color-scheme: light), (prefers-color-scheme: light) {
+  :root {
+    --uc-bg: var(--uc-sf-tint-90);
+    --uc-bg-scrim-layer: linear-gradient(color-mix(in srgb, var(--uc-sf-shade-60) var(--uc-bg-scrim), transparent), color-mix(in srgb, var(--uc-sf-shade-60) var(--uc-bg-scrim), transparent));
+    --uc-bg-sidebar: var(--uc-sf-tint-80);
+    --uc-bg-panel: var(--uc-sf-tint-90);
+    --uc-tab-selected: var(--uc-sf-tint-90);
+    --uc-tab-unfocused: transparent;
+    --uc-tab-hover: var(--uc-sf-tint-80);
+  }
+}
+
+@media (-moz-toolbar-prefers-color-scheme: dark), (prefers-color-scheme: dark) {
+  :root {
+    --uc-bg: var(--uc-sf-shade-60);
+    --uc-bg-scrim-layer: linear-gradient(color-mix(in srgb, var(--uc-sf-shade-60) var(--uc-bg-scrim), transparent), color-mix(in srgb, var(--uc-sf-shade-60) var(--uc-bg-scrim), transparent));
+    --uc-bg-sidebar: var(--uc-sf-shade-70);
+    --uc-bg-panel: var(--uc-sf-shade-60);
+    --uc-tab-selected: var(--uc-sf-shade-90);
+    --uc-tab-unfocused: transparent;
+    --uc-tab-hover: var(--uc-sf-shade-90);
+  }
+}
+
+/* Translucent tabs, part 3: the tab glows (hover, selected, idle) were solid colours, so they stayed opaque while the tab fill followed Tab opacity.
+   While Tab opacity is below 100% their colour carries the same alpha. Tab groups set their own glow colour closer to the tab and keep it.
+   To undo: delete this block. */
+@media (-moz-toolbar-prefers-color-scheme: light), (prefers-color-scheme: light) {
+  :root[uc-tab-translucent] {
+    --uc-hover-glow-color: color-mix(in srgb, var(--uc-tint-10) var(--uc-alpha-tab), transparent);
+    --uc-selected-glow-color: color-mix(in srgb, var(--uc-tint-10) var(--uc-alpha-tab), transparent);
+    --uc-inactive-glow-color: color-mix(in srgb, var(--uc-tint-10) var(--uc-alpha-tab), transparent);
+  }
+}
+
+@media (-moz-toolbar-prefers-color-scheme: dark), (prefers-color-scheme: dark) {
+  :root[uc-tab-translucent] {
+    --uc-hover-glow-color: color-mix(in srgb, var(--uc-shade-10) var(--uc-alpha-tab), transparent);
+    --uc-selected-glow-color: color-mix(in srgb, var(--uc-shade-10) var(--uc-alpha-tab), transparent);
+    --uc-inactive-glow-color: color-mix(in srgb, var(--uc-shade-10) var(--uc-alpha-tab), transparent);
+  }
+}
+
+/* Toolbar colours: the same rule for both themes (--uc-bg is set per theme above). */
+:root,
+#main-window,
+#navigator-toolbox {
+  --toolbar-bgcolor: var(--uc-bg-toolbar) !important;
+  --lwt-accent-color: var(--uc-bg-toolbar) !important;
+  --lwt-frame: var(--uc-bg-toolbar) !important;
+  /* Kill Firefox's default blue/purple background gradient */
+  --toolbox-background-image: none !important;
+}

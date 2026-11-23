@@ -1,0 +1,93 @@
+/* 16-accessibility.css: reduced motion and forced colours (Windows contrast themes). Imported by ../userChrome.css after 15 (17, 18 and 19 follow it).
+   Keyboard focus rings are with the things they belong to: the address bar's ring and the security badge in 03-urlbar.css, the "+" button's
+   ring in 06-sidebar-vertical-tabs.css. The address bar's dim text colour (contrast) is --uc-url-dim-color in 01-tokens.css.
+   Not covered here on purpose: the rail slide, the fullscreen toolbar/rail slides and the tab tile width animation. Firefox drives the rail
+   with its own JavaScript animation and several scripts and files (07, 11, 12, 14) are timed to it, so a CSS-only switch-off would put the
+   tiles and the rail out of step. Those stay as they are.
+   The fade of the Picture-in-Picture controls is in 17 (it is !important and comes later, so its reduced-motion switch-off has to live there).
+   To undo: delete this file and its @import line. */
+
+/* ==========================================================================
+   REDUCED MOTION (Windows: Settings > Accessibility > Visual effects > Animation effects off)
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  /* long tab titles (vertical rail and horizontal strip): no back-and-forth scrolling (the title is cut with the fade at its end instead; the full title is in the tooltip) */
+  :is(#sidebar-main, sidebar-main, #sidebar-container, #sidebar-box) #tabbrowser-tabs[expanded] .tabbrowser-tab:hover .tab-label,
+  #TabsToolbar .tabbrowser-tab[selected]:hover .tab-label {
+    animation: none !important;
+  }
+
+  /* titles fade in and out without sliding sideways (same selector as in 06, which is why it wins: it comes later) */
+  #tabbrowser-tabs[orient="vertical"]:not([expanded]) .tab-label-container {
+    transform: none !important;
+  }
+
+  /* press feedback and badge hover: no scaling */
+  .tabbrowser-tab:active .tab-stack {
+    transform: none !important;
+  }
+
+  .tab-audio-button,
+  .tab-icon-overlay {
+    transition: none !important;
+  }
+}
+
+/* ==========================================================================
+   FORCED COLOURS (Windows contrast themes)
+   Firefox then replaces the colours of text, backgrounds and borders with the system's and drops box shadows, so the glows that show
+   which tab is selected or hovered disappear. Outlines survive, so the selected and hovered tab get one.
+   ========================================================================== */
+@media (forced-colors: active) {
+  .tabbrowser-tab:hover .tab-content {
+    outline: 1px solid ButtonText;
+    outline-offset: -2px;
+  }
+
+  /* after the hover rule, same specificity: a selected tab under the pointer keeps the stronger outline */
+  .tabbrowser-tab[selected] .tab-content {
+    outline: 2px solid Highlight;
+    outline-offset: -3px;
+  }
+
+  /* things drawn with a colour from this theme that would otherwise be repainted in the background colour and vanish */
+  .tab-throbber {
+    forced-color-adjust: none;
+    background-color: Highlight !important;
+  }
+
+  .tabbrowser-tab[pinned] .tab-icon-stack::after {
+    forced-color-adjust: none;
+    background-color: CanvasText;
+  }
+
+  tab-group .tab-group-label,
+  .tab-audio-button,
+  .tab-icon-overlay {
+    forced-color-adjust: none;
+  }
+
+  /* no background image behind the chrome: the system colours have to stay readable */
+  #main-window[uc-bg-image] {
+    background-image: none !important;
+  }
+
+  /* the address bar: no recoloured overlay, so the real text shows in the system colour (the overlay hides the input's own text
+     while the bar is not focused, and in the floating bar also while it is focused and untouched) */
+  #uc-url-overlay {
+    display: none !important;
+  }
+
+  #urlbar[uc-url-colored]:not([focused]) .urlbar-input {
+    color: CanvasText !important;
+  }
+
+  :root#main-window[uc-vertical] #urlbar[focused][uc-url-colored][uc-url-pristine] .urlbar-input {
+    color: CanvasText !important;
+    caret-color: CanvasText !important;
+  }
+
+  :root#main-window[uc-vertical] #urlbar[focused][uc-url-colored][uc-url-pristine] .urlbar-input::selection {
+    color: HighlightText !important;
+  }
+}

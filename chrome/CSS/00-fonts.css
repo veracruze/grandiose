@@ -1,0 +1,139 @@
+/* 00-fonts.css: bundled multi-language fonts that follow the interface language. Imported first by ../userChrome.css. */
+
+/* ==========================================================================
+   FONTS
+   Goal: the same heavy, rounded look in every language, with nothing installed system-wide.
+   The font files live in chrome/fonts/. None are bundled: the README (section "Fonts") links to where to download them.
+
+   The stack for all of Firefox's own interface:
+
+       --uc-font-latin       Latin look (tried first). Nunito Black by default; in languages written in another
+                             script (Greek, Hebrew, Arabic, Thai, Hindi, Japanese, Chinese, Korean ...) it is
+                             Noto Sans Black instead, so Latin letters match the rest of the line
+       Nunito Black Custom   Latin, Latin Extended (Turkish etc.), Cyrillic, Vietnamese
+       UC Sans               Greek, Hebrew, Arabic, Thai, Devanagari (Noto Sans Black, one file each)
+       --uc-font-cjk         Japanese / Chinese / Korean: ONE of the "UC JP/SC/TC/KR" families, chosen by
+                             the interface language below (Han characters look different per language, so
+                             they can't share one font). For any other language it stays on sans-serif and
+                             the big CJK files are never loaded.
+       sans-serif            Firefox's own per-language choice: the net under everything
+
+   Each @font-face below only claims the characters in its unicode-range, and Firefox loads a file only when
+   a character from its range is on screen. A file that is missing simply falls through to the next font, so
+   you can add the files one language at a time; nothing breaks and nothing is installed system-wide.
+   Licences: Nunito and Noto are SIL Open Font License, so they could be shipped; this theme links to them instead.
+
+   JS/uiLanguage.uc.js puts the interface language on the window (lang, which is how Firefox decides what
+   sans-serif means, and uc-lang, used by the blocks at the bottom). Without it only the language-neutral
+   parts work: Latin, Greek, Hebrew, Arabic, Thai and Devanagari still get their bundled fonts.
+   ========================================================================== */
+
+/* ---- Latin, Latin Extended, Cyrillic, Vietnamese: Nunito Black ----
+   Two places are tried, so the file can stay where it was (chrome/Nunito-Black.ttf) or move into fonts/. */
+@font-face {
+  font-family: "Nunito Black Custom";
+  src: url("../fonts/Nunito-Black.ttf") format("truetype"), url("../Nunito-Black.ttf") format("truetype");
+  font-weight: 900;
+  font-style: normal;
+  unicode-range: U+0000-036F, U+0400-052F, U+1E00-1EFF, U+2000-206F, U+20A0-20CF, U+2113, U+2116, U+2122, U+2191, U+2193, U+2212, U+2215, U+2C60-2C7F, U+2DE0-2DFF, U+A640-A69F, U+A720-A7FF, U+FEFF, U+FFFD;
+}
+
+/* ---- Latin letters in Noto Sans Black, used in place of Nunito when the interface is in a language written
+   in another script (see the blocks at the bottom), so a Hebrew or Japanese line is one consistent style.
+   Uses the same NotoSans-Black.ttf as Greek below. ---- */
+@font-face {
+  font-family: "UC Noto Latin";
+  src: local("Noto Sans Black"), local("NotoSans-Black"), url("../fonts/NotoSans-Black.ttf") format("truetype");
+  font-weight: 900;
+  unicode-range: U+0000-036F, U+1E00-1EFF, U+2000-206F, U+20A0-20CF, U+2113, U+2122, U+2191, U+2193, U+2212, U+2215, U+2C60-2C7F, U+A720-A7FF, U+FEFF, U+FFFD;
+}
+
+/* ---- Other alphabets: one family, "UC Sans", made of one Noto Sans Black file per script ---- */
+@font-face {
+  font-family: "UC Sans";
+  src: local("Noto Sans Black"), local("NotoSans-Black"), url("../fonts/NotoSans-Black.ttf") format("truetype");
+  font-weight: 900;
+  unicode-range: U+0370-03FF, U+1F00-1FFF;   /* Greek */
+}
+@font-face {
+  font-family: "UC Sans";
+  src: local("Noto Sans Hebrew Black"), local("NotoSansHebrew-Black"), url("../fonts/NotoSansHebrew-Black.ttf") format("truetype");
+  font-weight: 900;
+  unicode-range: U+0590-05FF, U+FB1D-FB4F;   /* Hebrew */
+}
+@font-face {
+  font-family: "UC Sans";
+  src: local("Noto Sans Arabic Black"), local("NotoSansArabic-Black"), url("../fonts/NotoSansArabic-Black.ttf") format("truetype");
+  font-weight: 900;
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+FB50-FDFF, U+FE70-FEFF;   /* Arabic */
+}
+@font-face {
+  font-family: "UC Sans";
+  src: local("Noto Sans Thai Black"), local("NotoSansThai-Black"), url("../fonts/NotoSansThai-Black.ttf") format("truetype");
+  font-weight: 900;
+  unicode-range: U+0E00-0E7F;   /* Thai */
+}
+@font-face {
+  font-family: "UC Sans";
+  src: local("Noto Sans Devanagari Black"), local("NotoSansDevanagari-Black"), url("../fonts/NotoSansDevanagari-Black.ttf") format("truetype");
+  font-weight: 900;
+  unicode-range: U+0900-097F, U+A8E0-A8FF;   /* Devanagari (Hindi, Marathi, Nepali) */
+}
+
+/* ---- Japanese, Chinese, Korean: one family per language, picked by --uc-font-cjk below ----
+   Han characters are shared between these languages but drawn differently, so each language needs its own
+   font. These files are big (several MB each); only the one for the current interface language is used.
+   Japanese: "M PLUS Rounded 1c" (rounded, closest to Nunito) is an option in place of Noto Sans JP:
+   download MPLUSRounded1c-Black.ttf and swap the file name in the url() below. */
+@font-face {
+  font-family: "UC JP";
+  src: local("Noto Sans JP Black"), local("NotoSansJP-Black"), url("../fonts/NotoSansJP-Black.ttf") format("truetype");
+  font-weight: 900;
+  unicode-range: U+3000-30FF, U+31F0-31FF, U+3400-4DBF, U+4E00-9FFF, U+FF00-FFEF;
+}
+@font-face {
+  font-family: "UC SC";
+  src: local("Noto Sans SC Black"), local("NotoSansSC-Black"), url("../fonts/NotoSansSC-Black.ttf") format("truetype");
+  font-weight: 900;
+  unicode-range: U+3000-303F, U+3100-312F, U+3400-4DBF, U+4E00-9FFF, U+FF00-FFEF;
+}
+@font-face {
+  font-family: "UC TC";
+  src: local("Noto Sans TC Black"), local("NotoSansTC-Black"), url("../fonts/NotoSansTC-Black.ttf") format("truetype");
+  font-weight: 900;
+  unicode-range: U+3000-303F, U+3100-312F, U+3400-4DBF, U+4E00-9FFF, U+FF00-FFEF;
+}
+@font-face {
+  font-family: "UC KR";
+  src: local("Noto Sans KR Black"), local("NotoSansKR-Black"), url("../fonts/NotoSansKR-Black.ttf") format("truetype");
+  font-weight: 900;
+  unicode-range: U+1100-11FF, U+3000-303F, U+3130-318F, U+3400-4DBF, U+4E00-9FFF, U+AC00-D7AF, U+FF00-FFEF;
+}
+
+:root {
+  --uc-font-latin: "Nunito Black Custom";   /* the Latin look for every language */
+  --uc-font-cjk: sans-serif;                /* set per language below */
+}
+
+/* Keep this on `*`. Tried narrowing it to :root plus a list of elements (Oct 2026): the urlbar, its dropdown and placeholder text, the
+   History / Bookmarks sidebar panels and the Library fell back to the system font, because the font on :root does not reach them
+   (Firefox gives them their own font that inherits from something other than the theme stack). A universal rule on one
+   inherited property is cheap; the expensive universal rule was the 55 button variables in 01-tokens.css, which are scoped now. */
+* {
+  font-family: var(--uc-font-latin), "Nunito Black Custom", "UC Sans", var(--uc-font-cjk), sans-serif;
+}
+
+/* ---- Languages written in another script: Latin letters in Noto Sans too ----
+   (Cyrillic languages are not listed: Nunito covers Cyrillic, so Nunito stays for the whole line.)
+   To add a language, add its code to the list. [uc-lang|="zh"] covers zh-cn and zh-tw. */
+:root:is([uc-lang|="el"], [uc-lang|="he"], [uc-lang|="ar"], [uc-lang|="fa"], [uc-lang|="ur"], [uc-lang|="th"],
+         [uc-lang|="hi"], [uc-lang|="mr"], [uc-lang|="ne"], [uc-lang|="ja"], [uc-lang|="ko"], [uc-lang|="zh"]) {
+  --uc-font-latin: "UC Noto Latin";
+}
+
+/* ---- Which CJK font for which interface language ----
+   [uc-lang|="ja"] matches "ja" and anything starting "ja-". Chinese is split by region, so those are exact. */
+:root[uc-lang|="ja"] { --uc-font-cjk: "UC JP"; }
+:root[uc-lang|="ko"] { --uc-font-cjk: "UC KR"; }
+:root[uc-lang="zh-cn"] { --uc-font-cjk: "UC SC"; }
+:root[uc-lang="zh-tw"] { --uc-font-cjk: "UC TC"; }

@@ -1,0 +1,296 @@
+/* 12-fullscreen-overlay.css: Overlay mode for fullscreen and push/retract for windowed
+ *
+ * ARCHITECTURE:
+ * - Fullscreen: toolbar and rail slide OVER the page (page never resizes)
+ * - Windowed: expanded rail pushes the page (translate, then resize to settle)
+ * - JS-managed geometry: sidebarPushSettle.uc.js owns all geometry via CSS variables
+ *   (open: page slides, then resizes once; close: page resizes once, then slides)
+ *
+ * Easing: every transform slide uses var(--uc-fs-ease) (ease-in-out), the same easing Firefox's own
+ * rail slide uses. The rail's CLOSE slide keeps its own --uc-fs-rail-collapse-ease fallback so the
+ * close can be tuned separately without touching the open.
+ *
+ * KEY ATTRIBUTES:
+ * [uc-fs-overlay-rail] - fullscreen overlay mode active
+ * [uc-fs-rail-end] - right-side sidebar (set by JS based on the pref, ignoring Firefox's flickering attributes)
+ * [uc-overlay-off] - windowed push mode active
+ * [uc-push-managed] - JS owns sidebar/page geometry
+ * [uc-push] - push state machine: "", "settled", "out", "back", "back2"
+ * [uc-push-end] - right-side sidebar
+ */
+
+/* ==========================================================================
+   SECTION 1: FULLSCREEN - TOOLBAR OVERLAY
+   The toolbar slides over the page; the page never resizes.
+   ========================================================================== */
+
+:root[uc-fs-overlay-bar][inFullscreen]:not([inDOMFullscreen="true"]) #browser#browser#browser {
+  padding-top: 0 !important;
+  transition: none !important;
+}
+
+/* ==========================================================================
+   SECTION 2: FULLSCREEN - RAIL OVERLAY
+   The rail is taken out of the layout and slides in/out over the page.
+   ========================================================================== */
+
+/* Base overlay (Left side fallback): rail is fixed, positioned at the toolbox's bottom edge */
+:root[uc-fs-overlay-rail][sidebar-expand-on-hover][inFullscreen]:not([inDOMFullscreen]) #sidebar-container#sidebar-container#sidebar-container:not([sidebar-panel-open]),
+:root[uc-fs-overlay-rail][inFullscreen]:not([inDOMFullscreen]):not([sidebar-expand-on-hover]) #sidebar-container#sidebar-container#sidebar-container:not([sidebar-panel-open]) {
+  position: fixed !important;
+  top: var(--uc-fs-rail-top, 0px) !important;
+  bottom: 0 !important;
+  inset-inline-start: 0 !important;
+  inset-inline-end: auto !important;
+  z-index: 100 !important;
+  content-visibility: visible !important;
+  transition: transform var(--uc-fs-rail-dur) var(--uc-fs-ease) !important;
+  view-transition-name: none !important;
+}
+
+/* Right rail positioning (Uses our un-flickerable root attribute) */
+:root[uc-fs-rail-end][uc-fs-overlay-rail][sidebar-expand-on-hover][inFullscreen]:not([inDOMFullscreen]) #sidebar-container#sidebar-container#sidebar-container:not([sidebar-panel-open]),
+:root[uc-fs-rail-end][uc-fs-overlay-rail][inFullscreen]:not([inDOMFullscreen]):not([sidebar-expand-on-hover]) #sidebar-container#sidebar-container#sidebar-container:not([sidebar-panel-open]) {
+  inset-inline-start: auto !important;
+  inset-inline-end: 0 !important;
+}
+
+/* The "not hovered" test used to be :root:not(:has(#tabbrowser-tabbox[sidebar-launcher-hovered])), which the browser re-checked on every DOM change in the
+   whole window. It is now anchored on #browser (it holds both the rail and the page area), so only changes inside #browser are re-checked.
+   Specificity, so nobody has to count again: :not(:has(#tabbrowser-tabbox[...])) counts as one ID (its argument has an ID), and #browser is a second
+   one, so these selectors have 5 IDs against the 4 of section 7 (JS-owned geometry). That is why they win over section 7 WHEN THEY MATCH.
+   To undo: move the :not(:has(...)) back onto :root. */
+
+/* WHO MOVES THE RAIL IN FULLSCREEN (the five "hidden / close" rules below).
+   Default (uc.overlay.js-rail = true): sidebarPushSettle.uc.js owns the rail and moves it with `translate` (section 7), over --uc-fs-rail-dur.
+   It sets [uc-push-overlay] on :root while it does. These CSS slides out-rank section 7 (5 IDs against 4), so on paper both would move the
+   rail at once: the JS translate and this transform. They now stand down while [uc-push-overlay] is set ( :not([uc-push-overlay]) ), so
+   ONE engine moves it. This was found by reading the selectors, not by a visible bug: if the fullscreen slide looks the same with and
+   without these terms, either version is fine.
+   They stay as the CSS-only fallback: uc.overlay.js-rail = false, Customize open, or any moment the script does not own the geometry.
+   (An instant fullscreen close that was reported turned out to be "Keep sidebar visible" in sidebarAutoHide.uc.js, not this.)
+   To undo: delete the five :not([uc-push-overlay]) terms (each follows [fullscreenNavToolboxHidden]). */
+
+/* Toolbar hidden: left rail slides out through its own edge */
+:root:not([uc-fs-rail-end])[uc-fs-overlay-rail][sidebar-expand-on-hover][inFullscreen]:not([inDOMFullscreen])[fullscreenNavToolboxHidden]:not([uc-push-overlay]) #browser:not(:has(#tabbrowser-tabbox[sidebar-launcher-hovered])) #sidebar-container#sidebar-container#sidebar-container:not([sidebar-panel-open]),
+:root:not([uc-fs-rail-end])[uc-fs-overlay-rail][inFullscreen]:not([inDOMFullscreen]):not([sidebar-expand-on-hover])[fullscreenNavToolboxHidden] #sidebar-container#sidebar-container#sidebar-container:not([sidebar-panel-open]) {
+  transform: translateX(-100%) !important;
+  transition: none !important;
+}
+
+/* Toolbar hidden: right rail slides out rightward */
+:root[uc-fs-rail-end][uc-fs-overlay-rail][sidebar-expand-on-hover][inFullscreen]:not([inDOMFullscreen])[fullscreenNavToolboxHidden]:not([uc-push-overlay]) #browser:not(:has(#tabbrowser-tabbox[sidebar-launcher-hovered])) #sidebar-container#sidebar-container#sidebar-container:not([sidebar-panel-open]),
+:root[uc-fs-rail-end][uc-fs-overlay-rail][inFullscreen]:not([inDOMFullscreen]):not([sidebar-expand-on-hover])[fullscreenNavToolboxHidden] #sidebar-container#sidebar-container#sidebar-container:not([sidebar-panel-open]) {
+  transform: translateX(100%) !important;
+  transition: none !important;
+}
+
+/* Soft transition when toolbar has just been hidden */
+:root[uc-fs-overlay-rail][sidebar-expand-on-hover][inFullscreen]:not([inDOMFullscreen])[fullscreenNavToolboxHidden]:not([uc-push-overlay])[uc-fs-toolbox-anim] #browser:not(:has(#tabbrowser-tabbox[sidebar-launcher-hovered])) #sidebar-container#sidebar-container#sidebar-container:not([sidebar-panel-open]),
+:root[uc-fs-overlay-rail][inFullscreen]:not([inDOMFullscreen]):not([sidebar-expand-on-hover])[fullscreenNavToolboxHidden][uc-fs-toolbox-anim] #sidebar-container#sidebar-container#sidebar-container:not([sidebar-panel-open]) {
+  transition: transform var(--uc-fs-rail-dur) var(--uc-fs-ease) !important;
+}
+
+/* Closing from expanded rail: hold expanded width during Firefox's shrink */
+:root[uc-fs-overlay-rail][sidebar-expand-on-hover][inFullscreen]:not([inDOMFullscreen])[fullscreenNavToolboxHidden][uc-fs-rail-shrinking] #sidebar-container#sidebar-container#sidebar-container:not([sidebar-panel-open], [sidebar-launcher-expanded]) {
+  width: var(--uc-fs-rail-hold-w, calc(var(--uc-rail-expanded-w) - var(--uc-rail-border, 1px))) !important;
+  min-width: var(--uc-fs-rail-hold-w, calc(var(--uc-rail-expanded-w) - var(--uc-rail-border, 1px))) !important;
+  max-width: var(--uc-fs-rail-hold-w, calc(var(--uc-rail-expanded-w) - var(--uc-rail-border, 1px))) !important;
+}
+
+/* Close: left rail slide out */
+:root:not([uc-fs-rail-end])[uc-fs-overlay-rail][sidebar-expand-on-hover][inFullscreen]:not([inDOMFullscreen])[fullscreenNavToolboxHidden]:not([uc-push-overlay])[uc-fs-rail-collapsing] #browser:not(:has(#tabbrowser-tabbox[sidebar-launcher-hovered])) #sidebar-container#sidebar-container#sidebar-container:not([sidebar-panel-open]) {
+  transform: translateX(calc(-1 * var(--uc-fs-rail-slide-w, calc(var(--uc-rail-expanded-w) - var(--uc-rail-border, 1px))))) !important;
+}
+
+/* Close: right rail slide out with custom easing */
+:root[uc-fs-rail-end][uc-fs-overlay-rail][sidebar-expand-on-hover][inFullscreen]:not([inDOMFullscreen])[fullscreenNavToolboxHidden]:not([uc-push-overlay])[uc-fs-rail-collapsing] #browser:not(:has(#tabbrowser-tabbox[sidebar-launcher-hovered])) #sidebar-container#sidebar-container#sidebar-container:not([sidebar-panel-open]) {
+  transition: transform var(--uc-fs-rail-dur) var(--uc-fs-rail-collapse-ease, cubic-bezier(.4, 0, .6, 1)) var(--uc-fs-rail-collapse-delay, 0ms) !important;
+  transform: translateX(var(--uc-fs-rail-slide-w, calc(var(--uc-rail-expanded-w) - var(--uc-rail-border, 1px)))) !important;
+}
+
+/* Right rail, closing from expanded: the hold keeps the CONTAINER expanded-wide while it slides out,
+   but sidebar-main (collapsed layout) fills it from its START edge, which for a right rail is the
+   far-from-screen-edge side, so the strip jumps ~240px inwards and then sweeps out. Pin the strip to
+   the END edge for the duration of the hold. Left rail is unaffected (its start edge is the screen edge). */
+:root[uc-fs-rail-end][uc-fs-overlay-rail][sidebar-expand-on-hover][inFullscreen]:not([inDOMFullscreen])[fullscreenNavToolboxHidden][uc-fs-rail-shrinking]:not([uc-push-overlay]) #sidebar-container#sidebar-container#sidebar-container:not([sidebar-panel-open], [sidebar-launcher-expanded]) sidebar-main {
+  width: var(--uc-rail-collapsed, 50px) !important;
+  min-width: var(--uc-rail-collapsed, 50px) !important;
+  max-width: var(--uc-rail-collapsed, 50px) !important;
+  margin-inline-start: auto !important;
+}
+
+/* ==========================================================================
+   SECTION 3: FULLSCREEN - PAGE AREA
+   No margin follows the rail; no snapshot animation stretches it.
+   ========================================================================== */
+
+:root[uc-fs-overlay-rail][sidebar-expand-on-hover][inFullscreen]:not([inDOMFullscreen]) #tabbrowser-tabbox#tabbrowser-tabbox#tabbrowser-tabbox:not([sidebar-panel-open]) {
+  margin-inline: 0 !important;
+  transition: none !important;
+  view-transition-name: none !important;
+}
+
+/* ==========================================================================
+   SECTION 4: WINDOWED - PUSH/RETRACT (Overlay mode OFF)
+   The expanded rail pushes the page: slides with the rail, then resizes once.
+   State machine driven by sidebarPushSettle.uc.js via [uc-push] attribute.
+   ========================================================================== */
+
+/* Base transition for the slide */
+:root[uc-overlay-off][sidebar-expand-on-hover]:not([inDOMFullscreen]) #tabbrowser-tabbox#tabbrowser-tabbox {
+  transition: translate var(--uc-sidebar-anim) !important;
+}
+
+/* Step 1: hovered, sliding (left rail only) */
+:root[uc-push-managed][uc-overlay-off][sidebar-expand-on-hover]:not([inDOMFullscreen], [uc-customize-open]) #tabbrowser-tabbox#tabbrowser-tabbox[sidebar-launcher-hovered]:not([sidebar-panel-open], [sidebar-positionend]) {
+  translate: calc(var(--uc-rail-expanded-w) - var(--uc-rail-collapsed)) 0 !important;
+}
+
+/* Step 2: settled, resized from the right */
+:root[uc-push-managed][uc-overlay-off][sidebar-expand-on-hover][uc-push="settled"]:not([inDOMFullscreen], [uc-customize-open]) #tabbrowser-tabbox#tabbrowser-tabbox:not([sidebar-panel-open], [sidebar-positionend]) {
+  translate: none !important;
+  padding-inline-start: calc(var(--uc-rail-expanded-w) - var(--uc-rail-collapsed)) !important;
+  transition: translate var(--uc-push-resize-ms, 260ms) ease-out, padding-inline var(--uc-push-resize-ms, 260ms) ease-out !important;
+}
+
+:root[uc-push-managed][uc-overlay-off][sidebar-expand-on-hover][uc-push="settled"]:not([inDOMFullscreen], [uc-customize-open]) #tabbrowser-tabbox#tabbrowser-tabbox[sidebar-positionend]:not([sidebar-panel-open]) {
+  padding-inline-end: calc(var(--uc-rail-expanded-w) - var(--uc-rail-collapsed)) !important;
+  transition: padding-inline-end var(--uc-push-resize-ms, 260ms) ease-out !important;
+}
+
+/* ==========================================================================
+   SECTION 5: FULLSCREEN - PUSH MODE (Overlay mode OFF in fullscreen)
+   Same push logic as windowed, but with margin pins for fullscreen geometry.
+   ========================================================================== */
+
+/* Margin pins for fullscreen push */
+:root[uc-push-managed][uc-overlay-off][sidebar-expand-on-hover][inFullscreen]:not([inDOMFullscreen], [uc-customize-open]) #tabbrowser-tabbox#tabbrowser-tabbox[sidebar-launcher-hovered]:not([sidebar-panel-open], [sidebar-positionend]),
+:root[uc-push-managed][uc-overlay-off][sidebar-expand-on-hover][inFullscreen][uc-push]:not([inDOMFullscreen], [uc-customize-open]) #tabbrowser-tabbox#tabbrowser-tabbox:not([sidebar-panel-open], [sidebar-positionend]) {
+  margin-inline-start: var(--uc-rail-collapsed) !important;
+}
+
+:root[uc-push-managed][uc-overlay-off][sidebar-expand-on-hover][inFullscreen]:not([inDOMFullscreen], [uc-customize-open]) #tabbrowser-tabbox#tabbrowser-tabbox[sidebar-launcher-hovered][sidebar-positionend]:not([sidebar-panel-open]),
+:root[uc-push-managed][uc-overlay-off][sidebar-expand-on-hover][inFullscreen][uc-push]:not([inDOMFullscreen], [uc-customize-open]) #tabbrowser-tabbox#tabbrowser-tabbox[sidebar-positionend]:not([sidebar-panel-open]) {
+  margin-inline-end: var(--uc-rail-collapsed) !important;
+}
+
+/* Higher specificity for hidden toolbox */
+:root[uc-push-managed][uc-overlay-off][sidebar-expand-on-hover][inFullscreen]:not([inDOMFullscreen], [uc-customize-open]) #tabbrowser-tabbox#tabbrowser-tabbox#tabbrowser-tabbox[sidebar-launcher-hovered]:not([sidebar-panel-open], [sidebar-positionend]),
+:root[uc-push-managed][uc-overlay-off][sidebar-expand-on-hover][inFullscreen][uc-push]:not([inDOMFullscreen], [uc-customize-open]) #tabbrowser-tabbox#tabbrowser-tabbox#tabbrowser-tabbox:not([sidebar-panel-open], [sidebar-positionend]) {
+  margin-inline-start: var(--uc-rail-collapsed) !important;
+}
+
+:root[uc-push-managed][uc-overlay-off][sidebar-expand-on-hover][inFullscreen]:not([inDOMFullscreen], [uc-customize-open]) #tabbrowser-tabbox#tabbrowser-tabbox#tabbrowser-tabbox[sidebar-launcher-hovered][sidebar-positionend]:not([sidebar-panel-open]),
+:root[uc-push-managed][uc-overlay-off][sidebar-expand-on-hover][inFullscreen][uc-push]:not([inDOMFullscreen], [uc-customize-open]) #tabbrowser-tabbox#tabbrowser-tabbox#tabbrowser-tabbox[sidebar-positionend]:not([sidebar-panel-open]) {
+  margin-inline-end: var(--uc-rail-collapsed) !important;
+}
+
+/* ==========================================================================
+   SECTION 6: FULLSCREEN - OVERRIDE INSTANT TRANSITIONS
+   Beats 11-fullscreen-rail.css's transition: none for the moments that need animation.
+   ========================================================================== */
+
+:root[uc-overlay-off][sidebar-expand-on-hover][inFullscreen]:not([inDOMFullscreen], [uc-push]) #tabbrowser-tabbox#tabbrowser-tabbox#tabbrowser-tabbox[sidebar-launcher-hovered]:not([sidebar-panel-open]) {
+  transition: translate var(--uc-sidebar-anim) !important;
+}
+
+/* ==========================================================================
+   SECTION 7: JS-OWNED PUSH GEOMETRY
+   sidebarPushSettle.uc.js owns sidebar/page geometry while [uc-push-managed] is set (push mode, and overlay mode
+   too while uc.overlay.js-rail is true: then [uc-push-overlay] is set and the page vars are 0 / strip, never pushed).
+   These rules consume CSS variables written by the script.
+   ========================================================================== */
+
+/* Sidebar: fixed position, variable-driven width */
+:root[uc-push-managed][sidebar-expand-on-hover]:not([inDOMFullscreen])
+#sidebar-container#sidebar-container#sidebar-container#sidebar-container:not([sidebar-panel-open]) {
+  position: fixed !important;
+  top: var(--uc-push-rail-top, 0px) !important;
+  height: var(--uc-push-rail-h, 100%) !important;
+  bottom: auto !important;
+  inset-inline-start: 0 !important;
+  inset-inline-end: auto !important;
+  width: var(--uc-push-rail-w, var(--uc-rail-collapsed, 60px)) !important;
+  min-width: var(--uc-push-rail-w, var(--uc-rail-collapsed, 60px)) !important;
+  max-width: var(--uc-push-rail-w, var(--uc-rail-collapsed, 60px)) !important;
+  overflow: hidden !important;
+  content-visibility: visible !important;
+  z-index: 100 !important;
+  translate: var(--uc-push-rail-x, 0px) 0 !important;
+  transform: none !important;
+  transition: none !important;
+  animation: none !important;
+  clip-path: none !important;
+  view-transition-name: none !important;
+}
+
+/* Right rail positioning */
+:root[uc-push-managed][uc-push-end][sidebar-expand-on-hover]:not([inDOMFullscreen])
+#sidebar-container#sidebar-container#sidebar-container#sidebar-container:not([sidebar-panel-open]) {
+  inset-inline-start: auto !important;
+  inset-inline-end: 0 !important;
+}
+
+/* Sidebar-main: prevent Firefox's counter-movement.
+   TEST: this used to be "#sidebar-main#sidebar-main#sidebar-main", but sidebar-main has no id, so the rule never
+   matched. To undo: put that selector back (it makes the rule dead again). */
+:root[uc-push-managed][sidebar-expand-on-hover]:not([inDOMFullscreen])
+#sidebar-container#sidebar-container#sidebar-container:not([sidebar-panel-open]) sidebar-main {
+  width: 100% !important;
+  min-width: 100% !important;
+  max-width: 100% !important;
+  translate: none !important;
+  transform: none !important;
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Page: entirely variable-driven */
+:root[uc-push-managed][sidebar-expand-on-hover]:not([inDOMFullscreen])
+#tabbrowser-tabbox#tabbrowser-tabbox#tabbrowser-tabbox#tabbrowser-tabbox:not([sidebar-panel-open]) {
+  margin-inline-start: var(--uc-push-margin-start, 0px) !important;
+  margin-inline-end: var(--uc-push-margin-end, 0px) !important;
+  padding-inline-start: var(--uc-push-pad-start, 0px) !important;
+  padding-inline-end: var(--uc-push-pad-end, 0px) !important;
+  translate: var(--uc-push-page-x, 0px) 0 !important;
+  transition: none !important;
+  animation: none !important;
+  view-transition-name: none !important;
+}
+
+/* ==========================================================================
+   SECTION 8: TAB RESIZE BEHAVIOR
+   Tabs follow the rail width instantly (no CSS transitions): the rail width
+   is animated by the script every frame, so everything inside must just
+   follow it. Firefox's own collapsed/expanded layout still decides alignment
+   (favicon centering, label visibility); we only remove fixed sizes.
+   ========================================================================== */
+
+/* Wrappers between rail and tabs (tagged by the script): no fixed sizes */
+:root[uc-push-managed][sidebar-expand-on-hover]:not([inDOMFullscreen])
+#sidebar-container:not([sidebar-panel-open])
+[uc-push-chain] {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Tabs fill whatever the wrapper gives them */
+:root[uc-push-managed][sidebar-expand-on-hover]:not([inDOMFullscreen])
+#sidebar-container:not([sidebar-panel-open])
+.tabbrowser-tab {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  transition: none !important;
+}
+
+:root[uc-push-managed][sidebar-expand-on-hover]:not([inDOMFullscreen])
+#sidebar-container:not([sidebar-panel-open])
+:is(.tab-content, .tab-label-container) {
+  transition: none !important;
+}

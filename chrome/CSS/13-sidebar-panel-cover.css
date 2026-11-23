@@ -1,0 +1,741 @@
+/* 13-sidebar-panel-cover.css: the sidebar panels (History, Bookmarks, Customize...) that open from the rail buttons are drawn at the
+   sidebar's side (left or right, as it is when the panel opens), BESIDE the rail and OVER the page. The panel takes no
+   room in the layout, so nothing resizes when it opens or closes, whatever the Overlay mode toggle says.
+   Needs JS/sidebarContextMenuHold.uc.js, which also holds the rail still while a panel is open (like a context menu)
+   and publishes the panel's widths on #browser.
+
+   --------------------------------------------------------------------------------------------------------------
+   NO FREEZE. The panel's margins used to be computed from --uc-rail-flow-w / -keep-w / -visible-w, which the JS
+   republished from whatever Firefox had measured. When Firefox changed the rail mid-open, the published numbers
+   changed too, the panel's margins moved, and the page moved with them. The freeze machinery paused publishing to
+   work around that.
+   Now, while Customize is open, those three variables are PINNED to --uc-rail-collapsed (or to
+   --uc-rail-expanded-w in always-show), so the panel's margins resolve to constants. The rail is forced to
+   `width: keep-w; position: relative`, so its layout contribution is exactly that constant. The panel sits
+   at [collapsed, collapsed+panel-w]; its net layout addition is 0; the page stays at collapsed. Nothing to
+   freeze because nothing is being read.
+   Density changes (Compact / Standard / Touch) come for free: --uc-rail-collapsed changes on :root, the pinned
+   variables inherit the new value, the rail resizes, the panel's margins recompute, the page stays put.
+   --------------------------------------------------------------------------------------------------------------
+
+   How the panel is positioned: the panel box (#sidebar-box) stays where Firefox puts it, right after the rail in
+   the layout, and its margins shift it to the rail's drawn edge without changing the layout. The splitter that
+   sits between panel and page is hidden (it is not draggable in this theme, and it would add its own width).
+
+   Other panels (History, Bookmarks, Downloads, extension panels) keep their previous behaviour: the JS publishes
+   their flow / keep / visible widths and the rules further down compute the panel's margins from those.
+
+   The Compact favicon / "+" offsets are in 07 (Compact block); the Compact tile rules are in 14.
+
+   FULLSCREEN: fullscreen Customize gets a specific cover treatment (end of this file). While the panel is open in
+   fullscreen, the rail is squeezed to 0 width and the panel is stretched over [0, collapsed + base] so the pointer
+   can never reach the rail and start a hover expand. sidebarContextMenuHold.uc.js sets uc-customize-open to trigger
+   this; exiting fullscreen drops the cover automatically (it is gated on [inFullscreen]) and the panel reverts to
+   sitting beside the rail.
+
+   EXPAND-ON-HOVER, WINDOWED, CUSTOMIZE OPEN: the rail is forced to look collapsed (hover-off state) even if it was
+   hover-expanded when CS opened. See the "EXPAND-ON-HOVER + CUSTOMIZE OPEN" section below.
+
+   COOLDOWN AFTER CS CLOSES (uc-hover-suppressed): for ~300ms after CS closes, the rail is kept visually collapsed
+   by the "COOLDOWN" section. Without it, Firefox's own expanded-layout state ([sidebar-launcher-expanded] on the
+   container, [expanded] on the tab strip) would widen the rail to 289px for the whole cooldown, then push-settle
+   would snap it back to collapsed at the moment it re-owns. The JS clears that state at cooldown end so the hand-
+   off is state-consistent, and the CSS pins hold the visual until then.
+   The cooldown pins apply in WINDOWED AND FULLSCREEN. In fullscreen the CS "cover" block already forces the rail
+   to 0 width while the panel is open; the cooldown pins are what keeps the rail looking collapsed once the cover
+   stops matching (CS closed, uc-hover-suppressed still set, [sidebar-launcher-expanded] still true from before
+   CS opened). Without them the rail renders at 289px for the cooldown window and snaps to 50px at cooldown end.
+
+   FULLSCREEN ENTER / LEAVE ANIMATION: sidebarContextMenuHold.uc.js sets uc-panel-anim="in" / "out" on #sidebar-box when
+   the panel is shown / hidden in fullscreen. Every margin rule below that says
+   :not([hidden]:not([uc-panel-anim="out"])) means "shown, or still sliding out", so the layout does not change while
+   the panel leaves.
+   To undo: delete this file and its @import line. */
+
+
+/* ==========================================================================
+   BASELINE PIN: the rail and page numbers are constants while CS is open
+   ========================================================================== */
+
+/* These three variables feed every margin formula further down. Pinning them to --uc-rail-collapsed makes
+   the panel's position and the page edge fixed while a Customize panel is open, so Firefox mutating the rail
+   during the open cannot move the panel or the page. --uc-rail-collapsed inherits from :root, where
+   07-split-glows-density.css sets it per density (Compact 40, Standard 50, Touch 60), so density changes are
+   picked up automatically.
+   The pin lives on #browser (where the JS writes the same variables inline); !important beats the inline style.
+   It only applies while uc-customize-open is set. When that is cleared, the JS-published values take over
+   again for non-Customize panels, and CSS falls back to Firefox's own layout. */
+:root[uc-customize-open] #browser {
+  --uc-rail-flow-w: var(--uc-rail-collapsed) !important;
+  --uc-rail-keep-w: var(--uc-rail-collapsed) !important;
+  --uc-rail-visible-w: var(--uc-rail-collapsed) !important;
+}
+
+
+/* ==========================================================================
+   GENERIC PANEL POSITIONING (all panel states)
+   ========================================================================== */
+
+#sidebar-box:not([hidden]:not([uc-panel-anim="out"])) {
+  position: relative !important;
+  z-index: calc(var(--browser-area-z-index-sidebar-expand-on-hover, 100) + 1) !important;
+  transition: none !important;
+}
+
+/* the splitter that sits between the panel and the page: it is not draggable here (06) and would add its own width to the layout */
+#sidebar-splitter {
+  display: none !important;
+}
+
+/* rail on the start side (left): the panel starts at the rail's DRAWN edge (beside it, not over it) */
+:root #sidebar-box:not([hidden]:not([uc-panel-anim="out"]), [sidebar-positionend]) {
+  margin-inline-start: calc(var(--uc-rail-visible-w, 0px) - var(--uc-rail-flow-w, 0px)) !important;
+  margin-inline-end: calc(var(--uc-rail-keep-w, 0px) - var(--uc-rail-visible-w, 0px) - var(--uc-panel-w, 340px)) !important;
+}
+
+/* rail on the end side (right) */
+:root #sidebar-box[sidebar-positionend]:not([hidden]:not([uc-panel-anim="out"])) {
+  margin-inline-end: calc(var(--uc-rail-visible-w, 0px) - var(--uc-rail-flow-w, 0px)) !important;
+  margin-inline-start: calc(var(--uc-rail-keep-w, 0px) - var(--uc-rail-visible-w, 0px) - var(--uc-panel-w, 340px)) !important;
+}
+
+/* fullscreen with the toolbar hidden: Firefox collapses the rail to nothing, so the panel is the only thing at the edge */
+:root[fullscreenNavToolboxHidden]:not([inDOMFullscreen]) #sidebar-box:not([hidden]:not([uc-panel-anim="out"]), [sidebar-positionend]) {
+  margin-inline-start: 0 !important;
+  margin-inline-end: calc(-1 * var(--uc-panel-w, 340px)) !important;
+}
+
+:root[fullscreenNavToolboxHidden]:not([inDOMFullscreen]) #sidebar-box[sidebar-positionend]:not([hidden]:not([uc-panel-anim="out"])) {
+  margin-inline-end: 0 !important;
+  margin-inline-start: calc(-1 * var(--uc-panel-w, 340px)) !important;
+}
+
+
+/* ==========================================================================
+   ALWAYS-SHOW: the rail is 289px wide in this mode, so pin to that
+   ========================================================================== */
+
+/* In always-show Firefox keeps the CONTAINER at --sidebar-launcher-collapsed-width (40 Compact) but lets
+   sidebar-main overflow it to 289. The page sits at 40. Without this block the [uc-customize-open] pin
+   forced the container back to 40 and the panel started at 40 — on the LEFT rail that put the panel over
+   [40, 289], i.e. over most of the visible rail.
+   Pinning to 289 instead makes the container 289, sidebar-main 289 (no overflow), page flex-positions at
+   289, panel sits at 289. Panel covers [289, 569] of the page — the standard "panel over page" behaviour.
+   --uc-rail-expanded-w (01-tokens) is density-independent (290), so this works at Compact/Standard/Touch:
+   the rail is 289px when expanded at every density.
+   Hide-sidebar and expand-on-hover are not affected: neither matches uc-sidebar-mode="always-show", so
+   they fall through to the collapsed pin above. */
+:root[uc-customize-open][uc-sidebar-mode="always-show"] #browser {
+  --uc-rail-flow-w: calc(var(--uc-rail-expanded-w) - var(--uc-rail-border)) !important;
+  --uc-rail-keep-w: calc(var(--uc-rail-expanded-w) - var(--uc-rail-border)) !important;
+  --uc-rail-visible-w: calc(var(--uc-rail-expanded-w) - var(--uc-rail-border)) !important;
+}
+
+
+/* ==========================================================================
+   CUSTOMIZE OPEN: the container is pinned, the panel sits beside it
+   ========================================================================== */
+
+/* Container: pinned to --uc-rail-keep-w (collapsed while CS is open). :root:root and the doubled
+   ID raise specificity well above any competing rule. overflow: hidden AND overflow: clip are both
+   set — some Firefox builds set `overflow: visible` inline on the container during the expand state,
+   and mixing both ensures at least one wins regardless of which form Firefox tried to use. The
+   three-axis form (overflow-x/y) catches the case where only one axis is overridden.
+   contain: paint is the load-bearing part — it makes the container the containing block for any
+   position: fixed descendants too, so no child can paint outside its 50px box even if it tried. */
+:root:root[uc-customize-open]
+  #sidebar-container#sidebar-container {
+  position: relative !important;
+  width: var(--uc-rail-keep-w, var(--uc-rail-collapsed)) !important;
+  inline-size: var(--uc-rail-keep-w, var(--uc-rail-collapsed)) !important;
+  min-width: var(--uc-rail-keep-w, var(--uc-rail-collapsed)) !important;
+  max-width: var(--uc-rail-keep-w, var(--uc-rail-collapsed)) !important;
+  flex: none !important;
+  overflow: hidden !important;
+  overflow-x: hidden !important;
+  overflow-y: hidden !important;
+  overflow-clip-margin: 0 !important;
+  pointer-events: none !important;
+  contain: paint !important;
+}
+
+/* rail on the start side (left): panel natural = right after the rail; margin-start pulls it to keep - flow */
+:root[uc-customize-open] #sidebar-box:not([hidden]:not([uc-panel-anim="out"]), [sidebar-positionend]) {
+  margin-inline-start: calc(var(--uc-rail-keep-w, 0px) - var(--uc-rail-flow-w, 0px)) !important;
+  margin-inline-end: calc(-1 * var(--uc-panel-w, 340px)) !important;
+}
+
+/* rail on the end side (right) */
+:root[uc-customize-open] #sidebar-box[sidebar-positionend]:not([hidden]:not([uc-panel-anim="out"])) {
+  margin-inline-end: calc(var(--uc-rail-keep-w, 0px) - var(--uc-rail-flow-w, 0px)) !important;
+  margin-inline-start: calc(-1 * var(--uc-panel-w, 340px)) !important;
+}
+
+
+/* ==========================================================================
+   EXPAND-ON-HOVER + CUSTOMIZE OPEN: the rail looks collapsed
+   ==========================================================================
+   While CS is open in windowed mode, #sidebar-container is pinned to --uc-rail-keep-w (= --uc-rail-collapsed:
+   40/50/60) by the rule above. But if the rail was hover-expanded at the moment CS opened, Firefox still
+   has [sidebar-launcher-expanded] on the container and [expanded] on #tabbrowser-tabs, so:
+     - sidebar-main inside the 40/50/60px container still has its expanded width (289px);
+     - #vertical-tabs (Firefox's .customization-target box inside sidebar-main) has a min-width sized for
+       the EXPANDED rail (~90px: label + back/forward room), so pinning only the container leaves this
+       middle box expanded and the container clips its overflow — you see a 50px slice of a 90px-wide
+       layout, which reads as "expanded rail";
+     - the tab strip draws the EXPANDED layout, mixing expanded visuals with the collapsed container width.
+
+   The fixes below force the collapsed LOOK unconditionally while CS is open in expand-on-hover:
+     1. sidebar-main is pinned to the same collapsed width as the container.
+     2. #vertical-tabs / .customization-target inside sidebar-main are pinned to the collapsed width
+        (width only; see the "flex in a column" note below).
+     3. #tabbrowser-tabs and its scroll containers fill the collapsed parent.
+     4. The favicon-title gap is closed.
+     5. The tab labels are hidden (opacity 0, slide-out transform).
+     6. The hover marquee animation is off.
+
+   FLEX IN A COLUMN FLEX: sidebar-main is a COLUMN flex container. `flex` / `flex-basis` there means
+   HEIGHT, not width. An earlier revision of these rules set `flex: 0 0 50px` and got a 50px-tall tab
+   strip area — one tab height — which pushed the button row and the chevron to the top of the sidebar.
+   The rules below override WIDTH only (width / min-width / max-width); Firefox's own flex rules for these
+   elements are already correct for the vertical tab-list role.
+
+   Fullscreen is excluded: the cover block later in this file forces the rail to 0 width there, and
+   stretches the panel over both the rail's position and its own — the rail is not reachable in fullscreen.
+   Other visibility modes are excluded by [sidebar-expand-on-hover]: they never hover-expand. */
+
+:root[uc-customize-open][sidebar-expand-on-hover]:not([inFullscreen])
+  :is(#sidebar-main, sidebar-main) {
+  /* Force the button sizing variables to their collapsed-mode values. Firefox's
+     sidebar-main.mjs re-renders the button wrapper in expanded mode when the launcher
+     state changes (which it does when CS opens); Firefox's own expanded-mode padding
+     (14px on each side) then overrides the theme's collapsed-mode values, making the
+     wrapper 50px instead of the theme's 40px in Compact. These explicit variables
+     prevent that. */
+  --button-size-icon: var(--uc-rail-buttons-w) !important;
+  --sidebar-launcher-button-padding-inline: calc((var(--uc-rail-collapsed) - var(--uc-rail-buttons-w)) / 2) !important;
+  width: var(--uc-rail-keep-w, 0px) !important;
+  min-width: var(--uc-rail-keep-w, 0px) !important;
+  max-width: var(--uc-rail-keep-w, 0px) !important;
+}
+
+/* ---- The inner layout: #vertical-tabs (Firefox's .customization-target box) ----
+   Pin its WIDTH only. NO flex / flex-basis here (see the column-flex note above). Its default
+   `flex: 1 1 auto` is correct for a column flex item that must fill the vertical space.
+   Per-element targeting (no :is() of four): the earlier all-in-one selector was measured NOT matching
+   (tab strip stayed 90px). Dropped [orient="vertical"] because it wasn't present on the strip while CS
+   was open (measured: tt_cssWidth: "90.3333px" even with the rule targeting the right selector). */
+:root:root[uc-customize-open][sidebar-expand-on-hover]:not([inFullscreen])
+  sidebar-main > #vertical-tabs,
+:root:root[uc-customize-open][sidebar-expand-on-hover]:not([inFullscreen])
+  sidebar-main > .customization-target {
+  width: var(--uc-rail-keep-w, var(--uc-rail-collapsed)) !important;
+  inline-size: var(--uc-rail-keep-w, var(--uc-rail-collapsed)) !important;
+  min-width: 0 !important;
+  max-width: var(--uc-rail-keep-w, var(--uc-rail-collapsed)) !important;
+  overflow: hidden !important;
+}
+
+/* ---- #tabbrowser-tabs and its scroll containers: fill the now-collapsed parent ----
+   Two selectors so if either the parent-chain or the ID-doubling changes the other still matches.
+   Both drop [orient="vertical"] on purpose — see the note above. NO flex overrides. */
+:root:root[uc-customize-open][sidebar-expand-on-hover]:not([inFullscreen])
+  #sidebar-container sidebar-main
+  :is(#tabbrowser-tabs, #tabbrowser-arrowscrollbox, #pinned-tabs-container),
+:root:root[uc-customize-open][sidebar-expand-on-hover]:not([inFullscreen])
+  #vertical-tabs#vertical-tabs > #tabbrowser-tabs#tabbrowser-tabs {
+  width: 100% !important;
+  inline-size: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+/* ---- Touch density: cap the button size ONLY while the wrapper is pinned to 40px ----
+   This originally applied in ALL Touch states, but the 40px wrapper only exists during
+   Customize-open (and other sidebar panels): there, the theme deliberately freezes the rail
+   to Compact size to avoid layout shifts. In normal use the rail is 60px and buttons may
+   grow to --uc-rail-buttons-w (48px in Touch by default).
+
+   Gating on [uc-customize-open] / [uc-panel-open] restores the theme's beefier buttons in
+   normal Touch use while keeping the Customize-open wrapper intact.
+   To undo: remove the two :is(...) gates (back to the unconditional rule). */
+:root[uidensity="touch"]:is([uc-customize-open], [uc-panel-open]) .buttons-wrapper:has(> .overflow-button) > * > *,
+:root[uidensity="touch"]:is([uc-customize-open], [uc-panel-open]) .buttons-wrapper:has(> .overflow-button) > * {
+  max-width: 40px !important;
+  max-height: 40px !important;
+  overflow: visible !important;
+}
+
+/* Favicon-title gap closed (--uc-rail-collapsed look: no gap). */
+:root[uc-customize-open][sidebar-expand-on-hover]:not([inFullscreen])
+  #tabbrowser-tabs :is(.tab-icon-stack, .tab-icon-image) {
+  margin-inline-end: 0 !important;
+}
+
+/* Tab labels hidden (opacity 0, slide-out transform). */
+:root[uc-customize-open][sidebar-expand-on-hover]:not([inFullscreen])
+  #tabbrowser-tabs .tab-label-container {
+  opacity: 0 !important;
+  transform: translateX(calc(var(--uc-label-slide, 10px) * -1)) !important;
+  pointer-events: none !important;
+  transition: opacity var(--uc-label-out, 90ms) ease-in, transform var(--uc-label-out, 90ms) ease-in !important;
+}
+
+/* Hover marquee off, so a stray pointer cannot scroll a title that would not be visible. */
+:root[uc-customize-open][sidebar-expand-on-hover]:not([inFullscreen])
+  #tabbrowser-tabs .tabbrowser-tab:hover .tab-label {
+  animation: none !important;
+}
+
+
+/* ==========================================================================
+   COOLDOWN AFTER CS CLOSES (uc-hover-suppressed): rail stays collapsed
+   ==========================================================================
+   When CS closes, uc-customize-open is removed and the CS pins stop matching. Firefox's own state still has
+   [sidebar-launcher-expanded] on #sidebar-container and [expanded] on #tabbrowser-tabs (from before CS
+   opened; the mouseleave was suppressed during CS). Firefox's CSS then widens the rail back to 289px for the
+   duration of the cooldown (300ms), and the JS cooldown handler clears the state at the end — visually the
+   rail would show expanded then snap to collapsed at the moment push-settle re-owns.
+
+   These rules keep the rail pinned to --uc-rail-collapsed for the whole cooldown, so nothing visually changes
+   from the moment CS closes until push-settle re-owns. By then the JS has cleared the stale attributes (see
+   sidebarContextMenuHold.uc.js's cooldown handler), so push-settle sees a consistent hover-off state.
+
+   Applies in WINDOWED AND FULLSCREEN. In fullscreen the CS cover block (further down) has already forced the
+   rail to 0 width while the panel is open. The cooldown pins are what keeps the rail looking collapsed once
+   the cover stops matching — without them, the rail renders at 289px for the cooldown window (Firefox's
+   [sidebar-launcher-expanded] default) and snaps to 50px when the JS clears the state at cooldown end. With
+   them, nothing visually changes from CS close to cooldown end.
+
+   Deliberately no flex / flex-basis overrides: sidebar-main is a column flex, and flex-basis means HEIGHT
+   there. Width / min-width / max-width are sufficient for the width pin. */
+
+:root:root[uc-hover-suppressed][sidebar-expand-on-hover]
+  :is(#sidebar-main, sidebar-main),
+:root:root[uc-hover-suppressed][sidebar-expand-on-hover]:not([inFullscreen][fullscreenNavToolboxHidden][uc-overlay-off]:not([inDOMFullscreen]))
+  #sidebar-container:not([sidebar-panel-open]) {
+  width: var(--uc-rail-collapsed) !important;
+  inline-size: var(--uc-rail-collapsed) !important;
+  min-width: var(--uc-rail-collapsed) !important;
+  max-width: var(--uc-rail-collapsed) !important;
+  overflow: hidden !important;
+}
+
+:root:root[uc-hover-suppressed][sidebar-expand-on-hover]
+  sidebar-main > :is(#vertical-tabs, .customization-target) {
+  width: var(--uc-rail-collapsed) !important;
+  inline-size: var(--uc-rail-collapsed) !important;
+  min-width: 0 !important;
+  max-width: var(--uc-rail-collapsed) !important;
+  overflow: hidden !important;
+}
+
+:root:root[uc-hover-suppressed][sidebar-expand-on-hover]
+  #vertical-tabs#vertical-tabs > #tabbrowser-tabs#tabbrowser-tabs,
+:root:root[uc-hover-suppressed][sidebar-expand-on-hover]
+  #sidebar-container sidebar-main :is(#tabbrowser-tabs, #tabbrowser-arrowscrollbox, #pinned-tabs-container) {
+  width: 100% !important;
+  inline-size: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+/* Hide labels and close the favicon gap during the cooldown too. The CS rules that did this are gated on
+   [uc-customize-open], so they stop matching when CS closes; these cover the 300ms window so the rail
+   looks collapsed, not just narrow. */
+:root[uc-hover-suppressed][sidebar-expand-on-hover]
+  #tabbrowser-tabs .tab-label-container {
+  opacity: 0 !important;
+  transform: translateX(calc(var(--uc-label-slide, 10px) * -1)) !important;
+  pointer-events: none !important;
+}
+
+:root[uc-hover-suppressed][sidebar-expand-on-hover]
+  #tabbrowser-tabs :is(.tab-icon-stack, .tab-icon-image) {
+  margin-inline-end: 0 !important;
+}
+
+:root[uc-hover-suppressed][sidebar-expand-on-hover]
+  #tabbrowser-tabs .tabbrowser-tab:hover .tab-label {
+  animation: none !important;
+}
+
+
+/* ==========================================================================
+   "+ new tab" button: collapsed look while CS is open OR during its cooldown
+   ==========================================================================
+   In expanded mode Firefox gives the + button its expanded styling (a "New Tab" text label, a wider
+   clickable area, extra padding-inline-start). 06's collapsed-mode + button rules are gated on
+   :not([expanded]) (for the styling variants) and [orient="vertical"] (for the sizing), so during
+   CS and the cooldown — when [expanded] is still set on the tab strip — Firefox's expanded-mode
+   styles override the collapsed look and the + button appears wider than the strip.
+
+   These rules force the collapsed + button styling regardless of [expanded], so the button matches
+   the collapsed rail. The padding value is the one 06 uses for the collapsed state.
+   Measured padding at Standard density after applying: 18.3px (matches 06's formula exactly).
+
+   Applies in WINDOWED AND FULLSCREEN. In fullscreen the + button is not visible while the rail is
+   translated off-screen (toolbar hidden), but once the toolbar is revealed — during CS close or
+   during the cooldown — the + button appears and would render in expanded-mode styling without
+   these pins. Same values as windowed; no fullscreen-specific tweak needed because the collapsed
+   + button look is the same at every mode. */
+
+:root:is([uc-customize-open], [uc-hover-suppressed])[sidebar-expand-on-hover]
+  #tabbrowser-tabs #tabs-newtab-button {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  justify-content: flex-start !important;
+  border-radius: var(--uc-newtab-radius) !important;
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding-inline-start: calc(var(--uc-rail-pad-start) - 3px + (var(--uc-icon-size) - var(--uc-newtab-icon)) / 2 + var(--uc-newtab-nudge)) !important;
+  padding-inline-end: 0 !important;
+}
+
+/* Hide any text label the + button renders in expanded mode. If a label still shows, inspect the
+   button in the Browser Toolbox and add the actual class name to this list. */
+:root:is([uc-customize-open], [uc-hover-suppressed])[sidebar-expand-on-hover]
+  #tabbrowser-tabs #tabs-newtab-button > :is(.toolbarbutton-text, .toolbarbutton-label) {
+  display: none !important;
+}
+
+:root:is([uc-customize-open], [uc-hover-suppressed])[sidebar-expand-on-hover]
+  #tabbrowser-tabs #tabs-newtab-button > .toolbarbutton-icon {
+  width: var(--uc-newtab-icon) !important;
+  height: var(--uc-newtab-icon) !important;
+  margin: 0 !important;
+}
+
+
+/* ==========================================================================
+   HIDDEN RAIL, FULLSCREEN OVERLAY, DENSITY PINS
+   ========================================================================== */
+
+/* ---- A HIDDEN RAIL HAS NO WIDTH, panel open or not ----
+   With the sidebar hidden ("Hide tabs and sidebar" and the rail turned off) 06 forces the rail visible (display: flex) as soon as a
+   panel opens, which put a rail strip next to the panel and moved the page by that much. The published numbers already say "no rail"
+   (flow 0, keep 0, visible 0), so the rail gets no width here either. (The Customize rule above covers the visible rail.) */
+:root #sidebar-container[hidden][sidebar-panel-open] {
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  flex: none !important;
+  overflow: clip !important;
+  pointer-events: none !important;
+}
+
+/* Fullscreen, overlay on: while the toolbar hides, keep the rail at its own collapsed width (Compact 40px) instead of falling back to 50px */
+:root[uc-fs-overlay-rail][inFullscreen]:not([inDOMFullscreen])[fullscreenNavToolboxHidden] #sidebar-container:not([sidebar-panel-open], [sidebar-launcher-expanded]) {
+  width: var(--uc-rail-collapsed, var(--sidebar-launcher-collapsed-width)) !important;
+  min-width: var(--uc-rail-collapsed, var(--sidebar-launcher-collapsed-width)) !important;
+  max-width: var(--uc-rail-collapsed, var(--sidebar-launcher-collapsed-width)) !important;
+}
+
+/* » overflow menu: always use the Normal-density sizes, whatever the density setting.
+   The first two lines ignore the density-dependent rail width; the rest are the Normal menu / panel sizes. */
+#sidebar-tools-overflow {
+  --sidebar-launcher-collapsed-width: 50px !important;
+  --uc-rail-collapsed: 50px !important;
+  --toolbarbutton-padding-inner: 8px !important;
+  --uei-icon-size: 32px !important;
+  --menuitem-padding-block: 8px !important;
+  --menuitem-margin: 0 8px !important;
+  --menuitem-height: calc(2 * 8px + max(1lh + 2 * 1px, 16px + 2 * calc(0.125rem / 2))) !important;
+  --panel-menuitem-padding-block: 8px !important;
+  --panel-menuitem-padding: 8px 8px !important;
+  --panel-menuitem-margin-inline: 8px !important;
+  --panel-menuitem-margin: 0 8px !important;
+  --panel-subview-body-padding: 8px 0px !important;
+  --panel-subview-body-padding-block: 8px !important;
+  --panel-separator-padding-inline: 8px !important;
+  --panel-separator-padding: 4px 8px !important;
+  --panel-header-min-height: calc(calc(16px + (2 * 6px)) + (8px * 2)) !important;
+  --panel-header-back-icon-full-width: calc(16px + (2 * 6px)) !important;
+  --panel-header-back-icon-padding: 6px !important;
+  --sidebar-launcher-button-padding-inline: 9px !important;
+}
+
+/* ---- EXPAND-ON-HOVER, NORMAL WINDOW: keep the collapsed-rail width Firefox gives the page ----
+   Firefox writes this number inline on #browser from the rail it measures; in "Hide tabs and sidebar"
+   it measures 0 and does not write the real value again when expand-on-hover returns. It is the width
+   Firefox keeps the page clear of while the rail is out of the layout (expanded), so 0 means "no room
+   kept". An !important rule in a stylesheet beats Firefox's inline value, so the number is simply
+   pinned to the theme's collapsed width. Not in fullscreen: there 12 already keeps the page still and
+   Firefox hides the rail on purpose. */
+:root[sidebar-expand-on-hover]:not([inFullscreen]) #browser {
+  --sidebar-launcher-collapsed-width: var(--uc-rail-collapsed) !important;
+}
+
+
+/* ==========================================================================
+   FULLSCREEN + CUSTOMIZE OPEN: THE PANEL COVERS THE WHOLE SIDEBAR
+   ==========================================================================
+   While the Customize panel is open in fullscreen, the whole sidebar area is
+   one piece: the panel is stretched over the rail's normal position AND its own,
+   so the pointer never lands on the rail and Firefox never starts a hover
+   expand. The rail's box is collapsed to ZERO width for the same reason —
+   pointer-events: none stops DOM events, but Firefox's MousePosTracker reads
+   the rail's BOUNDING RECT, so a 50px-wide invisible rail still counts as
+   "pointer is over the sidebar". An empty rect cannot.
+
+   Layout maths (rail width 0 → panel's natural left edge is 0):
+     panel width         = collapsed + base
+     margin-inline-start = 0                                   (left rail)
+     margin-inline-end   = -(collapsed + base)                 (left rail)
+   → panel drawn over [0, collapsed + base]; its layout contribution is 0, so
+     the page edge stays at 0 in every state (toolbar shown or hidden, Overlay
+     mode on or off). The earlier "fullscreen with the toolbar hidden" rule
+     above (0 / -panel-w) is superseded by this block for Customize, because
+     the block is more specific.
+
+   --uc-panel-base-w is the panel's NATURAL width, captured by
+   sidebarContextMenuHold.uc.js before uc-customize-open is set (see its
+   syncCustomize), so this rule never feeds into the ResizeObserver that
+   publishes --uc-panel-w. */
+
+/* 1) rail: empty box, not in the pointer tracker's way, on whatever side it lives */
+:root[uc-customize-open][inFullscreen]:not([inDOMFullscreen])
+#sidebar-container#sidebar-container#sidebar-container#sidebar-container {
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  flex: none !important;
+  overflow: clip !important;
+  pointer-events: none !important;
+  transition: none !important;
+}
+
+/* 2) panel, rail on the start side: stretched over [0, collapsed + base] */
+:root[uc-customize-open][inFullscreen]:not([inDOMFullscreen])
+#sidebar-box#sidebar-box:not([hidden]:not([uc-panel-anim="out"]), [sidebar-positionend]) {
+  width: calc(var(--uc-rail-collapsed) + var(--uc-panel-base-w, 340px)) !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  margin-inline-start: 0 !important;
+  margin-inline-end: calc(-1 * (var(--uc-rail-collapsed) + var(--uc-panel-base-w, 340px))) !important;
+}
+
+/* 3) panel, rail on the end side (right) */
+:root[uc-customize-open][inFullscreen]:not([inDOMFullscreen])
+#sidebar-box#sidebar-box[sidebar-positionend]:not([hidden]:not([uc-panel-anim="out"])) {
+  width: calc(var(--uc-rail-collapsed) + var(--uc-panel-base-w, 340px)) !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  margin-inline-end: 0 !important;
+  margin-inline-start: calc(-1 * (var(--uc-rail-collapsed) + var(--uc-panel-base-w, 340px))) !important;
+}
+
+
+/* ==========================================================================
+   FULLSCREEN: THE PANEL SLIDES IN AND OUT
+   ==========================================================================
+   The panel is already out of the layout (margins above), so only transform and opacity move: the page
+   never resizes. Firefox hides the panel with the hidden attribute (display: none, so nothing could be
+   animated). For the leave animation sidebarContextMenuHold.uc.js sets uc-panel-anim="out" at that moment
+   and this rule shows the box again until the animation ends (the margin rules above treat it as still
+   shown). Firefox may already have blanked the page inside the panel, in which case the leaving panel is
+   an empty box in the sidebar colour; if that looks wrong, set --uc-panel-leave-dur: 0ms in 01-tokens.css.
+   The panel slides from / to the screen edge it sits on: --uc-panel-dir is -1 (left) or 1 (right).
+   Tunables: --uc-panel-anim-dur, --uc-panel-leave-dur, --uc-panel-slide (01-tokens.css). No motion with
+   reduced motion. */
+@keyframes uc-panel-in {
+  from { opacity: 0; transform: translateX(calc(var(--uc-panel-dir, -1) * var(--uc-panel-slide, 40px))); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes uc-panel-out {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateX(calc(var(--uc-panel-dir, -1) * var(--uc-panel-slide, 40px))); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  #sidebar-box[sidebar-positionend] {
+    --uc-panel-dir: 1;
+  }
+
+  :root[inFullscreen]:not([inDOMFullscreen]) #sidebar-box[uc-panel-anim="in"] {
+    animation: uc-panel-in var(--uc-panel-anim-dur, 220ms) ease-out both;
+  }
+
+  /* The box AND the panel document inside it: Firefox sets [hidden] on the panel and may also set
+     content-visibility: hidden on the browser element (or on #sidebar) to save memory. Forcing both
+     back keeps the panel's contents painted for the duration of the leave slide.
+     If Firefox has already cleared the document (removed the <browser> or replaced its content), no
+     amount of CSS will bring it back — in that case set --uc-panel-leave-dur: 0ms in 01-tokens.css so
+     the leave is a straight fade-out of the panel box instead of an empty rectangle. */
+  :root[inFullscreen]:not([inDOMFullscreen]) #sidebar-box[hidden][uc-panel-anim="out"],
+  :root[inFullscreen]:not([inDOMFullscreen]) #sidebar-box[hidden][uc-panel-anim="out"] :is(#sidebar, browser, webview) {
+    content-visibility: visible !important;
+  }
+
+  :root[inFullscreen]:not([inDOMFullscreen]) #sidebar-box[hidden][uc-panel-anim="out"] {
+    display: flex !important;
+    pointer-events: none !important;
+    animation: uc-panel-out var(--uc-panel-leave-dur, 160ms) ease-in both;
+  }
+}
+
+/* The leaving panel keeps the cover's size while it fades: width and margin come from the same expression, so net layout width is 0
+   whether or not uc-customize-open is still set (the old margin used --uc-panel-w, measured while stretched, and shifted the page 40px). */
+:root[inFullscreen]:not([inDOMFullscreen])
+#sidebar-box#sidebar-box[uc-panel-anim="out"]:not([sidebar-positionend]) {
+  width: calc(var(--uc-rail-collapsed) + var(--uc-panel-base-w, 340px)) !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  margin-inline-start: 0 !important;
+  margin-inline-end: calc(-1 * (var(--uc-rail-collapsed) + var(--uc-panel-base-w, 340px))) !important;
+}
+
+:root[inFullscreen]:not([inDOMFullscreen])
+#sidebar-box#sidebar-box[uc-panel-anim="out"][sidebar-positionend] {
+  width: calc(var(--uc-rail-collapsed) + var(--uc-panel-base-w, 340px)) !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  margin-inline-end: 0 !important;
+  margin-inline-start: calc(-1 * (var(--uc-rail-collapsed) + var(--uc-panel-base-w, 340px))) !important;
+}
+
+/* ==========================================================================
+   WINDOWED, "Hide tabs and sidebar" / "Show sidebar": NO PAGE SNAP DURING THE SLIDE
+   ==========================================================================
+   Measured in the Browser Console: Firefox moves the page area with a web animation on `translate`
+   (+-40px to 0, 200ms) and writes inline max-width / min-width / margin-left / margin-right on
+   #tabbrowser-tabbox during the slide. Right rail, showing: the page edge runs 0 -> -40 over the
+   200ms and then jumps back to 0 when the animation ends: that is the overshoot and snap-back.
+   A declaration with !important beats a web animation (12 relies on the same thing for the rail),
+   so `translate` is pinned to none and the page simply sits at its final position while the rail
+   slides. `transform` is pinned too in case a later Firefox switches to it. The rail's own slide is
+   not touched. Not in fullscreen (11 and 12), and not with expand-on-hover: the page is pushed
+   there by the padding in 12 (Overlay mode Off), and this pin was only measured in the other two
+   modes. */
+:root:not([inFullscreen], [sidebar-expand-on-hover]) #tabbrowser-tabbox {
+  translate: none !important;
+  transform: none !important;
+}
+
+/* The three inline values Firefox writes (max-width / min-width / margin-inline) are overridden while
+   the slide runs ([sidebar-ongoing-animations] is on #tabbrowser-tabbox exactly then), so the page
+   already has the size and place it ends with. At rest the margins are 0 and nothing is written
+   inline. Not with expand-on-hover and not in fullscreen. */
+:root:not([inFullscreen], [sidebar-expand-on-hover]) #tabbrowser-tabbox[sidebar-ongoing-animations] {
+  min-width: 0 !important;
+  max-width: none !important;
+  margin-inline: 0 !important;
+}
+
+/* ==========================================================================
+   NON-CS PANELS: same rail-collapse treatment as Customize
+   ==========================================================================
+   CS pins the rail to --uc-rail-collapsed while [uc-customize-open] is set, so
+   the page doesn't push and the panel sits beside a collapsed rail. Bookmarks,
+   History, and AI chatbot panels suffer the same page-push without that pin
+   (they open while the rail might be hover-expanded). sidebarContextMenuHold
+   now sets uc-panel-open on :root for ANY open panel.
+
+   The rules below replicate the CS pins for [uc-panel-open] when
+   [uc-customize-open] is NOT set — i.e. for non-CS panels only. CS keeps using
+   its own rules (unchanged, higher in the file). The :not([uc-customize-open])
+   guard makes them mutually exclusive so there's no double application.
+
+   These mirror the pins from "CUSTOMIZE OPEN" and "EXPAND-ON-HOVER + CUSTOMIZE
+   OPEN" section by section. Selector shape matches the originals (plus the
+   :not(...) guard), so specificity and cascade behaviour are preserved.
+
+   Fullscreen cover (rail→0, panel stretched) is deliberately NOT replicated:
+   it was a CS-specific treatment and would be too destructive for general panels.
+   ========================================================================== */
+
+/* 1. Pin --uc-rail-flow-w / --uc-rail-keep-w / --uc-rail-visible-w to collapsed. */
+:root[uc-panel-open]:not([uc-customize-open]) #browser {
+  --uc-rail-flow-w: var(--uc-rail-collapsed) !important;
+  --uc-rail-keep-w: var(--uc-rail-collapsed) !important;
+  --uc-rail-visible-w: var(--uc-rail-collapsed) !important;
+}
+
+/* 1b. Always-show: the rail stays 289px (no hover-expand), so pin the variables to the expanded width, the same as the Customize block does. */
+:root[uc-panel-open]:not([uc-customize-open])[uc-sidebar-mode="always-show"] #browser {
+  --uc-rail-flow-w: calc(var(--uc-rail-expanded-w) - var(--uc-rail-border)) !important;
+  --uc-rail-keep-w: calc(var(--uc-rail-expanded-w) - var(--uc-rail-border)) !important;
+  --uc-rail-visible-w: calc(var(--uc-rail-expanded-w) - var(--uc-rail-border)) !important;
+}
+
+/* 2. Force #sidebar-container to the collapsed width. */
+:root:root[uc-panel-open]:not([uc-customize-open])
+  #sidebar-container#sidebar-container {
+  position: relative !important;
+  width: var(--uc-rail-keep-w, var(--uc-rail-collapsed)) !important;
+  inline-size: var(--uc-rail-keep-w, var(--uc-rail-collapsed)) !important;
+  min-width: var(--uc-rail-keep-w, var(--uc-rail-collapsed)) !important;
+  max-width: var(--uc-rail-keep-w, var(--uc-rail-collapsed)) !important;
+  flex: none !important;
+  overflow: hidden !important;
+  overflow-x: hidden !important;
+  overflow-y: hidden !important;
+  overflow-clip-margin: 0 !important;
+  pointer-events: none !important;
+  contain: paint !important;
+}
+
+/* 2b. Always-show: rule 2 sets pointer-events: none (needed against hover-expand). Always-show has no hover-expand,
+   and the rail buttons must stay clickable to switch panels. */
+:root:root[uc-panel-open]:not([uc-customize-open])[uc-sidebar-mode="always-show"] #sidebar-container#sidebar-container {
+  pointer-events: auto !important;
+}
+
+/* 3. Force sidebar-main to the same width, and force the collapsed button size. */
+:root[uc-panel-open]:not([uc-customize-open])[sidebar-expand-on-hover]:not([inFullscreen])
+  :is(#sidebar-main, sidebar-main) {
+  --button-size-icon: var(--uc-rail-buttons-w) !important;
+  --sidebar-launcher-button-padding-inline: calc((var(--uc-rail-collapsed) - var(--uc-rail-buttons-w)) / 2) !important;
+  width: var(--uc-rail-keep-w, 0px) !important;
+  min-width: var(--uc-rail-keep-w, 0px) !important;
+  max-width: var(--uc-rail-keep-w, 0px) !important;
+}
+
+/* 4. Force the inner #vertical-tabs / .customization-target to collapsed. */
+:root:root[uc-panel-open]:not([uc-customize-open])[sidebar-expand-on-hover]:not([inFullscreen])
+  sidebar-main > #vertical-tabs,
+:root:root[uc-panel-open]:not([uc-customize-open])[sidebar-expand-on-hover]:not([inFullscreen])
+  sidebar-main > .customization-target {
+  width: var(--uc-rail-keep-w, var(--uc-rail-collapsed)) !important;
+  inline-size: var(--uc-rail-keep-w, var(--uc-rail-collapsed)) !important;
+  min-width: 0 !important;
+  max-width: var(--uc-rail-keep-w, var(--uc-rail-collapsed)) !important;
+  overflow: hidden !important;
+}
+
+/* 5. Force #tabbrowser-tabs and its scroll containers to fill the collapsed parent. */
+:root:root[uc-panel-open]:not([uc-customize-open])[sidebar-expand-on-hover]:not([inFullscreen])
+  #sidebar-container sidebar-main
+  :is(#tabbrowser-tabs, #tabbrowser-arrowscrollbox, #pinned-tabs-container),
+:root:root[uc-panel-open]:not([uc-customize-open])[sidebar-expand-on-hover]:not([inFullscreen])
+  #vertical-tabs#vertical-tabs > #tabbrowser-tabs#tabbrowser-tabs {
+  width: 100% !important;
+  inline-size: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+/* 6. Close the favicon-title gap. */
+:root[uc-panel-open]:not([uc-customize-open])[sidebar-expand-on-hover]:not([inFullscreen])
+  #tabbrowser-tabs :is(.tab-icon-stack, .tab-icon-image) {
+  margin-inline-end: 0 !important;
+}
+
+/* 7. Hide tab labels. */
+:root[uc-panel-open]:not([uc-customize-open])[sidebar-expand-on-hover]:not([inFullscreen])
+  #tabbrowser-tabs .tab-label-container {
+  opacity: 0 !important;
+  transform: translateX(calc(var(--uc-label-slide, 10px) * -1)) !important;
+  pointer-events: none !important;
+  transition: opacity var(--uc-label-out, 90ms) ease-in, transform var(--uc-label-out, 90ms) ease-in !important;
+}
+
+/* 8. Marquee off on hover. */
+:root[uc-panel-open]:not([uc-customize-open])[sidebar-expand-on-hover]:not([inFullscreen])
+  #tabbrowser-tabs .tabbrowser-tab:hover .tab-label {
+  animation: none !important;
+}
