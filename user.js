@@ -69,6 +69,21 @@ user_pref("browser.urlbar.formatting.enabled", false);
 // can also be switched from the Customize sidebar panel.)
 user_pref("browser.compactmode.show", true);
 
+// ---- New tab page ----
+
+// The theme restyles the new tab page's clock and weather widgets (chrome/userContent.css). The styling expects
+// them in Firefox's widgets row, which is where they appear when their size is "large". At the default size the
+// weather stays a small box in the top-right corner and the new tab layout looks broken.
+// These lines run at every start, so changing the widget size from the new tab page does not stick.
+user_pref("browser.newtabpage.activity-stream.widgets.weather.size", "large");
+user_pref("browser.newtabpage.activity-stream.widgets.clocks.size", "large");
+
+// Keeps the widgets row open instead of collapsed (the theme hides the button that would reopen it).
+user_pref("browser.newtabpage.activity-stream.widgets.maximized", true);
+
+// Optional: show the clocks in 24-hour format. Remove the two slashes to turn it on.
+user_pref("browser.newtabpage.activity-stream.widgets.clocks.hourFormat", "24");
+
 // ---- Optional: fixed text-selection colour ----
 // The Customize sidebar panel has a "Selection colour" option that follows your Windows accent colour. Use
 // these instead only if you want one fixed colour (it also colours selections on web pages). Remove the
