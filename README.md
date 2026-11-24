@@ -10,14 +10,75 @@ A userChrome theme for Firefox 160 built around native vertical tabs and the exp
 |---|---|
 | Firefox **160** | Tested on 160 only. Much of the theme depends on Firefox internals (sidebar, view transitions, shadow DOM) that change between releases. |
 | Windows 11 | Developed and tested on Windows 11. Linux and macOS are untested. |
-| [fx-autoconfig](https://github.com/MrOtherGuy/fx-autoconfig) | Loads the `.uc.js` scripts. Without it the CSS loads but the theme is only partly working. |
+| [fx-autoconfig](https://github.com/MrOtherGuy/fx-autoconfig) | Loads the `.uc.js` scripts. Without it the CSS loads but the theme is only partly working. The Express Install installs it for you. |
 | DWMBlurGlass + Windows transparency settings | For the glass/transparent window (see [Transparency](#6-transparency)). |
-| Fonts (optional) | See [Fonts](#4-fonts). Nothing is bundled. Missing fonts fall back to `sans-serif`. |
+| Fonts (optional) | See [Fonts](#4-fonts). Nothing is bundled in the repository; the Express Install downloads them. Missing fonts fall back to `sans-serif`. |
 | Cascadia Mono or Consolas | Used by the status feed in vertical-tabs mode. Falls back to any monospace. |
 
 ---
 
-## Installation
+## Express Install
+
+The installer (`install.ps1`) does the whole setup in one command: theme files, fonts, preferences and the fx-autoconfig loader. Use the [manual installation](#manual-installation) below only if you want to do it step by step.
+
+### How to install
+
+1. **Copy your profile folder path.** In Firefox, open `about:support`, find **Profile Folder** and click **Open Folder**. In the File Explorer window that opens, click the address bar at the top and press `Ctrl+C` to copy the path.
+2. **Open PowerShell.** Click the Windows Start button, type `PowerShell`, and press Enter. Do **not** choose "Run as administrator": the script asks for permission itself, once, when it needs it.
+3. **Run the installer.** In the blue window, paste the command below, replace `PASTE-THE-COPIED-PATH-HERE` with the path you copied (keep the quotes), then press Enter. Right-click the window to paste.
+
+```powershell
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/veracruze/grandiose/main/install.ps1))) -ProfilePath "PASTE-THE-COPIED-PATH-HERE" -NoBlur
+```
+
+`-NoBlur` skips the DWMBlurGlass installation. To install DWMBlurGlass as well (needed for a transparent window background), use `-Blur` instead of `-NoBlur`:
+
+```powershell
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/veracruze/grandiose/main/install.ps1))) -ProfilePath "PASTE-THE-COPIED-PATH-HERE" -Blur
+```
+
+If you installed the theme from a fork, replace `veracruze/grandiose` in the address with your own GitHub user name and repository name.
+
+4. **Restart Firefox.** Close every Firefox window (check Task Manager for a leftover `firefox.exe`), start it again, and open the Customize panel (gear icon at the bottom of the rail).
+5. **Only if something looks unstyled:** open `about:support`, click **Clear startup cache** and let Firefox restart.
+
+### What the installer does
+
+1. Finds your default Firefox profile. `-ProfilePath` is optional: without it the installer uses the default profile, and the line `Profile: <path>` at the start of its output tells you which one it picked. Check that it matches **Profile Folder** in `about:support`, especially if you also have Nightly or Developer Edition installed.
+2. Backs up your existing `chrome` folder (except `chrome\utils`) to `chrome.backup-<date>` in the profile.
+3. Downloads this repository and copies its `chrome\` folder into your profile. Your own `css\user-overrides.css` is kept and never overwritten. It also writes `chrome\1px-transparent.png`, the default background image.
+4. Downloads the fonts into `chrome\fonts` (Nunito, Noto Sans and the other alphabets, Poppins), plus the large CJK font for your Windows display language. Poppins is also registered for your Windows user only (no admin needed), because the new tab page loads it by name.
+5. Adds the theme's `user.js` settings to the `user.js` in your profile, inside a marked block. Re-running the installer replaces only that block; anything else you keep in `user.js` is left alone.
+6. Deletes old theme files listed in `removed-files.txt`.
+7. Installs the fx-autoconfig loader (`config.js` and `defaults\pref\config-prefs.js`) into Firefox's install folder. This is the only step that needs administrator permission, and Windows asks once. A different existing `config.js` is saved as `config.js.bak-<date>` first.
+8. Optional: with `-Blur`, downloads DWMBlurGlass 2.3.2 Beta3 (64-bit only) from its official release, checks its SHA256 and unzips it to `C:\Program Files\DWMBlurGlass`. It is not run and no setting is changed: follow [Transparency](#6-transparency) for what to do next.
+
+Running the installer again updates the theme in place, so use the same command to update.
+
+### Options
+
+| Option | Effect |
+|---|---|
+| `-ProfilePath "<folder>"` | Use this profile folder instead of the default one. |
+| `-Blur` / `-NoBlur` | Download DWMBlurGlass without asking / never ask about it. With neither, an interactive console asks `Download it now? [y/N]`. |
+| `-Cjk <auto\|none\|ja\|ko\|zh-cn\|zh-tw>` | Which large CJK font to download. Default `auto` picks it from your Windows display language. |
+| `-NoFonts` | Skip all font downloads. |
+| `-NoAutoconfig` | Do not touch Firefox's install folder. The `.uc.js` scripts will not run. |
+| `-FirefoxDir "<folder>"` | Firefox's install folder, if it is not found automatically (default `C:\Program Files\Mozilla Firefox`). |
+
+Example with several options: `... -ProfilePath "C:\Users\you\AppData\Roaming\Mozilla\Firefox\Profiles\abcd1234.default-release" -NoBlur -Cjk ja`
+
+### If something goes wrong
+
+- **Preferences not applied:** the installer reads `user.js` from the repository root. If it is missing there, you get a `user.js not found in the download` warning. See [Preferences](#preferences).
+- **`.uc.js` scripts do nothing:** the loader step was declined or failed. Run the installer again and accept the permission prompt, or pass `-FirefoxDir`.
+- **Missing fonts:** the installer prints which ones could not be downloaded. The theme falls back to Firefox's own font.
+- **Firefox was running:** the files are still copied. Restart Firefox to apply them.
+- **Undo:** the previous `chrome` folder is in `chrome.backup-<date>` in your profile. See also [Uninstall](#uninstall).
+
+---
+
+## Manual installation
 
 ### 1. Back up your profile
 Open `about:support`, click **Open Folder** next to *Profile Folder*, and copy the `chrome` folder (if you have one) somewhere safe.
@@ -60,7 +121,7 @@ All of them are SIL Open Font License fonts from Google Fonts.
 - Search "Visual effects" and enable "Animation effects" (also enable "Transparency effects" here if it is not enabled).
 
 ### 6. Transparency
-1. Download version 2.3.2b3 of [DWMBlurGlass](https://github.com/Maplespe/DWMBlurGlass/releases) (used to set transparency with the release of this theme; a higher version might work as well). Only tested on Windows 11.
+1. Download version 2.3.2b3 of [DWMBlurGlass](https://github.com/Maplespe/DWMBlurGlass/releases) (used to set transparency with the release of this theme; a higher version might work as well). Only tested on Windows 11. The Express Install can download it for you with `-Blur`.
    - Unzip the contents of the .zip file somewhere you will keep them and run `DWMBlurGlassGUI.exe`.
    - Toggle on "Override DWMAPI effect (Windows 11)".
    - Set the alpha of "Titlebar blend color (active)" and "Titlebar blend color (inactive)" to the transparency you want, for both "Light Mode colors" and "Dark Mode colors".
@@ -223,8 +284,8 @@ You will probably want to edit in `userContent.css`: `--bj-left`, `--bj-clock`, 
 ## Uninstall
 
 1. If you used the bookmarks and address-bar part of `FaviconUpgrader.uc.js`: open *Change favicon…* on any web page, set *Bookmarks & address bar* to *Off* and wait a minute. That removes the icons the script wrote there (Firefox stores its own again on the next visit).
-2. Delete the theme files from `chrome/` (`userChrome.css`, `userContent.css`, `thinking-dots.svg`, `css/`, and the theme's `JS/*.uc.js` files).
-3. Reset any preferences you set in `about:config` (right-click > Reset), including `extensions.uc.faviconUpgrader.placesScope`.
+2. Delete the theme files from `chrome/` (`userChrome.css`, `userContent.css`, `thinking-dots.svg`, `1px-transparent.png`, `css/`, and the theme's `JS/*.uc.js` files).
+3. Reset any preferences you set in `about:config` (right-click > Reset), including `extensions.uc.faviconUpgrader.placesScope`. If you used the Express Install, also delete the block between `// >>> userchrome-theme` and `// <<< userchrome-theme <<<` in the `user.js` of your profile.
 4. Delete `favicon-upgrader-cache.json` and `favicon-upgrader-overrides.json` from your profile folder (the folder `about:support` opens, not `chrome/`). The second one holds your manual per-site icon choices.
 5. Clear the startup cache and restart.
 
