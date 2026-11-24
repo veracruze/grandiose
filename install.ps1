@@ -23,8 +23,10 @@
   different config.js is saved as config.js.bak-<date> first. Skip with -NoAutoconfig.
 
   Right AFTER that, config.js is patched (not replaced): any existing
-  defaultPref("browser.uiCustomization.state", ...) line is overwritten with the theme's line, or the line is
-  inserted right after the first line if there is none. Everything else in config.js is left untouched.
+  defaultPref("browser.uiCustomization.state", ...) and defaultPref("uc.background.image", ...) lines are
+  replaced with the theme's lines, or inserted right after the first line if there are none. Everything else
+  in config.js is left untouched. uc.background.image is set to a file:/// URI built from the profile that
+  was chosen (-ProfilePath or the detected default), so no profile name is ever typed by hand.
   Same permission prompt rules as above. Re-run safe.
 
   Usage:
@@ -70,15 +72,18 @@ $DwmDir    = Join-Path $env:ProgramFiles 'DWMBlurGlass'                         
 $TransparentPngName = '1px-transparent.png'
 $TransparentPngB64  = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNgAAIAAAUAAen63NgAAAAASUVORK5CYII='
 
-# The one line this installer manages in Firefox's config.js. Any existing defaultPref for the same pref is replaced
-# with it; if there is none, it is inserted right after line 1 (Firefox's autoconfig parser skips line 1).
+# The lines this installer manages in Firefox's config.js. Any existing defaultPref for the same prefs is replaced
+# with them; if there are none, they are inserted right after line 1 (Firefox's autoconfig parser skips line 1).
+# __BG_IMAGE__ is replaced with a file:/// URI of <profile>\chrome\1px-transparent.png once the profile is known.
 # Literal here-string: nothing inside is expanded. The closing '@ must stay at the start of its line.
 $ConfigJsLine = @'
 defaultPref("browser.uiCustomization.state", '{"placements":{"widget-overflow-fixed-list":[],"unified-extensions-area":[],"nav-bar":["unified-extensions-button","sidebar-button","back-button","forward-button","vertical-spacer","urlbar-container","downloads-button","reset-pbm-toolbar-button"],"toolbar-menubar":["menubar-items"],"TabsToolbar":["tabbrowser-tabs","new-tab-button","customizableui-special-spring3","alltabs-button","smartwindow-group-tabs-button","ai-window-toggle"],"vertical-tabs":[],"PersonalToolbar":["personal-bookmarks"]},"seen":["reset-pbm-toolbar-button","smartwindow-group-tabs-button","ai-window-toggle","developer-button","screenshot-button"],"dirtyAreaCache":["nav-bar","TabsToolbar","vertical-tabs","toolbar-menubar","PersonalToolbar"],"currentVersion":28,"newElementCount":4}');
-defaultPref("uc.background.image", "file:///C:/Users/sykh3/AppData/Roaming/Mozilla/Firefox/Profiles/lggknhm6.test/chrome/1px-transparent.png");
+defaultPref("uc.background.image", "__BG_IMAGE__");
 '@
-# Matches an existing defaultPref line for that pref (single line, either quote style, optional semicolon).
-$ConfigJsPattern = '^\s*defaultPref\(\s*["'']browser\.uiCustomization\.state["'']\s*,.*\)\s*;?\s*$'
+# Matches an existing defaultPref line for either managed pref (single line, either quote style, optional semicolon).
+$ConfigJsPattern = '^\s*defaultPref\(\s*["'']((browser\.uiCustomization\.state)|(uc\.background\.image))["'']\s*,.*\)\s*;?\s*$'
+# Single-line marker: config.js already carrying this means it is ours (no extra config.js.bak-<date> on re-runs).
+$ConfigJsMarker  = 'defaultPref("uc.background.image"'
 
 # Fonts. File names must match chrome/css/00-fonts.css and the release assets exactly.
 $FontsCore    = @('Nunito-Black.ttf', 'NotoSans-Black.ttf')
@@ -135,7 +140,7 @@ function Find-FirefoxDir {
 
 # Copies program\ (config.js + defaults\pref\config-prefs.js) into Firefox's install folder. Normal copy first;
 # if Windows refuses (Program Files), the same copy is repeated once with an administrator prompt.
-# A config.js that already carries this installer's line (see $ConfigJsLine) is not backed up again,
+# A config.js that already contains the single-line $Marker is not backed up again,
 # otherwise every re-run would pile up a config.js.bak-<date> of our own file.
 function Install-Autoconfig([string]$SrcProgram, [string]$Dir, [string]$Marker) {
   $copy = {
@@ -150,7 +155,7 @@ function Install-Autoconfig([string]$SrcProgram, [string]$Dir, [string]$Marker) 
   try { & $copy $SrcProgram $Dir $Marker }
   catch {
     Write-Host 'Installing the loader into the Firefox folder (Windows will ask for permission)...'
-    $mq  = $Marker.Replace("'", "''")   # the marker contains single quotes
+    $mq  = $Marker.Replace("'", "''")   # in case the marker contains single quotes
     $cmd = "& { $($copy.ToString()) } '$SrcProgram' '$Dir' '$mq'"
     $enc = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($cmd))
     Start-Process powershell -Verb RunAs -Wait -ArgumentList '-NoProfile', '-EncodedCommand', $enc
@@ -161,9 +166,10 @@ function Install-Autoconfig([string]$SrcProgram, [string]$Dir, [string]$Marker) 
 }
 
 # Patches <Firefox>\config.js in place. Must run AFTER Install-Autoconfig, which copies fx-autoconfig's stock
-# config.js into the same place. Every line matching $Pattern is dropped and $Line takes the place of the first
-# one; with no match, $Line is inserted after line 1. The rest of the file, its line endings included, is kept.
-# The result is staged in %TEMP% so the elevated retry only has to do a plain copy. Written as UTF-8 without BOM.
+# config.js into the same place. Every line matching $Pattern is dropped and $Line (one or more lines) takes the
+# place of the first one; with no match, $Line is inserted after line 1. The rest of the file, its line endings
+# included, is kept. The result is staged in %TEMP% so the elevated retry only has to do a plain copy.
+# Written as UTF-8 without BOM.
 function Set-FirefoxConfigJs([string]$Dir, [string]$Line, [string]$Pattern) {
   $target = Join-Path $Dir 'config.js'
   if (-not (Test-Path $target)) { throw "config.js not found in $Dir." }
@@ -174,16 +180,20 @@ function Set-FirefoxConfigJs([string]$Dir, [string]$Line, [string]$Pattern) {
   $lines.AddRange([string[]]($orig -split "\r?\n"))
   if ($lines.Count -gt 1 -and $lines[$lines.Count - 1] -eq '') { $lines.RemoveAt($lines.Count - 1) }   # final newline
 
+  # $Line holds several lines; normalise them to the file's own line ending.
+  $newLines = @($Line -split "\r?\n" | Where-Object { $_ -ne '' })
+  $block    = $newLines -join $nl
+
   $out = New-Object 'System.Collections.Generic.List[string]'
   $placed = $false
   foreach ($l in $lines) {
     if ($l -match $Pattern) {
-      if (-not $placed) { $out.Add($Line); $placed = $true }   # first match is replaced in place, duplicates dropped
+      if (-not $placed) { $out.Add($block); $placed = $true }   # first match is replaced in place, duplicates dropped
       continue
     }
     $out.Add($l)
   }
-  if (-not $placed) { $out.Insert([Math]::Min(1, $out.Count), $Line) }
+  if (-not $placed) { $out.Insert([Math]::Min(1, $out.Count), $block) }
 
   $text = ($out -join $nl) + $nl
   if ($text -ceq $orig) { Write-Host 'config.js already up to date.'; return }
@@ -203,8 +213,11 @@ function Set-FirefoxConfigJs([string]$Dir, [string]$Line, [string]$Pattern) {
     Remove-Item $stage -Force -ErrorAction SilentlyContinue
   }
 
-  if (-not (Select-String -Path $target -SimpleMatch $Line -Quiet)) {
-    throw "config.js in $Dir was not updated (permission prompt declined?)."
+  # Select-String works line by line, so check every managed line separately.
+  foreach ($nlLine in $newLines) {
+    if (-not (Select-String -Path $target -SimpleMatch $nlLine -Quiet)) {
+      throw "config.js in $Dir was not updated (permission prompt declined?)."
+    }
   }
 }
 
@@ -328,8 +341,17 @@ $profileDir = if ($ProfilePath) { $ProfilePath } else { Get-DefaultProfile }
 if (-not (Test-Path $profileDir)) { throw "Profile folder not found: $profileDir" }
 Write-Host "Profile: $profileDir"
 
-# ---- backup -------------------------------------------------------------------
 $chromeDir = Join-Path $profileDir 'chrome'
+
+# Build the file:/// URI of <profile>\chrome\1px-transparent.png from whichever profile was resolved above
+# (-ProfilePath or the detected default) and put it into the config.js lines. [Uri] gives forward slashes
+# and %-encodes spaces, e.g. file:///C:/Users/me/AppData/Roaming/Mozilla/Firefox/Profiles/abc.test/chrome/1px-transparent.png
+$bgPath = [IO.Path]::GetFullPath((Join-Path $chromeDir $TransparentPngName))
+$bgUri  = ([Uri]$bgPath).AbsoluteUri
+$ConfigJsLine = $ConfigJsLine.Replace('__BG_IMAGE__', $bgUri)
+Write-Host "Default background image: $bgUri"
+
+# ---- backup -------------------------------------------------------------------
 if (Test-Path $chromeDir) {
   $backup = Join-Path $profileDir ("chrome.backup-" + (Get-Date -Format 'yyyyMMdd-HHmmss'))
   New-Item -ItemType Directory $backup | Out-Null
@@ -398,14 +420,14 @@ try {
     Write-Warning 'user.js not found in the download; the theme preferences were not applied.'
   }
 
-  # fx-autoconfig loader (needed for the .uc.js scripts), then the theme's own config.js on top of it
+  # fx-autoconfig loader (needed for the .uc.js scripts), then the theme's own config.js lines on top of it
   if (-not $NoAutoconfig) {
     try {
       $srcProgram = Join-Path $srcRoot 'program'
       if (-not (Test-Path (Join-Path $srcProgram 'config.js'))) { throw 'the download has no program\config.js' }
       $ffDir = if ($FirefoxDir) { $FirefoxDir } else { Find-FirefoxDir }
       if (-not $ffDir -or -not (Test-Path (Join-Path $ffDir 'firefox.exe'))) { throw 'Firefox install folder not found; run again with -FirefoxDir "<folder that contains firefox.exe>"' }
-      Install-Autoconfig $srcProgram $ffDir $ConfigJsLine
+      Install-Autoconfig $srcProgram $ffDir $ConfigJsMarker
       Write-Host "fx-autoconfig loader installed in $ffDir"
 
       # Must come after Install-Autoconfig: that step copies fx-autoconfig's stock config.js into the same place.
@@ -414,7 +436,7 @@ try {
         Write-Host "config.js updated in $ffDir"
       }
       catch {
-        Write-Warning "config.js was not updated: $($_.Exception.Message)`n  The .uc.js loader is installed, but the default toolbar layout line was not added to config.js."
+        Write-Warning "config.js was not updated: $($_.Exception.Message)`n  The .uc.js loader is installed, but the default toolbar layout and background image lines were not added to config.js."
       }
 
       # Firefox keeps a startup cache that can hide a newly installed loader.
