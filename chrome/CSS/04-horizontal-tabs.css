@@ -333,6 +333,34 @@
   pointer-events: none !important;
 }
 
+/* TAB OPEN / CLOSE ANIMATION (horizontal strip): the favicon stays inside the tab.
+   While a tab closes (and while it opens) Firefox has removed [fadein] and animates the tab's min/max-width to ~0. Two things made the
+   favicon travel outside the shrinking tab on its own:
+     1) .tab-content is a centred flex row (justify-content: center, set above) and the favicon box cannot shrink (min-width, section 5 of 05).
+        When the content is wider than the tab, a plain `center` overflows EQUALLY on both sides, so the favicon slid out to the left.
+        `safe center` is identical while it fits and falls back to start alignment the moment it would overflow, so the favicon stays
+        glued to the tab's start edge (no jump: at that point both positions are the same).
+     2) nothing clipped the tab, so whatever overflowed was visible (this theme also forces visibility: visible on the icon, above).
+        The tab now clips to its own box while it has no [fadein], so the favicon is simply swept away by the shrinking edge.
+   Only tabs without [fadein] are touched; settled tabs, pinned tabs and the vertical rail are unchanged.
+   To undo: delete this block. */
+#TabsToolbar .tabbrowser-tab:not([fadein], [pinned]) {
+  overflow: clip !important;
+}
+
+#TabsToolbar .tabbrowser-tab:not([fadein], [pinned]) :is(.tab-stack, .tab-content) {
+  min-width: 0 !important;
+  overflow: clip !important;
+}
+
+#TabsToolbar .tabbrowser-tab:not([fadein], [pinned]) .tab-content {
+  justify-content: safe center !important;
+}
+
+#TabsToolbar .tabbrowser-tab:not([fadein], [pinned]) .tab-icon-stack {
+  flex: none !important;
+}
+
 /* The .tab-audio-button (speaker badge beside the favicon) is styled in 06-sidebar-vertical-tabs.css, AUDIO BADGE section. */
 
 .tab-icon-stack:is([muted], [soundplaying], [activemedia-blocked]) {
