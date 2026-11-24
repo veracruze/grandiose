@@ -761,12 +761,12 @@ moz-button[type="primary"][disabled]::part(button) {
   object-position: center !important;
 }
 
-/* Hamburger spacing. #PanelUI-button is a plain <toolbaritem> wrapping the real button (#PanelUI-menu-button), so there are TWO sides:
-   - END (right edge of the toolbar): --uc-hamburger-gap. This is what the variable always controlled, which is why changing it never moved
-     the Extensions button.
-   - START (between Extensions and the hamburger): --uc-hamburger-ext-gap, the visible gap between the two backdrops. Each button already has
-     --uc-toolbar-button-spacing (2px) of margin per side (rule 3), so that part is subtracted: 4px = nothing extra.
-   Both set per density in 07 section 17. */
+/* Hamburger spacing. The hamburger is the FIRST item of the nav bar (order: -2 in 02), so:
+   - START margin = space between the toolbar's left edge and the hamburger: --uc-hamburger-ext-gap (+ -adjust). Despite the name it
+     is NOT a gap to the Extensions button. Each button has --uc-toolbar-button-spacing (2px) per side (rule 3), so that part is subtracted.
+   - END margin = gap to the first button of the toolbar: --uc-hamburger-gap (+ -adjust). The button area is pulled back 11px by
+     #nav-bar-customization-target (02), and the first button and the hamburger button each have a 2px margin, so
+     visible gap = hamburger-gap + adjust - 7px (Compact: 8 - 7 = 1px). */
 #nav-bar #PanelUI-button {
   margin-inline-start: calc(
     var(--uc-hamburger-ext-gap, 4px)
