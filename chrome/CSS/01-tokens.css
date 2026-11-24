@@ -109,7 +109,7 @@
   --uc-rail-buttons-w: 36px; /* CHANGED from 32px - beefier bottom-rail buttons (7px air each side at 50px rail) */
   --uc-rail-buttons-gap: 0px; /* Vertical spacing of .buttons-wrapper top buttons */
     /* Free space to the right of the hamburger menu */
-  --uc-hamburger-gap: 7px; /* CHANGED from 8px to match the new button sizes */
+  --uc-hamburger-gap: 9px; /* CHANGED from 8px to match the new button sizes */
   /* Visible gap between the Extensions button and the hamburger, backdrop edge to backdrop edge (05, hamburger rule).
      4px = the natural spacing every navbar button has (2px margin each side), i.e. nothing extra. Raise it for more air; per density in 07 §17. */
   --uc-hamburger-ext-gap: 5px;
@@ -120,7 +120,7 @@
   /* Added on top of the per-density gap (--uc-hamburger-gap here, 07 for Compact/Touch).
      Positive = more space, negative = less. Never set this in a density block. */
   --uc-hamburger-gap-adjust: 0px;
-  --uc-hamburger-ext-gap-adjust: 0px;
+  --uc-hamburger-ext-gap-adjust: 1px;
   --uc-toolbar-icon-size: 20px;      /* NEW - navbar toolbar button icons (was Firefox's 16px) */
   --uc-toolbar-inner-padding: 6px;   /* NEW - navbar button padding around the icon (was Firefox's 6px) */
   --uc-rail-icon-size: 20px;         /* NEW - icon inside a bottom-rail button (moz-button) */
