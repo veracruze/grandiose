@@ -275,13 +275,13 @@
 
   function ensureRailButton() {
     const root = document.querySelector("sidebar-main")?.shadowRoot;
-    const wrap = root?.querySelector(".buttons-wrapper");
-    if (!wrap) return false;
-    // Top group (bookmarks, history, ...), not .bottom-actions and not the hidden overflow group.
-    const group = wrap.querySelector(":scope > .tools-and-extensions:not(.overflow-button)");
+    // Stock DOM is  shadowRoot > .wrapper > button-group.tools-and-extensions  (.buttons-wrapper only exists if
+    // another script adds it), so match the group directly. Skip the hidden » overflow group.
+    const group = root?.querySelector("button-group.tools-and-extensions:not(.overflow-button)");
     if (!group) return false;
     if (!railBtn) railBtn = makeRailButton(group.querySelector("moz-button:not([hidden]), button:not([hidden])"));
     if (railBtn.parentNode !== group) group.append(railBtn);
+    if (fallbackBtn) { fallbackBtn.remove(); fallbackBtn = null; } // rail became available after the fallback was used
     if (!observer) {
       // Lit may re-render the rail; put the button back if it gets dropped.
       observer = new MutationObserver(() => requestAnimationFrame(ensureRailButton));
@@ -305,12 +305,25 @@
     target.append(fallbackBtn);
   }
 
+  let placeTimer = 0;
   function placeButton(attempt = 0) {
+    clearTimeout(placeTimer);
     if (ensureRailButton()) return;
-    if (attempt < 40) { setTimeout(() => placeButton(attempt + 1), 250); return; } // rail renders late
-    warn("sidebar rail group not found (.buttons-wrapper > .tools-and-extensions), using a nav-bar button instead.");
+    // Fresh profiles build the rail late (sidebar-main is lazy-initialised), so retry for ~30 s.
+    if (attempt < 120) { placeTimer = setTimeout(() => placeButton(attempt + 1), 250); return; }
+    warn("sidebar rail group not found (sidebar-main > button-group.tools-and-extensions), using a nav-bar button until it appears.");
     addFallbackButton();
   }
+
+  // Toggling sidebar.revamp rebuilds <sidebar-main>; drop the stale observer and place the button again.
+  const REVAMP_PREF = "sidebar.revamp";
+  const revampObs = { observe() {
+    observer?.disconnect();
+    observer = null;
+    placeButton();
+    if (PLACE.overflow) ensureOverflowButton();
+  } };
+  Services.prefs.addObserver(REVAMP_PREF, revampObs);
 
   // ---- » overflow menu entry ---------------------------------------------------------------
   // Firefox builds #sidebar-tools-overflow > #tools-overflow-list from copies of the rail buttons (matched by
@@ -401,6 +414,8 @@
   window.addEventListener("unload", () => {
     try { AddonManager.removeAddonListener(listener); } catch {}
     observer?.disconnect();
+    clearTimeout(placeTimer);
+    try { Services.prefs.removeObserver(REVAMP_PREF, revampObs); } catch {}
     overflowPopup?.removeEventListener("popupshowing", ensureOverflowButton);
     overflowObserver?.disconnect();
     overflowBtn?.remove();
