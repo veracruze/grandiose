@@ -79,9 +79,10 @@ $TransparentPngB64  = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42
 $ConfigJsLine = @'
 defaultPref("browser.uiCustomization.state", '{"placements":{"widget-overflow-fixed-list":[],"unified-extensions-area":[],"nav-bar":["PanelUI-menu-button","unified-extensions-button","sidebar-button","back-button","forward-button","vertical-spacer","urlbar-container","downloads-button","reset-pbm-toolbar-button"],"toolbar-menubar":["menubar-items"],"TabsToolbar":["tabbrowser-tabs","new-tab-button","customizableui-special-spring3","alltabs-button","smartwindow-group-tabs-button","ai-window-toggle"],"vertical-tabs":[],"PersonalToolbar":["personal-bookmarks"]},"seen":["reset-pbm-toolbar-button","smartwindow-group-tabs-button","ai-window-toggle","developer-button","screenshot-button"],"dirtyAreaCache":["nav-bar","TabsToolbar","vertical-tabs","toolbar-menubar","PersonalToolbar"],"currentVersion":28,"newElementCount":4}');
 defaultPref("uc.background.image", "__BG_IMAGE__");
+defaultPref("browser.proton.toolbar.version", 3);
 '@
 # Matches an existing defaultPref line for either managed pref (single line, either quote style, optional semicolon).
-$ConfigJsPattern = '^\s*defaultPref\(\s*["'']((browser\.uiCustomization\.state)|(uc\.background\.image))["'']\s*,.*\)\s*;?\s*$'
+$ConfigJsPattern = '^\s*defaultPref\(\s*["'']((browser\.uiCustomization\.state)|(uc\.background\.image)|(browser\.proton\.toolbar\.version))["'']\s*,.*\)\s*;?\s*$'
 # Single-line marker: config.js already carrying this means it is ours (no extra config.js.bak-<date> on re-runs).
 $ConfigJsMarker  = 'defaultPref("uc.background.image"'
 
