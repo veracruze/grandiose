@@ -22,6 +22,11 @@
   them. This is the only step that needs administrator permission (Windows asks once). An existing,
   different config.js is saved as config.js.bak-<date> first. Skip with -NoAutoconfig.
 
+  Right AFTER that, config.js is patched (not replaced): any existing
+  defaultPref("browser.uiCustomization.state", ...) line is overwritten with the theme's line, or the line is
+  inserted right after the first line if there is none. Everything else in config.js is left untouched.
+  Same permission prompt rules as above. Re-run safe.
+
   Usage:
     irm https://raw.githubusercontent.com/OWNER/REPO/main/install.ps1 | iex
 
@@ -64,6 +69,15 @@ $DwmDir    = Join-Path $env:ProgramFiles 'DWMBlurGlass'                         
 # SidebarToggles.uc.js uses it as the default --uc-bg-image when no background image is chosen.
 $TransparentPngName = '1px-transparent.png'
 $TransparentPngB64  = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNgAAIAAAUAAen63NgAAAAASUVORK5CYII='
+
+# The one line this installer manages in Firefox's config.js. Any existing defaultPref for the same pref is replaced
+# with it; if there is none, it is inserted right after line 1 (Firefox's autoconfig parser skips line 1).
+# Literal here-string: nothing inside is expanded. The closing '@ must stay at the start of its line.
+$ConfigJsLine = @'
+defaultPref("browser.uiCustomization.state", '{"placements":{"widget-overflow-fixed-list":[],"unified-extensions-area":[],"nav-bar":["back-button","forward-button","unified-extensions-button","sidebar-button","vertical-spacer","reset-pbm-toolbar-button","urlbar-container","downloads-button"],"toolbar-menubar":["menubar-items"],"TabsToolbar":["tabbrowser-tabs","new-tab-button","alltabs-button","smartwindow-group-tabs-button","ai-window-toggle"],"vertical-tabs":[],"PersonalToolbar":["personal-bookmarks"]},"seen":["reset-pbm-toolbar-button","smartwindow-group-tabs-button","ai-window-toggle","developer-button","screenshot-button","profiler-button"],"dirtyAreaCache":["nav-bar","TabsToolbar","vertical-tabs","unified-extensions-area","toolbar-menubar","PersonalToolbar","widget-overflow-fixed-list"],"currentVersion":28,"newElementCount":35}');
+'@
+# Matches an existing defaultPref line for that pref (single line, either quote style, optional semicolon).
+$ConfigJsPattern = '^\s*defaultPref\(\s*["'']browser\.uiCustomization\.state["'']\s*,.*\)\s*;?\s*$'
 
 # Fonts. File names must match chrome/css/00-fonts.css and the release assets exactly.
 $FontsCore    = @('Nunito-Black.ttf', 'NotoSans-Black.ttf')
@@ -120,24 +134,76 @@ function Find-FirefoxDir {
 
 # Copies program\ (config.js + defaults\pref\config-prefs.js) into Firefox's install folder. Normal copy first;
 # if Windows refuses (Program Files), the same copy is repeated once with an administrator prompt.
-function Install-Autoconfig([string]$SrcProgram, [string]$Dir) {
+# A config.js that already carries this installer's line (see $ConfigJsLine) is not backed up again,
+# otherwise every re-run would pile up a config.js.bak-<date> of our own file.
+function Install-Autoconfig([string]$SrcProgram, [string]$Dir, [string]$Marker) {
   $copy = {
-    param($src, $dst)
+    param($src, $dst, $marker)
     $cfg = Join-Path $dst 'config.js'
-    if ((Test-Path $cfg) -and ((Get-FileHash $cfg).Hash -ne (Get-FileHash (Join-Path $src 'config.js')).Hash)) {
+    if ((Test-Path $cfg) -and ((Get-FileHash $cfg).Hash -ne (Get-FileHash (Join-Path $src 'config.js')).Hash) -and
+        -not (Select-String -Path $cfg -SimpleMatch $marker -Quiet)) {
       Copy-Item $cfg ($cfg + '.bak-' + (Get-Date -Format 'yyyyMMdd-HHmmss')) -Force   # keep a config.js that is not ours
     }
     Copy-Item (Join-Path $src '*') $dst -Recurse -Force
   }
-  try { & $copy $SrcProgram $Dir }
+  try { & $copy $SrcProgram $Dir $Marker }
   catch {
     Write-Host 'Installing the loader into the Firefox folder (Windows will ask for permission)...'
-    $cmd = "& { $($copy.ToString()) } '$SrcProgram' '$Dir'"
+    $mq  = $Marker.Replace("'", "''")   # the marker contains single quotes
+    $cmd = "& { $($copy.ToString()) } '$SrcProgram' '$Dir' '$mq'"
     $enc = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($cmd))
     Start-Process powershell -Verb RunAs -Wait -ArgumentList '-NoProfile', '-EncodedCommand', $enc
   }
   foreach ($f in 'config.js', 'defaults\pref\config-prefs.js') {
     if (-not (Test-Path (Join-Path $Dir $f))) { throw "$f was not copied into $Dir (permission prompt declined?)." }
+  }
+}
+
+# Patches <Firefox>\config.js in place. Must run AFTER Install-Autoconfig, which copies fx-autoconfig's stock
+# config.js into the same place. Every line matching $Pattern is dropped and $Line takes the place of the first
+# one; with no match, $Line is inserted after line 1. The rest of the file, its line endings included, is kept.
+# The result is staged in %TEMP% so the elevated retry only has to do a plain copy. Written as UTF-8 without BOM.
+function Set-FirefoxConfigJs([string]$Dir, [string]$Line, [string]$Pattern) {
+  $target = Join-Path $Dir 'config.js'
+  if (-not (Test-Path $target)) { throw "config.js not found in $Dir." }
+
+  $orig  = [IO.File]::ReadAllText($target)
+  $nl    = if ($orig -match "`r`n") { "`r`n" } else { "`n" }
+  $lines = New-Object 'System.Collections.Generic.List[string]'
+  $lines.AddRange([string[]]($orig -split "\r?\n"))
+  if ($lines.Count -gt 1 -and $lines[$lines.Count - 1] -eq '') { $lines.RemoveAt($lines.Count - 1) }   # final newline
+
+  $out = New-Object 'System.Collections.Generic.List[string]'
+  $placed = $false
+  foreach ($l in $lines) {
+    if ($l -match $Pattern) {
+      if (-not $placed) { $out.Add($Line); $placed = $true }   # first match is replaced in place, duplicates dropped
+      continue
+    }
+    $out.Add($l)
+  }
+  if (-not $placed) { $out.Insert([Math]::Min(1, $out.Count), $Line) }
+
+  $text = ($out -join $nl) + $nl
+  if ($text -ceq $orig) { Write-Host 'config.js already up to date.'; return }
+
+  $stage = Join-Path $env:TEMP ('config-' + [guid]::NewGuid().ToString('N') + '.js')
+  [IO.File]::WriteAllText($stage, $text, (New-Object Text.UTF8Encoding($false)))
+  try {
+    try { Copy-Item $stage $target -Force }
+    catch {
+      Write-Host 'Updating config.js in the Firefox folder (Windows will ask for permission)...'
+      $cmd = "Copy-Item -LiteralPath '$stage' -Destination '$target' -Force"
+      $enc = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($cmd))
+      Start-Process powershell -Verb RunAs -Wait -ArgumentList '-NoProfile', '-EncodedCommand', $enc
+    }
+  }
+  finally {
+    Remove-Item $stage -Force -ErrorAction SilentlyContinue
+  }
+
+  if (-not (Select-String -Path $target -SimpleMatch $Line -Quiet)) {
+    throw "config.js in $Dir was not updated (permission prompt declined?)."
   }
 }
 
@@ -331,15 +397,25 @@ try {
     Write-Warning 'user.js not found in the download; the theme preferences were not applied.'
   }
 
-  # fx-autoconfig loader (needed for the .uc.js scripts)
+  # fx-autoconfig loader (needed for the .uc.js scripts), then the theme's own config.js on top of it
   if (-not $NoAutoconfig) {
     try {
       $srcProgram = Join-Path $srcRoot 'program'
       if (-not (Test-Path (Join-Path $srcProgram 'config.js'))) { throw 'the download has no program\config.js' }
       $ffDir = if ($FirefoxDir) { $FirefoxDir } else { Find-FirefoxDir }
       if (-not $ffDir -or -not (Test-Path (Join-Path $ffDir 'firefox.exe'))) { throw 'Firefox install folder not found; run again with -FirefoxDir "<folder that contains firefox.exe>"' }
-      Install-Autoconfig $srcProgram $ffDir
+      Install-Autoconfig $srcProgram $ffDir $ConfigJsLine
       Write-Host "fx-autoconfig loader installed in $ffDir"
+
+      # Must come after Install-Autoconfig: that step copies fx-autoconfig's stock config.js into the same place.
+      try {
+        Set-FirefoxConfigJs $ffDir $ConfigJsLine $ConfigJsPattern
+        Write-Host "config.js updated in $ffDir"
+      }
+      catch {
+        Write-Warning "config.js was not updated: $($_.Exception.Message)`n  The .uc.js loader is installed, but the default toolbar layout line was not added to config.js."
+      }
+
       # Firefox keeps a startup cache that can hide a newly installed loader.
       $cacheDir = Join-Path $env:LOCALAPPDATA ('Mozilla\Firefox\Profiles\' + (Split-Path $profileDir -Leaf) + '\startupCache')
       Remove-Item $cacheDir -Recurse -Force -ErrorAction SilentlyContinue
