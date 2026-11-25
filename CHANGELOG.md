@@ -15,6 +15,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versioning: [S
 - Extensions toggles button placing itself on the navbar on a fresh install. Now it lands on sidebar as intended.
 - Some errors/false errors thrown by the installer.
 - Light mode having white text on white button on white background on popup messages/notifications.
+- Sidepanel opening caused snapshot duplication via document.startViewTransition.
 
 ## [1.0.0] - 2026-11-24
 ### Added
