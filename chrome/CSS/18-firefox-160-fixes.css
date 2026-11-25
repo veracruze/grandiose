@@ -13,3 +13,21 @@
   min-width: var(--uc-rail-collapsed) !important;
   max-width: var(--uc-rail-collapsed) !important;
 }
+
+/* FF 160: panels (Customize, History...) must not animate the page through a view transition.
+   Both snapshots show through the transparent newtab, so they appear as a doubled page. */
+:root:not([inFullscreen]) #tabbrowser-tabbox,
+:root:not([inFullscreen]) #sidebar-box,
+:root #sidebar-container,
+:root sidebar-main {
+  view-transition-name: none !important;
+}
+
+/* Backstop: if Firefox names the elements some other way, make the groups end instantly */
+:root[uc-panel-open]::view-transition-group(*),
+:root[uc-panel-open]::view-transition-image-pair(*),
+:root[uc-panel-open]::view-transition-old(*),
+:root[uc-panel-open]::view-transition-new(*) {
+  animation-duration: 0s !important;
+  animation-delay: 0s !important;
+}
