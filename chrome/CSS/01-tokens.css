@@ -109,10 +109,10 @@
   --uc-rail-buttons-w: 36px; /* CHANGED from 32px - beefier bottom-rail buttons (7px air each side at 50px rail) */
   --uc-rail-buttons-gap: 0px; /* Vertical spacing of .buttons-wrapper top buttons */
     /* Free space to the right of the hamburger menu */
-  --uc-hamburger-gap: 9px; /* CHANGED from 8px to match the new button sizes */
+  --uc-hamburger-gap: 10px; /* CHANGED from 8px to match the new button sizes */
   /* Visible gap between the Extensions button and the hamburger, backdrop edge to backdrop edge (05, hamburger rule).
      4px = the natural spacing every navbar button has (2px margin each side), i.e. nothing extra. Raise it for more air; per density in 07 §17. */
-  --uc-hamburger-ext-gap: 5px;
+  --uc-hamburger-ext-gap: 4px;
   /* ---- Button icon sizes (Normal; overridden per density in section 17) ----
      These control how big the glyph inside a button is. The button's own box (padding,
      min-height, width) stays Firefox's, or is set elsewhere. Grouped here so the density
