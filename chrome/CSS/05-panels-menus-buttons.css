@@ -546,7 +546,7 @@ popupnotification :is(.popup-notification-primary-button, button[default], butto
   background-color: var(--uc-primary) !important;
   color: white !important;
   border-color: transparent !important;
-  border-radius: var(--uc-button-radius) !important;
+  border-radius: 16px !important;
 }
 
 popupnotification :is(.popup-notification-primary-button, button[default], button.primary) > .button-background {
