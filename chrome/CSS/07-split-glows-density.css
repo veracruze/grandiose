@@ -73,7 +73,7 @@
   --uc-menu-icon-gap: 8px;
   --uc-bookmark-icon-size: 16px;
   --uc-hamburger-gap: 8px;    /* free space to the right of the hamburger (Normal: 8px, fallback in 05) */
-  --uc-hamburger-ext-gap: 1px; /* gap between the Extensions button and the hamburger (the one that was 'doing nothing' is --uc-hamburger-gap, which is the OTHER side) */
+  --uc-hamburger-ext-gap: -1px; /* gap between the Extensions button and the hamburger (the one that was 'doing nothing' is --uc-hamburger-gap, which is the OTHER side) */
 
   /* Button icon sizes - Compact stays small (NEW lines: without these, Compact would inherit the new beefy Normal values from Section 2) */
   --uc-toolbar-icon-size: 16px;
@@ -110,7 +110,7 @@
   --uc-menu-icon-gap: 12px;
   --uc-bookmark-icon-size: 20px;
   --uc-hamburger-gap: 6px;
-  --uc-hamburger-ext-gap: 7px;
+  --uc-hamburger-ext-gap: 6px;
 
   /* Button icon sizes - Touch is beefiest (NEW lines; also --uc-rail-buttons-w above changed) */
   --uc-toolbar-icon-size: 24px;
