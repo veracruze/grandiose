@@ -141,7 +141,7 @@ xul|scrollcorner, xul|resizer, xul|scrollbar {
 #flash_scroller input[type="range"],
 .category-bar.custom-scrollbar-container,
 .category-list.custom-scrollbar-x {
-  color-scheme: dark !important;
+  scrollbar-color: #5a5a5a #1e1e1e !important;
 }
 
 
