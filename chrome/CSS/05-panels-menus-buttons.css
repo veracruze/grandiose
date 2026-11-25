@@ -533,6 +533,45 @@ moz-button[type="primary"][disabled]::part(button) {
   color: var(--uc-text) !important;
 }
 
+/* Popup notification buttons (add-on install, permissions, passwords...).
+   These are XUL <button>s, not <moz-button>, so the moz-button::part rules don't reach them. */
+popupnotification :is(.popup-notification-primary-button, button[default], button.primary) {
+  --button-background-color-primary: var(--uc-primary) !important;
+  --button-background-color-primary-hover: var(--uc-primary-hover) !important;
+  --button-background-color-primary-active: var(--uc-primary-active) !important;
+  --button-text-color-primary: white !important;
+  --color-accent-primary: var(--uc-primary) !important;
+  --color-accent-primary-hover: var(--uc-primary-hover) !important;
+  --color-accent-primary-active: var(--uc-primary-active) !important;
+  background-color: var(--uc-primary) !important;
+  color: white !important;
+  border-color: transparent !important;
+  border-radius: var(--uc-button-radius) !important;
+}
+
+popupnotification :is(.popup-notification-primary-button, button[default], button.primary) > .button-background {
+  background-color: var(--uc-primary) !important;
+  border-color: transparent !important;
+}
+
+popupnotification :is(.popup-notification-primary-button, button[default], button.primary):hover,
+popupnotification :is(.popup-notification-primary-button, button[default], button.primary):hover > .button-background {
+  background-color: var(--uc-primary-hover) !important;
+}
+
+popupnotification :is(.popup-notification-primary-button, button[default], button.primary):active,
+popupnotification :is(.popup-notification-primary-button, button[default], button.primary):active > .button-background {
+  background-color: var(--uc-primary-active) !important;
+}
+
+/* Disabled (the add-on prompt keeps "Add" disabled for ~1s): readable in both schemes */
+popupnotification :is(.popup-notification-primary-button, button[default], button.primary):is([disabled], [disabled="true"]),
+popupnotification :is(.popup-notification-primary-button, button[default], button.primary):is([disabled], [disabled="true"]) > .button-background {
+  background-color: var(--uc-selected) !important;
+  color: var(--uc-text) !important;
+  opacity: 1 !important;
+}
+
 /* ==========================================================================
    PERFECT TOOLBAR BUTTON SIZING & SPACING
    ========================================================================== */
