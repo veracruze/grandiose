@@ -1,3 +1,6 @@
 /* ==========================================================================
-   USER OVERRIDES / PLACE YOUR CSS CHANGES HERE. IT WILL OVERRIDE THEME VARIABLES.
+   USER OVERRIDES
+   Empty by default. Put your own changes here to override any theme component.
+   This file is imported last by ../userChrome.css and is never overwritten by
+   the installer, so it is the safe place for personal tweaks.
    ========================================================================== */
