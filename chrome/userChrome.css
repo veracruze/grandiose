@@ -8,6 +8,8 @@
                                    instead of :has() (css/02, 03, 11; also read by statusJson and fullscreenRailHover). The rail's own states stay :has() on purpose
      bookmarksToolbarHeight.uc.js  publishes the bookmarks toolbar's height as --uc-bm-h so the fixed toolbox height leaves room for it (css/02)
      moveNavToActiveTab.uc.js      puts back/forward inside the selected tab
+     horizontalTabOverflow.uc.js   horizontal tab strip: writes uc-tabstrip-compact / uc-tabstrip-probing so css/20 can compact the selected tab and resize idle tabs on hover when the strip overflows;
+                                   the window-state layout (restored = two-line, maximized = one-line) is pure CSS in css/20
      sidebarCollapseRail.uc.js     collapses the rail when "Hide tabs and sidebar" is on, and re-shows it at startup
      sidebarRailHold.uc.js         expand-on-hover: sets uc-rail-hold so css/07 can fade the rail's button row and » chevron out BEFORE the rail expands
                                    (timers only; the CSS that reaches into sidebar-main's shadow DOM is plain CSS in css/07, "SHADOW-DOM RULES")
@@ -30,12 +32,12 @@
      railExpandTargets.uc.js       expand-on-hover: which spots on the collapsed rail (buttons, "+", tabs) may start the expansion; never arms a second pending one
      sidebarAutoHide.uc.js         "Hide tabs and sidebar" + vertical tabs: reveals the rail at the screen edge; "Keep sidebar visible" and "Reveal sidebar" menu items
      sidebarCloseLeft.uc.js        Customize panel: moves the close button to the side facing the page when the rail is on the right
-     forceSchemePerSite.uc.js      per-site forced light/dark colour scheme (tab context menu, Ctrl+Alt+L / Ctrl+Alt+D)
+     forceSchemePerSite.uc.js      per-site forced light/dark color scheme (tab context menu, Ctrl+Alt+L (light) and Ctrl+Alt+D (dark))
      extensionIcons.uc.js          sharpest icon from the extension's own package for moz-extension:// tabs
-     pipControl.uc.js              Ctrl + hover over a tab opens it in Picture-in-Picture; Ctrl + hover over the PiP window returns the video to its tab
+     pipControl.uc.js              Ctrl + hover over a tab opens it in Picture-in-Picture; Ctrl + hover over the PiP window returns the video to the tab
      ExtensionToggles.uc.js        rail button and » menu entry that open a panel with an on/off switch for every installed extension (AddonManager)
      FaviconUpgrader.uc.js         replaces a site's small tab icon with the best one it offers, as a sharp PNG; per-site choice in the tab context menu ("Change favicon…")
-
+ 
    Also: userContent.css restyles about:newtab / about:home (transparent layout, clocks, weather, shortcuts; its accent follows the Colour source /
    Accent setting), the PiP and Screenshots overlays, and the scrollbar colours of every web page. The sidebar panels (History, Bookmarks, ...) are
    styled from this file (css/06; translucent through uc-panel-translucent).
@@ -51,9 +53,11 @@
                       holds the Normal values; section 17 overrides them. (Compact is hidden in Firefox's UI unless
                       browser.compactmode.show is true in about:config.)
      Rail behaviour . section 18 (all densities), driven by --uc-rail-collapsed and --uc-rail-buttons-w.
-     Background ..... the Customize panel (Background image, Image dimming, Image opacity, Surface opacity, Tab opacity, Popup opacity) or the --uc-bg-image / --uc-bg-scrim / --uc-bg-image-opacity /
+     Tab strip overflow .. css/20 (window-state layout, compact selected tab, idle hover-resize, multiselection frame, overflow "+" parity);
+                      sizing driven by JS/horizontalTabOverflow.uc.js. Idle hover width: --uc-idle-hover-w in css/20.
+     Background ..... the Customize panel (Background image, Image dimming, Surface opacity, Tab opacity, Popup opacity) or the --uc-bg-image / --uc-bg-scrim / --uc-bg-image-opacity /
                       --uc-alpha-* variables in section 2. The image is painted in css/17; translucency in 01 (gradients), 02 (toolbar), 04 and 15 (tabs), 05
-                      (popups) and 06 (rail and sidebar panels). Everything at 100% and no image = the solid look.
+                      (popups) and 06 (rail and sidebar panels).  Everything at 100% and no image = the solid look.
      Accessibility .. css/16 (reduced motion, Windows contrast themes). Focus rings: address bar (03) and the rail's "+" button (06) use --uc-focus.
                       Text contrast of the dim part of the address: --uc-url-dim-color (01). Security badge: --uc-security-* (01), drawn in 03.
  
@@ -77,6 +81,7 @@
      17  Density (Compact / Touch)
      18  Collapsed rail, all densities
 	 19	 Rail tool icons (Feather icons; css/19-rail-icons.css)
+	 20	 Tab strip overflow (window-state layout, compact sizing, multiselection; css/20-tabstrip-overflow.css)
 	 
 (pinned tabs and tab groups have no number: css/15-pinned-groups.css;
  reduced motion and forced colours: css/16-accessibility.css)                     
@@ -107,6 +112,7 @@
      css/17-glass-transparency.css                     custom background image layer and web content transparency
      css/18-firefox-160-fixes.css                      view transition opt-outs and sidebarAutoHide fixes for Firefox 160
      css/19-rail-icons.css                             Feather icons for the sidebar rail's tool buttons (History, Bookmarks, Customize ...), via moz-button's --button-icon-content
+     css/20-tabstrip-overflow.css      section 20      horizontal tab strip: window-state layout, compact sizing, idle hover-resize, multiselection frame, overflow "+" parity (needs JS/horizontalTabOverflow.uc.js)
 	 css/user-overrides.css                            Empty file for user defined changes to override theme css components. 
    ========================================================================== */
 
@@ -130,4 +136,5 @@
 @import url("css/17-glass-transparency.css");
 @import url("css/18-firefox-160-fixes.css");
 @import url("css/19-rail-icons.css");
+@import url("css/20-tabstrip-overflow.css");
 @import url("css/user-overrides.css");
