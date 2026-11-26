@@ -3,7 +3,11 @@
 All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versioning: [SemVer](https://semver.org/).
 
-## [Unreleased]
+## [1.0.2]
+### Added
+- Firefox 161 introduced colored Urlbar drop down menu icons. Colored them properly in dark/light modes.
+
+## [1.0.1]
 ### Added
 - Default settings for someone installing on a fresh install. 
   - Setting the transparent background png as default.
