@@ -168,6 +168,20 @@
   color: var(--uc-accent-text) !important;
 }
 
+/* Light mode: the badge glyphs on dropdown favicons are dark so they stand out on the light card.
+   Dark mode is untouched. To undo: delete this block. */
+@media (-moz-toolbar-prefers-color-scheme: light), (prefers-color-scheme: light) {
+  /* bookmark star: drawn as a mask, so its colour is the background colour */
+  .urlbarView-row[type="bookmark"] .urlbarView-type-icon {
+    background-color: var(--uc-text) !important;   /* shade-90, near black with the accent's hue; use #000 for pure black */
+  }
+
+  /* history clock / open-tab glyph: drawn as background-image, so it can't be recoloured directly, only darkened */
+  .urlbarView-row:not([type="bookmark"]) .urlbarView-type-icon {
+    filter: brightness(0) !important;
+  }
+}
+
 @media (-moz-toolbar-prefers-color-scheme: dark), (prefers-color-scheme: dark) {
   .urlbarView-row .urlbarView-type-icon,
   .urlbarView-row .urlbarView-icon {
@@ -551,4 +565,33 @@
     background-position: 100% 100% !important;
     background-repeat: no-repeat !important;
   }
+}
+
+/* ---- DROPDOWN BADGE COLOURS ----
+   Bookmark star: the Gradient colour (accent while that field is empty), both themes.
+   History / open-tab glyphs: black in light mode so they stand out on the light card.
+   Must stay below the bookmark badge block and the @supports block above (same selector, order decides).
+   To undo: delete this block. */
+.urlbarView-row[type="bookmark"] .urlbarView-type-icon {
+  background-color: var(--uc-shade-10, var(--uc-accent-base)) !important;
+}
+
+@media (-moz-toolbar-prefers-color-scheme: light), (prefers-color-scheme: light) {
+  .urlbarView-row[type="bookmark"] .urlbarView-type-icon {
+  background-color: var(--uc-shade-20, var(--uc-accent-base)) !important;
+  }
+  .urlbarView-row:not([type="bookmark"]) .urlbarView-type-icon {
+    filter: brightness(0) !important;
+  }
+
+}
+
+@media (-moz-toolbar-prefers-color-scheme: dark), (prefers-color-scheme: dark) {
+  .urlbarView-row[type="bookmark"] .urlbarView-type-icon {
+  background-color: var(--uc-tint-60, var(--uc-accent-base)) !important;
+  }
+  .urlbarView-row:not([type="bookmark"]) .urlbarView-type-icon {
+    filter: brightness(100) !important;
+  }
+
 }
