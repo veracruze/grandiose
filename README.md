@@ -1,6 +1,6 @@
-# Firefox userChrome theme (Firefox 160)
+# Firefox userChrome theme (Firefox 160 and above)
 
-A userChrome theme for Firefox 160 built around native vertical tabs and the expand-on-hover sidebar rail: an accent-driven palette, glass transparency, tab glows, split view and tab group styling, Feather icons, and a Customize-panel with live tunables.
+A userChrome theme for Firefox 160+ built around native vertical tabs and the expand-on-hover sidebar rail: an accent-driven palette, glass transparency, tab glows, split view and tab group styling, Feather icons, and a Customize-panel with live tunables.
 
 ---
 
@@ -8,7 +8,7 @@ A userChrome theme for Firefox 160 built around native vertical tabs and the exp
 
 | Item | Notes |
 |---|---|
-| Firefox **160** | Tested on 160 only. Much of the theme depends on Firefox internals (sidebar, view transitions, shadow DOM) that change between releases. |
+| Firefox **160** | Tested on 160. Much of the theme depends on Firefox internals (sidebar, view transitions, shadow DOM) that change between releases. |
 | Windows 11 | Developed and tested on Windows 11. Linux and macOS are untested. |
 | [fx-autoconfig](https://github.com/MrOtherGuy/fx-autoconfig) | Loads the `.uc.js` scripts. Without it the CSS loads but the theme is only partly working. The Express Install installs it for you. |
 | DWMBlurGlass + Windows transparency settings | For the glass/transparent window (see [Transparency](#6-transparency)). |
