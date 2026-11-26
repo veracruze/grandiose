@@ -1,0 +1,225 @@
+/* 20-tabstrip-overflow.css: Section 20: horizontal tab strip overflow behaviour. Imported by ../userChrome.css; order of the imports matters. */
+
+/* ==========================================================================
+   20. TAB STRIP OVERFLOW (window-state layout, compact sizing, multiselection)
+   The sizing attributes (uc-tabstrip-compact, uc-tabstrip-probing) are written
+   by JS/horizontalTabOverflow.uc.js. The window-state layout (20.1) is pure CSS
+   and works without the script.
+   ========================================================================== */
+
+/* 20.0 Remove Firefox's pre-tabs titlebar spacer. */
+.titlebar-spacer[type="pre-tabs"] {
+  display: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   20.1 Layout is driven by the WINDOW STATE, not by overflow.
+   Restored / floating window (sizemode="normal"): the one-line layout is
+   disabled at every width — the tabs get their own full-width row above the
+   navbar (two-line spacing). Maximized: the core one-line rules (02) apply
+   as-is. Fullscreen and vertical tabs are left to their own CSS.
+   -------------------------------------------------------------------------- */
+:root[sizemode="normal"]:not([uc-vertical]) #TabsToolbar {
+  margin-left: 0 !important;
+}
+:root[sizemode="normal"]:not([uc-vertical]) #nav-bar {
+  margin-top: 0 !important;
+  margin-right: 0 !important;
+  height: calc(var(--NavbarHeightSmall) * 1px) !important;
+  padding: 0 5px !important;
+}
+:root[sizemode="normal"]:not([uc-vertical]) #navigator-toolbox {
+  height: auto !important;
+}
+
+/* --------------------------------------------------------------------------
+   20.2 Compact selected tab while the (full-width) strip overflows.
+   Descendant selectors on purpose: the core width rules in 04 are also
+   descendant, so this reaches single tabs, the two tabs of a
+   tab-split-view-wrapper and the tabs inside a tab-group alike.
+   [selected] still matches while the tab is also [multiselected].
+   [fadein] lets a closing tab shrink to nothing; [hidden] skips the tabs of
+   a collapsed group.
+   -------------------------------------------------------------------------- */
+:root[uc-tabstrip-compact]
+  #TabsToolbar
+  .tabbrowser-tab[fadein][selected]:not([pinned]):not([hidden]) {
+  width: var(--uc-tab-w) !important;
+  min-width: var(--uc-tab-w) !important;
+  max-width: var(--uc-tab-w) !important;
+}
+:root[uc-tabstrip-compact]
+  #TabsToolbar
+  .tabbrowser-tab[fadein][selected]:is([soundplaying], [muted], [activemedia-blocked]):not([pinned]):not([hidden]) {
+  width: calc(var(--uc-tab-w) + 28px) !important;
+  min-width: calc(var(--uc-tab-w) + 28px) !important;
+  max-width: calc(var(--uc-tab-w) + 28px) !important;
+}
+
+/* The pair and the group must be allowed to shrink to their compacted tabs,
+   otherwise their own width keeps the strip overflowing. */
+:root[uc-tabstrip-compact] #TabsToolbar tab-split-view-wrapper,
+:root[uc-tabstrip-compact] #TabsToolbar tab-group {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  flex: 0 0 auto !important;
+}
+:root[uc-tabstrip-compact] #TabsToolbar tab-group .tab-group-label-container {
+  min-width: 0 !important;
+  flex: 0 0 auto !important;
+}
+
+/* Compact selected tab looks like an idle tab, in every state incl. hover
+   and while it is part of a multi-selection. */
+:root[uc-tabstrip-compact] #TabsToolbar .tabbrowser-tab[selected]:not([pinned]) .tab-content {
+  justify-content: center !important;
+  padding-inline-start: var(--uc-favicon-pad) !important;
+  padding-inline-end: var(--uc-favicon-pad) !important;
+}
+:root[uc-tabstrip-compact] #TabsToolbar .tabbrowser-tab[selected]:not([pinned]) .tab-icon-stack {
+  margin-left: 0 !important;
+  margin-inline-start: 0 !important;
+  margin-inline-end: 0 !important;
+}
+:root[uc-tabstrip-compact] #TabsToolbar .tabbrowser-tab[selected]:not([pinned]) .tab-label-container {
+  display: none !important;
+}
+:root[uc-tabstrip-compact] #TabsToolbar .tabbrowser-tab[selected]:not([pinned]) .tab-audio-button {
+  translate: none !important;
+}
+:root[uc-tabstrip-compact] #TabsToolbar .tabbrowser-tab[selected]:not([pinned]) .tab-content :is(#back-button, #forward-button) {
+  display: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   20.3 Resize-on-hover on the IDLE tabs while compact.
+   Also descendant: idle tabs of a split pair and of a group widen on hover
+   and reveal their title; the selected tab above never widens.
+   -------------------------------------------------------------------------- */
+:root[uc-tabstrip-compact] {
+  --uc-idle-hover-w: 200px;
+}
+:root[uc-tabstrip-compact]
+  #TabsToolbar
+  .tabbrowser-tab[fadein]:not([selected]):not([pinned]):not([hidden]) {
+  transition: width 160ms ease, min-width 160ms ease, max-width 160ms ease !important;
+}
+:root[uc-tabstrip-compact]
+  #TabsToolbar
+  .tabbrowser-tab[fadein]:not([selected]):not([pinned]):not([hidden]):hover {
+  width: var(--uc-idle-hover-w) !important;
+  min-width: var(--uc-idle-hover-w) !important;
+  max-width: var(--uc-idle-hover-w) !important;
+}
+:root[uc-tabstrip-compact] #TabsToolbar .tabbrowser-tab:not([selected]):not([pinned]):hover .tab-content {
+  justify-content: flex-start !important;
+  padding-inline-start: 12px !important;
+  padding-inline-end: 12px !important;
+}
+:root[uc-tabstrip-compact] #TabsToolbar .tabbrowser-tab:not([selected]):not([pinned]):hover .tab-icon-stack {
+  margin-left: 0 !important;
+  margin-inline-start: 0 !important;
+  margin-inline-end: 8px !important;
+}
+:root[uc-tabstrip-compact] #TabsToolbar .tabbrowser-tab:not([selected]):not([pinned]):hover .tab-label-container {
+  display: flex !important;
+}
+:root[uc-tabstrip-compact] #TabsToolbar tab-split-view-wrapper:has(.tabbrowser-tab:hover),
+:root[uc-tabstrip-compact] #TabsToolbar tab-group:has(.tabbrowser-tab:hover) {
+  max-width: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   20.4 Multi-selection  [multiselected="true"]  and keyboard focus.
+   Firefox paints its own .tab-background layer for multiselected tabs. That
+   layer is a DIFFERENT box than the themed .tab-content face, so the frame
+   read as offset / "lower". Hide it and draw the indicator on the face —
+   for single tabs, split-pair tabs and group tabs alike.
+   -------------------------------------------------------------------------- */
+#TabsToolbar .tabbrowser-tab[multiselected] .tab-background {
+  display: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+#TabsToolbar
+  .tabbrowser-tab:not([selected]):is(:focus, :focus-visible, [multiselected])
+  :is(.tab-stack, .tab-content, .tab-background) {
+  outline: none !important;
+}
+#TabsToolbar
+  .tabbrowser-tab:not([selected]):is(:focus-visible, [multiselected])
+  .tab-content {
+  outline: 2px solid var(--uc-focus, AccentColor) !important;
+  outline-offset: -2px !important;
+  border-radius: var(--uc-tab-radius) !important;
+}
+#TabsToolbar .tabbrowser-tab:not([selected])[multiselected] .tab-content {
+  background-color: var(--uc-selected) !important;
+}
+#TabsToolbar .tabbrowser-tab[selected][multiselected] .tab-content {
+  outline: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   20.5 Overflow new-tab button parity.
+   On overflow Firefox swaps #tabs-newtab-button for the standalone
+   #new-tab-button. Give it the same box, icon padding and tab-radius corners
+   as the in-strip "+" (05) so it keeps the visible glyph and rounded-square
+   backdrop instead of a circular, glyph-less button.
+   -------------------------------------------------------------------------- */
+#TabsToolbar #new-tab-button {
+  width: calc(var(--uc-toolbar-icon-size) + (2 * var(--uc-toolbar-inner-padding))) !important;
+  height: calc(var(--uc-toolbar-icon-size) + (2 * var(--uc-toolbar-inner-padding))) !important;
+  min-width: calc(var(--uc-toolbar-icon-size) + (2 * var(--uc-toolbar-inner-padding))) !important;
+  min-height: calc(var(--uc-toolbar-icon-size) + (2 * var(--uc-toolbar-inner-padding))) !important;
+  max-width: calc(var(--uc-toolbar-icon-size) + (2 * var(--uc-toolbar-inner-padding))) !important;
+  max-height: calc(var(--uc-toolbar-icon-size) + (2 * var(--uc-toolbar-inner-padding))) !important;
+  padding: 0 !important;
+  margin-inline: var(--uc-toolbar-button-spacing, 2px) !important;
+  border-radius: var(--uc-tab-radius) !important;
+  -moz-box-align: center !important;
+  -moz-box-pack: center !important;
+}
+#TabsToolbar #new-tab-button > .toolbarbutton-icon {
+  box-sizing: content-box !important;
+  width: var(--uc-toolbar-icon-size) !important;
+  height: var(--uc-toolbar-icon-size) !important;
+  min-width: var(--uc-toolbar-icon-size) !important;
+  min-height: var(--uc-toolbar-icon-size) !important;
+  max-width: var(--uc-toolbar-icon-size) !important;
+  max-height: var(--uc-toolbar-icon-size) !important;
+  padding: var(--uc-toolbar-inner-padding) !important;
+  margin: 0 !important;
+  border-radius: var(--uc-tab-radius) !important;
+}
+
+/* --------------------------------------------------------------------------
+   20.6 Probe state: measure with transitions off so widths are final.
+   -------------------------------------------------------------------------- */
+:root[uc-tabstrip-probing] #TabsToolbar,
+:root[uc-tabstrip-probing] #nav-bar,
+:root[uc-tabstrip-probing] #navigator-toolbox,
+:root[uc-tabstrip-probing] #tabbrowser-tabs,
+:root[uc-tabstrip-probing] #tabbrowser-arrowscrollbox,
+:root[uc-tabstrip-probing] .tabbrowser-tab,
+:root[uc-tabstrip-probing] .tabbrowser-tab *,
+:root[uc-tabstrip-probing] tab-split-view-wrapper,
+:root[uc-tabstrip-probing] tab-split-view-wrapper *,
+:root[uc-tabstrip-probing] tab-group,
+:root[uc-tabstrip-probing] tab-group * {
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
+/* --------------------------------------------------------------------------
+   20.7 Reduced motion: no width animation on the hover resize.
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  :root[uc-tabstrip-compact]
+    #TabsToolbar
+    .tabbrowser-tab[fadein]:not([selected]):not([pinned]):not([hidden]) {
+    transition: none !important;
+  }
+}
