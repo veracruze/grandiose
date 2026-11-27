@@ -11,9 +11,25 @@
 // ==/UserScript==
 
 (() => {
-  // Controls are inserted one after another directly below the anchor, so the LAST entry here ends up on top.
-  // Visual order in the panel (top to bottom): Theme mode, Color Scheme, Selection colour, Density, Overlay mode, Expand on hover delay, Colour source, Accent colour, Gradient colour, Gradient accent, Gradient amount, Gradient angle, Glow strength, Background image, Image dimming, Surface opacity, Tab opacity, Popup opacity.
+  // PANEL ORDER: the order of the entries in PREFS below no longer matters. Edit PANEL_ORDER (right under PREFS) instead:
+  // it lists the panel top-to-bottom. Any PREFS entry missing from PANEL_ORDER is appended at the bottom.
   const PREFS = {
+    pipmouse: {
+      id: "uc.pip.mouse",
+      fsId: "uc-pipmouse-fieldset",
+      label: "PiP mouse",
+      fallback: 1,
+      options: [[1, "On"], [0, "Off"]]
+    },
+    pipopacity: {
+      id: "uc.pip.opacity",
+      fsId: "uc-pipopacity-fieldset",
+      label: "PiP opacity (%)",
+      type: "number",
+      min: 10,          // not 0: a fully invisible PiP window can't be found again
+      max: 100,
+      defaultValue: 100
+    },
     popup: {
       id: "uc.popup.opacity",
       fsId: "uc-popupopacity-fieldset",
@@ -50,7 +66,7 @@
       max: 90,
       defaultValue: 40
     },
-	imageopacity: {
+    imageopacity: {
       id: "uc.background.image.opacity",
       fsId: "uc-imageopacity-fieldset",
       label: "Image opacity (%)",
@@ -186,6 +202,40 @@
         else Services.prefs.setIntPref("ui.systemUsesDarkTheme", v);
       }
     }
+  };
+
+  // Panel order, TOP to BOTTOM. Reorder this list freely; keys are the names used in PREFS above.
+  const PANEL_ORDER = [
+    "pipmouse",
+    "pipopacity",
+    "themeMode",
+    "color",
+    "selection",
+    "density",
+    "overlay",
+    "hoverDelay",
+    "themecolors",
+    "accent",
+    "gradcolor",
+    "gradaccent",
+    "gradient",
+    "gradangle",
+    "glow",
+    "bgimage",
+    "imageopacity",
+    "dim",
+    "surface",
+    "tab",
+    "popup"
+  ];
+
+  // Every control is inserted directly after the anchor, so each new one lands ABOVE the previous.
+  // To get PANEL_ORDER top-to-bottom we therefore inject in reverse. Unlisted PREFS keys go last (bottom).
+  const injectionOrder = () => {
+    const listed = PANEL_ORDER.filter((k) => k in PREFS);
+    const unlisted = Object.keys(PREFS).filter((k) => !listed.includes(k));
+    if (unlisted.length) console.warn("[uc-sidebar-toggles] not in PANEL_ORDER (placed last):", unlisted);
+    return listed.concat(unlisted).reverse();
   };
 
   try {
@@ -886,14 +936,33 @@
     return null;
   }
 
+  // Controls that are ALREADY in the panel (injected earlier by this or an older instance of the script, or by a panel that
+  // stayed loaded while the script was swapped) are never rebuilt, so they would keep their old position forever.
+  // This moves them into the current PANEL_ORDER instead (listeners and state are kept; nodes are only moved).
+  function reorderControls(root) {
+    const anchor = root.querySelector("#position")?.closest("moz-fieldset");
+    const scroller = root.querySelector(".sidebar-panel-scrollable-content");
+    if (!anchor && !scroller) return;
+    for (const key of injectionOrder()) {
+      const fs = root.querySelector(`#${PREFS[key].fsId}`);
+      if (!fs) continue;
+      if (anchor) anchor.insertAdjacentElement("afterend", fs);
+      else scroller.prepend(fs);
+    }
+    log("controls already present, reordered to:", PANEL_ORDER.join(", "));
+  }
+
   function injectControls(doc, root) {
-    if (root.querySelector(`#${PREFS.density.fsId}`)) return;
+    if (root.querySelector(`#${PREFS.density.fsId}`)) {
+      reorderControls(root);
+      return;
+    }
 
     const anchor = root.querySelector("#position")?.closest("moz-fieldset");
     const scroller = root.querySelector(".sidebar-panel-scrollable-content");
     if (!anchor && !scroller) return;
 
-    for (const key in PREFS) {
+    for (const key of injectionOrder()) {
       const config = PREFS[key];
       const fs = doc.createElement("moz-fieldset");
       fs.id = config.fsId;
@@ -1048,7 +1117,7 @@
 
     currentRoot = root;
     syncSwitches();
-    log("controls injected via event observer");
+    log("controls injected, PANEL_ORDER:", PANEL_ORDER.join(", "));
   }
 
   const getSidebarBrowser = () => window.SidebarController?.browser ?? document.getElementById("sidebar");
