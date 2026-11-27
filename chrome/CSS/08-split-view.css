@@ -149,16 +149,76 @@ tab-split-view-wrapper > .tabbrowser-tab {
   padding-inline-start: calc(var(--uc-rail-pad-start) - var(--uc-split-idle-nudge)) !important;
 }
 
+/* HOVER FRAME FIT: Ensure the hover state (background/glow) stays strictly 
+   inside the split-view wrapper's outer boundary, preventing bleed and 
+   maintaining clean inner corners on the divider. */
+#TabsToolbar tab-split-view-wrapper {
+  overflow: hidden !important;
+  border-radius: var(--uc-tab-radius) !important;
+  isolation: isolate !important; /* Prevents inset box-shadow glow from bleeding outside the wrapper */
+}
+
+#TabsToolbar tab-split-view-wrapper > .tabbrowser-tab:first-child:hover :is(.tab-stack, .tab-content) {
+  border-start-end-radius: 0 !important;
+  border-end-end-radius: 0 !important;
+}
+
+#TabsToolbar tab-split-view-wrapper > .tabbrowser-tab:last-child:hover :is(.tab-stack, .tab-content) {
+  border-start-start-radius: 0 !important;
+  border-end-start-radius: 0 !important;
+}
+
+#TabsToolbar tab-split-view-wrapper > .tabbrowser-tab:hover .tab-content {
+  background-clip: padding-box !important;
+}
+
+/* ==========================================================================
+   OUTER FRAME FIT: Make the selected tab's outline perfectly touch the wrapper
+   ========================================================================== */
+
+/* 1. Remove the outer borders of the first and last child. 
+   Because both .tab-stack and .tab-content draw borders, the selected tab's 
+   background was being inset by 1-2px from the wrapper's edge. */
+#TabsToolbar tab-split-view-wrapper > .tabbrowser-tab:first-child :is(.tab-stack, .tab-content) {
+  border-inline-start-width: 0 !important;
+  border-block-start-width: 0 !important;
+  border-block-end-width: 0 !important;
+}
+
+#TabsToolbar tab-split-view-wrapper > .tabbrowser-tab:last-child :is(.tab-stack, .tab-content) {
+  border-inline-end-width: 0 !important;
+  border-block-start-width: 0 !important;
+  border-block-end-width: 0 !important;
+}
+
+/* 2. Zero out the inner tabs' border-radius. 
+   Let the wrapper's overflow:hidden handle the outer rounding. This eliminates 
+   the sub-pixel anti-aliasing gap between the tab's own radius and the wrapper's. */
+#TabsToolbar tab-split-view-wrapper > .tabbrowser-tab :is(.tab-stack, .tab-content) {
+  border-radius: 0 !important;
+}
+
 /* DOUBLE DIVIDER FIX: every tab draws a 1px border on BOTH .tab-stack and the .tab-content inside it
    (04-horizontal-tabs.css), so where the second tab of a pair meets the first, its left (horizontal) or top
    (vertical) edge was two hairlines, one pixel apart. The first tab already drops its inner-side border;
-   the second tab now drops the .tab-stack copy, so one line is left between the two. */
-#TabsToolbar tab-split-view-wrapper > .tabbrowser-tab:last-child .tab-stack {
+   the second tab now drops BOTH the .tab-stack and .tab-content copies, so no line is left between the two. */
+#TabsToolbar tab-split-view-wrapper > .tabbrowser-tab:last-child :is(.tab-stack, .tab-content) {
   border-inline-start-width: 0 !important;
 }
 
 :is(#sidebar-main, sidebar-main, #sidebar-container, #sidebar-box) tab-split-view-wrapper > .tabbrowser-tab:last-child .tab-stack {
   border-block-start-width: 0 !important;
+}
+
+#TabsToolbar tab-split-view-wrapper > .tabbrowser-tab:last-child {
+  margin-inline-start: -4px !important;
+}
+
+#TabsToolbar tab-split-view-wrapper > .tabbrowser-tab:not([selected]) .tab-content {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding-inline: 0 !important;
 }
 
 /* ICON STACK FIX (horizontal pair): the selected tab gets `margin-left: 20px` on .tab-icon-stack in
