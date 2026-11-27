@@ -42,39 +42,71 @@
 }
 
 /* ==========================================================================
-   PICTURE-IN-PICTURE: HIDE CONTROLS UNTIL HOVER/TRANSPARENT BACKGROUND
-   ========================================================================== */
+PICTURE-IN-PICTURE: CONDITIONAL CONTROLS & HOVER OPAQUE
+========================================================================== */
 @-moz-document url(chrome://global/content/pictureinpicture/player.xhtml) {
   html,
   body {
     background-color: transparent !important;
   }
-}
 
-html[windowtype="Toolkit:PictureInPicture"] #controls-bottom,
-html[windowtype="Toolkit:PictureInPicture"] #close,
-html[windowtype="Toolkit:PictureInPicture"] #unpip {
-  opacity: 0 !important;
-  transition: opacity 0.2s ease-in-out !important;
-}
+  /* PiP video opacity. Fades only the video surface, not the controls. */
+  :root {
+    --uc-pip-opacity: 0.55;   /* resting opacity (overridden by pipSettings.uc.js if set) */
+  }
 
-html[windowtype="Toolkit:PictureInPicture"]:hover #controls-bottom,
-html[windowtype="Toolkit:PictureInPicture"]:hover #close,
-html[windowtype="Toolkit:PictureInPicture"]:hover #unpip {
-  opacity: 1 !important;
-}
+  /* The video lives in a remote <browser> inside the player document */
+  #browser,
+  browser {
+    opacity: var(--uc-pip-opacity) !important;
+    transition: opacity 150ms ease 220ms !important;
+  }
 
-html[windowtype="Toolkit:PictureInPicture"] #controls-bottom:focus-within,
-html[windowtype="Toolkit:PictureInPicture"] #close:focus,
-html[windowtype="Toolkit:PictureInPicture"] #unpip:focus {
-  opacity: 1 !important;
-}
+  /* ----------------------------------------------------------------------
+     DEFAULT BEHAVIOR (When "PiP mouse" = On / 1)
+     Controls show on hover, and video becomes fully opaque on hover.
+     ---------------------------------------------------------------------- */
+  html:not([uc-pip-nomouse]) #controls,
+  html:not([uc-pip-nomouse]) #controls-bottom,
+  html:not([uc-pip-nomouse]) #close,
+  html:not([uc-pip-nomouse]) #unpip {
+    opacity: 0 !important;
+    transition: opacity 0.2s ease-in-out !important;
+  }
+  html:not([uc-pip-nomouse]):hover #controls,
+  html:not([uc-pip-nomouse]):hover #controls-bottom,
+  html:not([uc-pip-nomouse]):hover #close,
+  html:not([uc-pip-nomouse]):hover #unpip {
+    opacity: 1 !important;
+  }
+  html:not([uc-pip-nomouse]):hover #browser,
+  html:not([uc-pip-nomouse]):hover browser {
+    opacity: 1 !important;
+    transition-delay: 0ms !important;
+  }
 
-/* Reduced motion (16 comes earlier and this file's transition is !important, so the switch-off is here): the controls just appear */
-@media (prefers-reduced-motion: reduce) {
-  html[windowtype="Toolkit:PictureInPicture"] #controls-bottom,
-  html[windowtype="Toolkit:PictureInPicture"] #close,
-  html[windowtype="Toolkit:PictureInPicture"] #unpip {
+  /* ----------------------------------------------------------------------
+     DISABLED BEHAVIOR (When "PiP mouse" = Off / 0)
+     1. Controls (including resize handle) are hidden and unclickable.
+     2. Hovering NO LONGER makes the PiP window opaque.
+     ---------------------------------------------------------------------- */
+  html[windowtype="Toolkit:PictureInPicture"][uc-pip-nomouse] :is(#controls, #controls-bottom, #close, #unpip) {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important; /* Prevents resizing and all mouse interaction */
     transition: none !important;
+  }
+  
+  /* Force the video to stay at the resting opacity even when hovered */
+  html[windowtype="Toolkit:PictureInPicture"][uc-pip-nomouse]:hover #browser,
+  html[windowtype="Toolkit:PictureInPicture"][uc-pip-nomouse]:hover browser {
+    opacity: var(--uc-pip-opacity) !important;
+    transition-delay: 0ms !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @-moz-document url(chrome://global/content/pictureinpicture/player.xhtml) {
+    #browser, browser { transition: none !important; }
   }
 }
