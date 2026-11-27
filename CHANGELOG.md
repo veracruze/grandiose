@@ -3,16 +3,16 @@
 All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versioning: [SemVer](https://semver.org/).
 
-## [1.0.3]
-### Added
-- Floating window mode organization for tabs. Scripted behavior for maximized and floating states.
-
-### Fixed
-- Multiselect and newtab visuals.
-
 ## [1.0.2]
 ### Added
 - Firefox 161 introduced colored Urlbar drop down menu icons. Colored them properly in dark/light modes.
+- Floating window mode organization for tabs. Scripted behavior for maximized and floating states.
+- Control toggles and transparency controls for PIP (Picture in picture) video in Customiz Sidebar Panel.
+- Split tab bar functions for maximized and floating versions of browser window.
+
+### Fixed
+- Multiselect and newtab visuals.
+- Splitview tab group styling. Tabs now fill the frame and have centered favicons.
 
 ## [1.0.1]
 ### Added
