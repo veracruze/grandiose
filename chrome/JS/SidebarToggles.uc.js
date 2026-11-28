@@ -66,7 +66,7 @@
       max: 90,
       defaultValue: 40
     },
-    imageopacity: {
+	imageopacity: {
       id: "uc.background.image.opacity",
       fsId: "uc-imageopacity-fieldset",
       label: "Image opacity (%)",
@@ -103,7 +103,7 @@
       label: "Gradient amount (%)",
       type: "number",
       min: 0,
-      max: 40,
+      max: 100,
       defaultValue: 9
     },
     gradaccent: {
@@ -114,6 +114,13 @@
       min: 0,
       max: 80,
       defaultValue: 25
+    },
+    gradtwo: {
+      id: "uc.gradient.two",
+      fsId: "uc-gradtwo-fieldset",
+      label: "Two-colour gradient",
+      fallback: 0,
+      options: [[0, "Off"], [1, "On"]]
     },
     gradcolor: {
       id: "uc.gradient.color",
@@ -217,6 +224,7 @@
     "themecolors",
     "accent",
     "gradcolor",
+    "gradtwo",
     "gradaccent",
     "gradient",
     "gradangle",
@@ -324,6 +332,45 @@
   };
   const systemAccentRGB = () => colorRGB("AccentColor");
   const hex = (rgb) => "#" + rgb.map((n) => n.toString(16).padStart(2, "0")).join("");
+
+  // Lowers a colour's HSL luminosity by `amount` on the 0–240 scale (matching the Windows colour picker's Lum field).
+  function lowerLuminosity(cssColor, amount = 100) {
+    const rgb = parseCssColor(cssColor);
+    if (!rgb) return cssColor;
+    let [r, g, b] = rgb.map((v) => v / 255);
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h = 0, s = 0, l = (max + min) / 2;
+    if (max !== min) {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+        case g: h = (b - r) / d + 2; break;
+        case b: h = (r - g) / d + 4; break;
+      }
+      h /= 6;
+    }
+    l = Math.max(0, l - amount / 240);
+    let r1, g1, b1;
+    if (s === 0) {
+      r1 = g1 = b1 = l;
+    } else {
+      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+      const p = 2 * l - q;
+      const hue2rgb = (t) => {
+        if (t < 0) t += 1;
+        if (t > 1) t -= 1;
+        if (t < 1 / 6) return p + (q - p) * 6 * t;
+        if (t < 1 / 2) return q;
+        if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+        return p;
+      };
+      r1 = hue2rgb(h + 1 / 3);
+      g1 = hue2rgb(h);
+      b1 = hue2rgb(h - 1 / 3);
+    }
+    return hex([r1, g1, b1].map((v) => Math.round(v * 255)));
+  }
 
   const CLIPBOARD = Ci.nsIClipboard.kGlobalClipboard;
   let eyedropperTimer = null;
@@ -628,10 +675,32 @@
     applySidebarAccent();
     syncSwitches();
   }
+  const darkToolbarMql = window.matchMedia("(-moz-toolbar-prefers-color-scheme: dark)");
+  const darkPrefersMql = window.matchMedia("(prefers-color-scheme: dark)");
+  const isDarkMode = () => {
+    const mode = PREFS.themeMode.read();
+    if (mode === 1) return true;
+    if (mode === 0) return false;
+    return darkToolbarMql.matches || darkPrefersMql.matches;
+  };
+  const shouldDimForDarkMode = () =>
+    Services.prefs.getIntPref(PREFS.themecolors.id, 0) === 0 &&
+    isDarkMode();
+
   // The accent actually in use: the theme's, or the Accent colour field's ("" = system accent)
   const effectiveAccent = () => {
     const tc = themeColorsActive();
     return tc ? tc.accent : accentOverride();
+  };
+
+  // The gradient colour actually in use: the theme's surface, or the Gradient colour field's.
+  // When Colour source is "User Defined" (0) and Theme mode is "Dark" (1), lower luminosity by 100.
+  const effectiveGradColor = () => {
+    const tc = themeColorsActive();
+    if (tc) return tc.surface;
+    const base = colorPref(PREFS.gradcolor);
+    if (!base) return "";
+    return shouldDimForDarkMode() ? lowerLuminosity(base, 100) : base;
   };
 
   const backgroundImage = () => {
@@ -686,15 +755,24 @@
 
     Object.assign(vars, GLOW_LEVELS[Services.prefs.getIntPref(PREFS.glow.id, 2)] || {});
 
-    const gradColor = themeCols ? themeCols.surface : colorPref(PREFS.gradcolor);
+    const gradColor = effectiveGradColor();
     if (gradColor) vars["--uc-gradient-color"] = gradColor;
+
+    // TWO-COLOUR GRADIENT: every gradient in the theme runs from --uc-gradient-hi (start) to --uc-gradient-lo (end), each mixed into the
+    // surface colour by Gradient amount. Normally those are the surface colour lightened / darkened. With this switch on they become the
+    // Accent colour (start) and the Gradient colour (end). Gradient amount = how far each end moves toward its colour (100% = pure colours).
+    if (Services.prefs.getIntPref(PREFS.gradtwo.id, 0) === 1) {
+      const accentHex = effectiveAccent() || hex(systemAccentRGB() || [0, 120, 215]);   // empty accent = system accent
+      vars["--uc-gradient-hi"] = accentHex;
+      vars["--uc-gradient-lo"] = gradColor || accentHex;                   // no Gradient colour set: both ends are the accent
+    }
 
     if (hasUserValue(PREFS.gradangle.id)) {
       const a = Math.min(PREFS.gradangle.max, Math.max(PREFS.gradangle.min, Services.prefs.getIntPref(PREFS.gradangle.id, PREFS.gradangle.defaultValue)));
       vars["--uc-gradient-angle"] = a + "deg";
     }
 
-    const custom = themeCols ? themeCols.accent : accentOverride();
+    const custom = effectiveAccent();
     if (custom) {
       const rgb = [1, 3, 5].map((i) => parseInt(custom.slice(i, i + 2), 16));
       const text = readableOn(rgb);
@@ -719,7 +797,8 @@
     const popup = hasUserValue(PREFS.popup.id) ? pct(PREFS.popup) : 100;
     if (hasUserValue(PREFS.surface.id)) vars["--uc-alpha-chrome"] = surface + "%";
     if (hasUserValue(PREFS.popup.id)) vars["--uc-alpha-popup"] = popup + "%";
-    if (hasUserValue(PREFS.dim.id)) vars["--uc-bg-scrim"] = pct(PREFS.dim) + "%";
+    if (isDarkMode()) vars["--uc-bg-scrim"] = "50%";
+    else if (hasUserValue(PREFS.dim.id)) vars["--uc-bg-scrim"] = pct(PREFS.dim) + "%";
     const image = backgroundImage();
     // Background image opacity
     const imgOpacity = hasUserValue(PREFS.imageopacity.id) ? pct(PREFS.imageopacity) : 50;
@@ -778,7 +857,7 @@
   // Window variables the panel document must share, so its surface colours (01-tokens.css: --uc-surface-base)
   // resolve to the same values as the window's. The panel is a separate document: inline variables on the
   // window's :root do not reach it.
-  const PANEL_FORWARD = ["--uc-gradient-color", "--uc-gradient-accent", "--uc-gradient-amount", "--uc-gradient-angle"];
+  const PANEL_FORWARD = ["--uc-gradient-color", "--uc-gradient-accent", "--uc-gradient-amount", "--uc-gradient-angle", "--uc-gradient-hi", "--uc-gradient-lo"];
 
   function applySidebarAccent(doc) {
     try {
@@ -892,7 +971,7 @@
         const input = currentRoot.querySelector(`.${config.fsId}-input`);
         if (input && input.getRootNode().activeElement !== input) {
           const tc = themeColorsActive();
-          const own = config === PREFS.accent ? effectiveAccent() : (tc ? tc.surface : colorPref(config));
+          const own = config === PREFS.accent ? effectiveAccent() : effectiveGradColor();
           const shown = own || effectiveAccent();
           const sys = shown ? null : systemAccentRGB();
           const value = shown || (sys ? hex(sys) : "");
@@ -915,7 +994,10 @@
       if (config.type === "number") {
         const input = currentRoot.querySelector(`.${config.fsId}-input`);
         if (input && input.getRootNode().activeElement !== input) {
-          input.value = String(Services.prefs.getIntPref(config.id, defaultNumber(config)));
+          const val = (config === PREFS.dim && isDarkMode())
+            ? 50
+            : Services.prefs.getIntPref(config.id, defaultNumber(config));
+          input.value = String(val);
         }
         continue;
       }
@@ -936,8 +1018,7 @@
     return null;
   }
 
-  // Controls that are ALREADY in the panel (injected earlier by this or an older instance of the script, or by a panel that
-  // stayed loaded while the script was swapped) are never rebuilt, so they would keep their old position forever.
+  // Controls that are ALREADY in the panel are never rebuilt, so they would keep their old position forever.
   // This moves them into the current PANEL_ORDER instead (listeners and state are kept; nodes are only moved).
   function reorderControls(root) {
     const anchor = root.querySelector("#position")?.closest("moz-fieldset");
@@ -1360,8 +1441,8 @@
     AddonMgr.addAddonListener(themeAddonListener);
   } catch (e) { AddonMgr = null; }
 
-  const schemeMql = window.matchMedia("(-moz-toolbar-prefers-color-scheme: dark)");
-  schemeMql.addEventListener("change", themeRefresh);
+  darkToolbarMql.addEventListener("change", themeRefresh);
+  darkPrefersMql.addEventListener("change", themeRefresh);
 
   // theme could already be applied by the time this runs (script loaded late): catch up once
   themeRefresh();
@@ -1376,7 +1457,8 @@
     for (const id of THEME_PREFS) { try { Services.prefs.removeObserver(id, themePrefObserver); } catch (e) {} }
     try { Services.obs.removeObserver(themeTopicObserver, THEME_TOPIC); } catch (e) {}
     try { AddonMgr && AddonMgr.removeAddonListener(themeAddonListener); } catch (e) {}
-    try { schemeMql.removeEventListener("change", themeRefresh); } catch (e) {}
+    try { darkToolbarMql.removeEventListener("change", themeRefresh); } catch (e) {}
+    try { darkPrefersMql.removeEventListener("change", themeRefresh); } catch (e) {}
     if (sidebar) sidebar.removeEventListener("DOMContentLoaded", onSidebarLoad, true);
     if (hookedSidebarBrowser) {
       try { hookedSidebarBrowser.removeEventListener("DOMWindowCreated", onSidebarWindowCreated, true); } catch (e) {}
