@@ -631,6 +631,41 @@ popupnotification, panel, panelview, panelmultiview, menupopup,
   }
 }
 
+/* PANELS: pure white (light) / pure black (dark) with your colour mixed in.
+   The colour is the Gradient colour field of the Customize panel (or the Accent colour while that is unset): --uc-surface-base.
+     Gradient accent (%) = how much of that colour is mixed into the white / black base of the panel (0 = plain white / black, 80 = mostly the colour)
+     Gradient amount (%) = how far the gradient drifts, doubled: light theme BRIGHTENS toward white at the top, dark theme DIMS toward black at the bottom
+   Applies to menus, the app menu, extension / tab-group popups and the sidebar panels. Icons and text are not touched (black / white as before).
+   To use the Accent colour field instead of the Gradient colour: --uc-panel-base: var(--uc-accent-base). To undo: delete this block. */
+:root {
+  --uc-panel-base: var(--uc-surface-base);
+																																 
+																											
+  --uc-panel-drift: calc(var(--uc-gradient-amount) * 2);
+  --uc-grad-panel: linear-gradient(in oklab var(--uc-gradient-angle), color-mix(in srgb, var(--uc-panel-top) var(--uc-alpha-popup), transparent), color-mix(in srgb, var(--uc-panel-bottom) var(--uc-alpha-popup), transparent));
+}
+
+@media (-moz-toolbar-prefers-color-scheme: light), (prefers-color-scheme: light) {
+  :root {
+    --uc-bg-panel: color-mix(in srgb, white, var(--uc-panel-base) var(--uc-gradient-accent));
+    --uc-panel-top: color-mix(in srgb, var(--uc-bg-panel), white var(--uc-panel-drift));
+    --uc-panel-bottom: var(--uc-bg-panel);
+								  
+								  
+										
+  }
+}
+
+@media (-moz-toolbar-prefers-color-scheme: dark), (prefers-color-scheme: dark) {
+  :root {
+    --uc-bg-panel: color-mix(in srgb, black, var(--uc-panel-base) var(--uc-gradient-accent));
+    --uc-panel-top: var(--uc-bg-panel);
+    --uc-panel-bottom: color-mix(in srgb, var(--uc-bg-panel), black var(--uc-panel-drift));
+								 
+								  
+										
+  }
+}
 /* Translucent tabs, part 3: the tab glows (hover, selected, idle) were solid colours, so they stayed opaque while the tab fill followed Tab opacity.
    While Tab opacity is below 100% their colour carries the same alpha. Tab groups set their own glow colour closer to the tab and keep it.
    To undo: delete this block. */
