@@ -8,6 +8,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versioning: [S
 - "Accent Colour" colors the second color of the gradient now, if the "Two-colour gradient" setting is on. 
   - It also dims "Accent Colour" on dark mode and switches icon colors accordingly. Try to pick light theme colors, if you like to switch around light/dark themes.
 
+### Fixed
+- Url dropdown bookmark star color follows dark/light themes. (White/Black with a tiny tint of accent color)
+
 ## [1.0.2]
 ### Added
 - Firefox 161 introduced colored Urlbar drop down menu icons. Colored them properly in dark/light modes.
