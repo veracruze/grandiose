@@ -57,7 +57,7 @@ menupopup::part(content) {
 /* Translucent popups, part 2: panels draw their surface on a slot in their shadow DOM with `background: var(--panel-background-color)`
    (chrome://global/skin/popup.css). Pointing that variable at the theme's panel gradient (which carries --uc-alpha-popup, see 01) makes the
    slot translucent without a script. The tab group editor keeps its own rules (15). To undo: delete this block. */
-:root[uc-popup-translucent] panel:not(.tab-group-editor-panel) {
+panel:not(.tab-group-editor-panel) {
   --panel-background-color: var(--uc-grad-panel) !important;
 }
 
