@@ -567,31 +567,22 @@
   }
 }
 
-/* ---- DROPDOWN BADGE COLOURS ----
-   Bookmark star: the Gradient colour (accent while that field is empty), both themes.
-   History / open-tab glyphs: black in light mode so they stand out on the light card.
-   Must stay below the bookmark badge block and the @supports block above (same selector, order decides).
-   To undo: delete this block. */
-.urlbarView-row[type="bookmark"] .urlbarView-type-icon {
-  background-color: var(--uc-shade-10, var(--uc-accent-base)) !important;
-}
-
 @media (-moz-toolbar-prefers-color-scheme: light), (prefers-color-scheme: light) {
-  .urlbarView-row[type="bookmark"] .urlbarView-type-icon {
-  background-color: var(--uc-shade-20, var(--uc-accent-base)) !important;
+  :root {
+    --uc-urlview-star: var(--uc-shade-90);     /* or #36454F */
+    --uc-urlview-glyph-filter: brightness(0);  /* black */
   }
-  .urlbarView-row:not([type="bookmark"]) .urlbarView-type-icon {
-    filter: brightness(0) !important;
+}
+@media (-moz-toolbar-prefers-color-scheme: dark), (prefers-color-scheme: dark) {
+  :root {
+    --uc-urlview-star: var(--uc-tint-90);      /* or #DCDCDC */
+    --uc-urlview-glyph-filter: brightness(100); /* white */
   }
-
 }
 
-@media (-moz-toolbar-prefers-color-scheme: dark), (prefers-color-scheme: dark) {
-  .urlbarView-row[type="bookmark"] .urlbarView-type-icon {
-  background-color: var(--uc-tint-60, var(--uc-accent-base)) !important;
-  }
-  .urlbarView-row:not([type="bookmark"]) .urlbarView-type-icon {
-    filter: brightness(100) !important;
-  }
-
+.urlbarView-row[type="bookmark"] .urlbarView-type-icon {
+  background-color: var(--uc-urlview-star) !important;
+}
+.urlbarView-row:not([type="bookmark"]) .urlbarView-type-icon {
+  filter: var(--uc-urlview-glyph-filter) !important;
 }
